@@ -1,4 +1,4 @@
-# Jimbo search engine
+# Joojle search engine
 ![Jimbo](http://www.staddon.eclipse.co.uk/Logos/jimbo.gif)  
 Collaborators:
 - Seyyed Mohammad Sadegh Keshavarzi
