@@ -1,13 +1,13 @@
-package in.nimbo.jimbo;
+package in.nimbo.jimbo.parse;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-public class Parser implements Runnable{
+public class PageParser implements Runnable{
 
     private String url;
 
-    Parser(String url) {
+    PageParser(String url) {
         this.url = url;
     }
 
