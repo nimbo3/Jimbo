@@ -12,9 +12,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConnectionRedis {
 
+    Config config;
     RedissonClient redissonClient;
     RMapCache<String, String> urls;
-    Config config;
+    RMapCache<String, Object> robots;    /////////////////////////////////////////
 
     public ConnectionRedis(String hostPort1, String password1, String hostPort2) {
 
@@ -23,6 +24,7 @@ public class ConnectionRedis {
                 .addNodeAddress("redis://" + hostPort1, "redis://" + hostPort2).setPassword(password1);
         redissonClient = Redisson.create(config);
         urls = redissonClient.getMapCache("urls");
+        robots = redissonClient.getMapCache("robots");
     }
 
     void addLinkToDb(String key, String value, int expiredTimeSecond) {
@@ -37,11 +39,36 @@ public class ConnectionRedis {
         }
     }
 
-    boolean existsInDB(String key) {
+    void addRobotsToDb(String hostAsKey, Object robot, int expiredTimeInHour) {
+        if (redissonClient.isShutdown()) {
+            redissonClient = Redisson.create(config);
+        }
+        // the result is for logging
+        boolean result = robots.fastPut(hostAsKey, robot, expiredTimeInHour, TimeUnit.HOURS);
+        if (!result) {
+            //
+        }
+    }
+
+    boolean existsLinkInDB(String key) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         return urls.containsKey(key);
+    }
+
+    boolean existRobotsInDb(String hostAsKey) {
+        if (redissonClient.isShutdown()) {
+            redissonClient = Redisson.create(config);
+        }
+        return robots.containsKey(hostAsKey);
+    }
+
+    Object getRobotsOfDb(String hostAsKey) {
+        if (redissonClient.isShutdown()) {
+            redissonClient = Redisson.create(config);
+        }
+        return robots.get(hostAsKey);
     }
 
 }
