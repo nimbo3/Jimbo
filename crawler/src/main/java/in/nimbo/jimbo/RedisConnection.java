@@ -1,4 +1,4 @@
-package in.nimbo.jimbo.Connection;
+package in.nimbo.jimbo;
 
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
@@ -10,14 +10,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * class for connecting to redis database (LRU cache)
  */
-public class ConnectionRedis {
+public class RedisConnection {
 
     Config config;
     RedissonClient redissonClient;
     RMapCache<String, String> urls;
     RMapCache<String, Object> robots;    /////////////////////////////////////////
 
-    public ConnectionRedis(String hostPort1, String password1, String hostPort2) {
+    public RedisConnection(String hostPort1, String password1, String hostPort2) {
 
         config = new Config();
         config.useReplicatedServers()
