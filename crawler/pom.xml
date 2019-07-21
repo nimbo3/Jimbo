@@ -44,6 +44,12 @@
             <version>${kafka.client.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>ir.jimbo</groupId>
+            <artifactId>commons</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
 </project>
