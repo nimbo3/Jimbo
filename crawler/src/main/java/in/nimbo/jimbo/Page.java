@@ -9,10 +9,8 @@ public class Page {
     Set<String> links = new HashSet<>();
     Set<String> h1 = new HashSet<>();
     Set<String> h2 = new HashSet<>();
-    Set<String> h3 = new HashSet<>();
-    Set<String> h4 = new HashSet<>();
-    Set<String> h5 = new HashSet<>();
-    Set<String> h6 = new HashSet<>();
+    Set<String> h3_6 = new HashSet<>();
     Set<String> pres = new HashSet<>();
+
 
 }
