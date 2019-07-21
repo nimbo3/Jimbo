@@ -12,6 +12,7 @@
     <artifactId>crawler</artifactId>
 
     <properties>
+        <robots.version>1.4.2</robots.version>
         <redisson.version>3.11.1</redisson.version>
         <jsoup.version>1.12.1</jsoup.version>
         <kafka.client.version>2.3.0</kafka.client.version>
@@ -36,6 +37,12 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>${jsoup.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.panforge</groupId>
+            <artifactId>robots</artifactId>
+            <version>${robots.version}</version>
         </dependency>
 
         <dependency>

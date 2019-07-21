@@ -3,12 +3,12 @@ package ir.jimbo.commons.model;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.util.*;
 
-@NoArgsConstructor
+
 @Setter
 @Getter
+@NoArgsConstructor
 public class Page {
     private String url;
     private String title;
