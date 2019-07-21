@@ -7,11 +7,11 @@ import java.util.Properties;
 
 public class RedisConfiguration {
 
-    Properties properties = new Properties();
+    private Properties properties = new Properties();
 
     RedisConfiguration() throws IOException {
         properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResource("configs.properties")).getPath()));
+                .getResource("redisConfigs.properties")).getPath()));
     }
 
     public String getProperty(String key) {
