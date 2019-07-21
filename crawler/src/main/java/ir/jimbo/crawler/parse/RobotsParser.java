@@ -8,7 +8,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-public class RobotsParser implements Runnable {
+public class RobotsParser {
     private String domain;
 
     RobotsParser(String domain) {
@@ -43,8 +43,7 @@ public class RobotsParser implements Runnable {
         }
     };
 
-    @Override
-    public void run() {
+    public RobotsTxt parse() {
         RobotsTxt robotsTxt = notFoundRobotsTxt;
         try (InputStream robotsTxtStream = new URL("https://github.com/robots.txt").openStream()) {
             robotsTxt = RobotsTxt.read(robotsTxtStream);
@@ -55,6 +54,6 @@ public class RobotsParser implements Runnable {
             e.printStackTrace();
         }
 
-        // TODO: add parsed robots.txt to redis
+        return robotsTxt;
     }
 }
