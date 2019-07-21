@@ -13,7 +13,6 @@ public class MyProducer {
 
     Producer<Long, String> producer;
 
-
     MyProducer(KafkaConfiguration data) {
         Properties producerProperties = new Properties();
         producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));

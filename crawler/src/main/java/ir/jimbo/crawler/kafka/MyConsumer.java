@@ -16,7 +16,6 @@ public class MyConsumer extends Thread{
 
     Consumer<Long, String> consumer;
 
-
     MyConsumer(KafkaConfiguration data) {
         Properties consumerProperties = new Properties();
         consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("host.and.port"));
