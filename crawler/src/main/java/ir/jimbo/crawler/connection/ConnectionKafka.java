@@ -1,6 +1,7 @@
 package ir.jimbo.crawler.connection;
 
-import ir.jimbo.crawler.Page;
+import ir.jimbo.commons.model.Page;
+
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -47,7 +48,7 @@ public class ConnectionKafka {
         consumerProperties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecord);
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
-        Consumer<Long, String> consumer = new KafkaConsumer<Long, String>(consumerProperties);
+        Consumer<Long, String> consumer = new KafkaConsumer<>(consumerProperties);
         consumer.subscribe(Collections.singletonList(linksTopicName));
         return consumer;
     }

@@ -15,19 +15,19 @@ public class ConnectionRedis {
     Config config;
     RedissonClient redissonClient;
     RMapCache<String, String> urls;
-    RMapCache<String, Object> robots;    /////////////////////////////////////////
+    RMapCache<String, Object> robots;
 
-    public ConnectionRedis(String hostPort1, String password1, String hostPort2) {
+    public ConnectionRedis(String hostPort1, String password, String hostPort2) {
 
         config = new Config();
-        config.useReplicatedServers()
-                .addNodeAddress("redis://" + hostPort1, "redis://" + hostPort2).setPassword(password1);
+        config.useReplicatedServers().addNodeAddress("redis://" + hostPort1, "redis://" + hostPort2).
+                setPassword(password);
         redissonClient = Redisson.create(config);
         urls = redissonClient.getMapCache("urls");
         robots = redissonClient.getMapCache("robots");
     }
 
-    void addLinkToDb(String key, String value, int expiredTimeSecond) {
+    void addLinkToDB(String key, String value, int expiredTimeSecond) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -39,12 +39,13 @@ public class ConnectionRedis {
         }
     }
 
-    void addRobotsToDb(String hostAsKey, Object robot, int expiredTimeInHour) {
+    void addRobotToDB(String hostAsKey, Object robot, int expiredTimeInHour) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         // the result is for logging
         boolean result = robots.fastPut(hostAsKey, robot, expiredTimeInHour, TimeUnit.HOURS);
+
         if (!result) {
             //
         }
@@ -57,14 +58,14 @@ public class ConnectionRedis {
         return urls.containsKey(key);
     }
 
-    boolean existRobotsInDb(String hostAsKey) {
+    boolean existsRobotInDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         return robots.containsKey(hostAsKey);
     }
 
-    Object getRobotsOfDb(String hostAsKey) {
+    Object getRobotsOfDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }

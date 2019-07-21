@@ -16,8 +16,8 @@ public class LoadConfigs {
     private Properties properties = new Properties();
 
     LoadConfigs() throws IOException {
-        properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResource("configs.properties")).getPath()));
+        properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().
+                getResource("configs.properties")).getPath()));
     }
 
     private String getPropertyValue(String key) {
