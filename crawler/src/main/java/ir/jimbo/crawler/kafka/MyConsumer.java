@@ -4,6 +4,7 @@ import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
@@ -17,24 +18,16 @@ public class MyConsumer extends Thread{
 
 
     MyConsumer(KafkaConfiguration data) {
-        consumer = createConsumer(data.getProperty("hostAndPort"), data.getProperty("groupIdConfig"),
-                Integer.parseInt(data.getProperty("maxPollRecord")), data.getProperty("autoCommit"),
-                data.getProperty("autoOffsetReset"), data.getProperty("linksTopicName"));
-    }
-
-    private Consumer<Long, String> createConsumer(String hostAndPort, String groupIdConfig, int maxPollRecord,
-                                                                                    String autoCommit, String autoOffsetReset, String linksTopicName) {
         Properties consumerProperties = new Properties();
-        consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, hostAndPort);
-        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, groupIdConfig);
+        consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("host.and.port"));
+        consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, data.getProperty("group.id.config"));
         consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
         consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        consumerProperties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecord);
-        consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
-        consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
-        org.apache.kafka.clients.consumer.Consumer<Long, String> consumer = new org.apache.kafka.clients.consumer.KafkaConsumer<>(consumerProperties);
-        consumer.subscribe(Collections.singletonList(linksTopicName));
-        return consumer;
+        consumerProperties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, Integer.parseInt(data.getProperty("max.poll.record")));
+        consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, data.getProperty("auto.commit"));
+        consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, data.getProperty("auto.offset.reset"));
+        consumer = new KafkaConsumer<>(consumerProperties);
+        consumer.subscribe(Collections.singletonList(data.getProperty("links.topic.name")));
     }
 
     @Override

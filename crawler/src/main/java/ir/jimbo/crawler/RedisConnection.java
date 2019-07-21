@@ -1,5 +1,6 @@
-package ir.jimbo.crawler;
+package ir.jimbo.crawler.connection;
 
+import ir.jimbo.crawler.config.RedisConfiguration;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
@@ -12,39 +13,47 @@ import java.util.concurrent.TimeUnit;
  */
 public class RedisConnection {
 
-    Config config;
-    RedissonClient redissonClient;
-    RMapCache<String, String> urls;
-    RMapCache<String, Object> robots;    /////////////////////////////////////////
+    private Config config;
+    private RedissonClient redissonClient;
+    private RMapCache<String, String> urls;
+    private RMapCache<String, Object> robots;
+    private int expiredTimeDomainSecond;
+    private int expiredTimerobotsHour;
 
-    public RedisConnection(String hostPort1, String password1, String hostPort2) {
-
+    public RedisConnection(RedisConfiguration data) {
         config = new Config();
-        config.useReplicatedServers()
-                .addNodeAddress("redis://" + hostPort1, "redis://" + hostPort2).setPassword(password1);
+        config.useSingleServer().setAddress("redis://" + data.getProperty("host.port.1"))
+                .setPassword(data.getProperty("redis.password"));
+
+//        config.useReplicatedServers().addNodeAddress("redis://" + data.getProperty("host.port.1"),
+//                "redis://" + data.getProperty("host.port.2")).setPassword(data.getProperty("redis.password"));
+
         redissonClient = Redisson.create(config);
-        urls = redissonClient.getMapCache("urls");
-        robots = redissonClient.getMapCache("robots");
+        urls = redissonClient.getMapCache(data.getProperty("urls.cache.map"));
+        robots = redissonClient.getMapCache(data.getProperty("robots.cache.map"));
+        expiredTimeDomainSecond = Integer.parseInt(data.getProperty("expired.time.for.domain.cache"));
+        expiredTimerobotsHour = Integer.parseInt(data.getProperty("expired.time.for.robots.cache"));
     }
 
-    void addLinkToDb(String key, String value, int expiredTimeSecond) {
+    void addLinkToDB(String key, String value) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         // the result is for logging
-        boolean result = urls.fastPut(key, value, expiredTimeSecond, TimeUnit.SECONDS);
+        boolean result = urls.fastPut(key, value, expiredTimeDomainSecond, TimeUnit.SECONDS);
 
         if (!result) {
             //
         }
     }
 
-    void addRobotsToDb(String hostAsKey, Object robot, int expiredTimeInHour) {
+    void addRobotToDB(String hostAsKey, Object robot) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         // the result is for logging
-        boolean result = robots.fastPut(hostAsKey, robot, expiredTimeInHour, TimeUnit.HOURS);
+        boolean result = robots.fastPut(hostAsKey, robot, expiredTimerobotsHour, TimeUnit.HOURS);
+
         if (!result) {
             //
         }
@@ -57,14 +66,14 @@ public class RedisConnection {
         return urls.containsKey(key);
     }
 
-    boolean existRobotsInDb(String hostAsKey) {
+    boolean existsRobotInDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         return robots.containsKey(hostAsKey);
     }
 
-    Object getRobotsOfDb(String hostAsKey) {
+    Object getRobotsOfDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }

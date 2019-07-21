@@ -1,6 +1,6 @@
 package ir.jimbo.crawler.kafka;
 
-import in.nimbo.jimbo.Page;
+import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.LongSerializer;
@@ -15,16 +15,12 @@ public class MyProducer {
 
 
     MyProducer(KafkaConfiguration data) {
-        producer = createProducer(data.getProperty("hostAndPort"), data.getProperty("clientIdConfig"));
-    }
-
-    private Producer<Long, String> createProducer(String hostAndPort, String clientIdConfig) {
         Properties producerProperties = new Properties();
-        producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, hostAndPort);
-        producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, clientIdConfig);
+        producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));
+        producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, data.getProperty("client.id"));
         producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
         producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        return new KafkaProducer<>(producerProperties);
+        producer = new KafkaProducer<>(producerProperties);
     }
 
     public void addPageToKafka(String topicName, Page value) {
