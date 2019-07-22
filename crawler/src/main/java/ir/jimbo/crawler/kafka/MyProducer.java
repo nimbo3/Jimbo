@@ -1,6 +1,10 @@
 package ir.jimbo.crawler.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.LongSerializer;
@@ -24,7 +28,16 @@ public class MyProducer {
     }
 
     public void addPageToKafka(String topicName, Page value) {
-        ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, value.toString());
+
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String pageJson = null; // ?/
+        try {
+            pageJson = ow.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            // log
+        }
+
+        ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, pageJson);
         // use metadata for log
         RecordMetadata metadata;
         try {
@@ -34,4 +47,21 @@ public class MyProducer {
         }
     }
 
+    public void addLinkToKafka(String topicName, TitleAndLink titleAndLink) {
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String titleAndLinkJson = null; // ?/
+        try {
+            titleAndLinkJson = ow.writeValueAsString(titleAndLink);
+        } catch (JsonProcessingException e) {
+            // log
+        }
+        ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, titleAndLinkJson);
+        // use metadata for log
+        RecordMetadata metadata;
+        try {
+            metadata = producer.send(record).get();
+        } catch (InterruptedException | ExecutionException e) {
+            // logging here(this happen when getting metadata not sending it)
+        }
+    }
 }
