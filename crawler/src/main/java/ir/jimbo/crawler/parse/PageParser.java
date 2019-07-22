@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PageParser implements Runnable {
+public class PageParser {
 
     private String url;
 
@@ -17,8 +17,7 @@ public class PageParser implements Runnable {
         this.url = url;
     }
 
-    @Override
-    public void run() {
+    public Page parse() {
         Document document = Jsoup.parse(url);
         Page page = new Page();
 
@@ -73,6 +72,6 @@ public class PageParser implements Runnable {
                 page.getPlainTextList().add(text);
         }
 
-        // TODO: Add parsed page to kafka
+        return page;
     }
 }
