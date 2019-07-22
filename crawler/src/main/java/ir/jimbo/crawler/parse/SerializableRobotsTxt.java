@@ -5,8 +5,7 @@ import com.panforge.robotstxt.RobotsTxt;
 import java.io.Serializable;
 import java.util.List;
 
-public class Robot implements RobotsTxt, Serializable {
-
+public class SerializableRobotsTxt implements RobotsTxt, Serializable {
 
     @Override
     public boolean query(String userAgent, String path) {
