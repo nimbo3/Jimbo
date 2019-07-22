@@ -12,8 +12,11 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class MyConsumer extends Thread{
+    private static final Logger LOGGER = LogManager.getLogger("HelloWorld");
 
     Consumer<Long, String> consumer;
     long pollDuration;
@@ -45,7 +48,7 @@ public class MyConsumer extends Thread{
                 try {
                     titleAndLink = mapper.readValue(record.value(), TitleAndLink.class);
                 } catch (IOException e) {
-                    // logging here
+                    LOGGER.error("", e);
                 }
                 new ProcessLink(titleAndLink.getTitle(), titleAndLink.getUrl()).start();
             }
