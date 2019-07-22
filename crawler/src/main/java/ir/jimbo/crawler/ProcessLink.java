@@ -30,7 +30,7 @@ public class ProcessLink extends Thread{
     }
 
     private boolean checkValid(String url) {
-        return false;
+        return url.endsWith(".html") || url.endsWith(".htm") || !url.contains(".");
     }
 
     private String getDomain(String url) throws NoDomainFoundException {
