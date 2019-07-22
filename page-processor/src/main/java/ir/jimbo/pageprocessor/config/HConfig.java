@@ -9,21 +9,15 @@ public class HConfig extends Config {
     private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
     private static final String PREFIX = "hbase";
 
-    private static HConfig instance;
-
-    static {
-        try {
-            instance = new HConfig();
-        } catch (IOException e) {
-            LOGGER.error("", e);
-        }
-    }
+    private static HConfig instance = null;
 
     private HConfig() throws IOException {
         super(PREFIX);
     }
 
-    public static HConfig getInstance() {
+    public static HConfig getInstance() throws IOException {
+        if (instance == null)
+            instance = new HConfig();
         return instance;
     }
 }

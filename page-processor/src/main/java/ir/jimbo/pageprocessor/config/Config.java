@@ -1,6 +1,5 @@
 package ir.jimbo.pageprocessor.config;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
@@ -11,8 +10,8 @@ public abstract class Config {
 
     Config(String prefix) throws IOException {
         this.prefix = prefix;
-        properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().
-                getResource("configs.properties")).getPath()));
+        properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                "configs.properties")));
     }
 
     public String getPropertyValue(String key) {
