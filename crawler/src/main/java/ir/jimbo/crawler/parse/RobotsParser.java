@@ -1,7 +1,6 @@
 package ir.jimbo.crawler.parse;
 
 import com.panforge.robotstxt.RobotsTxt;
-import ir.jimbo.commons.model.RobotsTxtModel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +43,7 @@ public class RobotsParser {
         }
     };
 
-    public RobotsTxtModel parse() {
+    public RobotsTxt parse() {
         RobotsTxt robotsTxt = notFoundRobotsTxt;
         try (InputStream robotsTxtStream = new URL("https://github.com/robots.txt").openStream()) {
             robotsTxt = RobotsTxt.read(robotsTxtStream);
@@ -55,6 +54,6 @@ public class RobotsParser {
             e.printStackTrace();
         }
 
-        return new RobotsTxtModel(robotsTxt);
+        return robotsTxt;
     }
 }
