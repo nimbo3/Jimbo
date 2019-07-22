@@ -5,6 +5,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,8 +19,15 @@ public class PageParser {
     }
 
     public Page parse() {
-        Document document = Jsoup.parse(url);
+        Document document = null;
         Page page = new Page();
+        try {
+            document = Jsoup.connect(url).get();
+        } catch (IOException e) {
+            // TODO: Log
+            e.printStackTrace();
+            return page;
+        }
 
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
@@ -27,21 +35,22 @@ public class PageParser {
             String text = element.text();
             if(text == null)
                 text = "";
-            if (h3to6Tags.contains(element.tagName()))
+            if (h3to6Tags.contains(element.tagName().toLowerCase()))
                 page.getH3to6List().add(text);
-            if (plainTextTags.contains(element.tagName()))
+            else if (plainTextTags.contains(element.tagName().toLowerCase()))
                 page.getPlainTextList().add(text);
-            if (element.tagName().equals("h1"))
+            else if (element.tagName().equalsIgnoreCase("h1"))
                 page.getH1List().add(text);
-            if (element.tagName().equals("h2"))
+            else if (element.tagName().equalsIgnoreCase("h2"))
                 page.getH2List().add(text);
-            if (element.tagName().equals("a")) {
+            else if (element.tagName().equalsIgnoreCase("title"))
+                page.setTitle(element.text());
+            else if (element.tagName().equalsIgnoreCase("a")) {
                 String href = element.attr("href");
                 if (href == null)
                     href = "";
                 page.getLinks().put(text, href);
-            }
-            if (element.tagName().equals("meta")) {
+            } else if (element.tagName().equalsIgnoreCase("meta")) {
                 String name = element.attr("name");
                 if (name == null)
                     name = "";
