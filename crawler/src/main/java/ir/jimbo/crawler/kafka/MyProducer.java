@@ -17,7 +17,7 @@ public class MyProducer {
 
     Producer<Long, String> producer;
 
-    MyProducer(KafkaConfiguration data) {
+    public MyProducer(KafkaConfiguration data) {
         Properties producerProperties = new Properties();
         producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));
         producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, data.getProperty("client.id"));

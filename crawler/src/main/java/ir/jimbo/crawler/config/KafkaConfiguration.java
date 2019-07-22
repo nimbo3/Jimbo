@@ -9,7 +9,7 @@ public class KafkaConfiguration {
 
     private Properties properties = new Properties();
 
-    KafkaConfiguration() throws IOException {
+    public KafkaConfiguration() throws IOException {
         properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResource("kafkaConfigs.properties")).getPath()));
     }
