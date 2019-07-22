@@ -19,16 +19,19 @@ public class PageProcessor extends Thread {
 
     @Override
     public void run() {
-        //TODO Read from Kafka
-        Page page = new Page();
-        page.getLinks().forEach((k, v) -> {
-            try {
-                hTableManager.put(k, hQualifier, v);
-            } catch (IOException e) {
-                LOGGER.error("", e);
-            }
-        });
-        //TODO Write to ES
-        //TODO Write to Kafka
+        while (!interrupted()) {
+            //TODO Read from Kafka
+            Page page = new Page();
+            System.err.println("new page");
+            page.getLinks().forEach((k, v) -> {
+                try {
+                    hTableManager.put(k, hQualifier, v);
+                } catch (IOException e) {
+                    LOGGER.error("", e);
+                }
+            });
+            //TODO Write to ES
+            //TODO Write to Kafka
+        }
     }
 }

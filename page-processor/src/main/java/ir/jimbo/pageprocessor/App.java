@@ -11,17 +11,6 @@ import java.io.IOException;
 public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
 
-    private static String hTableName;
-    private static String hColumnFamily;
-    private static String hQualifier;
-
-    static {
-        Config hConfig = HConfig.getInstance();
-        hTableName = hConfig.getPropertyValue("tableName");
-        hColumnFamily = hConfig.getPropertyValue("columnFamily");
-        hQualifier = hConfig.getPropertyValue("qualifier");
-    }
-
     public static void main(String[] args) throws IOException {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -30,6 +19,12 @@ public class App {
                 LOGGER.error("", e);
             }
         }));
+        Config hConfig = HConfig.getInstance();
+
+        String hTableName = hConfig.getPropertyValue("tableName");
+        String hColumnFamily = hConfig.getPropertyValue("columnFamily");
+        String hQualifier = hConfig.getPropertyValue("qualifier");
+
         for (int i = 0; i < 10; i++) {
             new PageProcessor(hTableName, hColumnFamily, hQualifier).start();
         }
