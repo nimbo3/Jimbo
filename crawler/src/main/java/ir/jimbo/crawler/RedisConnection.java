@@ -1,5 +1,6 @@
-package ir.jimbo.crawler.connection;
+package ir.jimbo.crawler;
 
+import com.panforge.robotstxt.RobotsTxt;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
@@ -16,7 +17,7 @@ public class RedisConnection {
     private Config config;
     private RedissonClient redissonClient;
     private RMapCache<String, String> urls;
-    private RMapCache<String, Object> robots;
+    private RMapCache<String, RobotsTxt> robots;
     private int expiredTimeDomainSecond;
     private int expiredTimerobotsHour;
 
@@ -35,7 +36,7 @@ public class RedisConnection {
         expiredTimerobotsHour = Integer.parseInt(data.getProperty("expired.time.for.robots.cache"));
     }
 
-    void addLinkToDB(String key, String value) {
+    void addDomainInDb(String key, String value) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -47,7 +48,7 @@ public class RedisConnection {
         }
     }
 
-    void addRobotToDB(String hostAsKey, Object robot) {
+    void addRobotToDB(String hostAsKey, RobotsTxt robot) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -59,7 +60,7 @@ public class RedisConnection {
         }
     }
 
-    boolean existsLinkInDB(String key) {
+    boolean existsDomainInDB(String key) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -73,11 +74,10 @@ public class RedisConnection {
         return robots.containsKey(hostAsKey);
     }
 
-    Object getRobotsOfDB(String hostAsKey) {
+    RobotsTxt getRobotsOfDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         return robots.get(hostAsKey);
     }
-
 }

@@ -16,6 +16,7 @@
         <redisson.version>3.11.1</redisson.version>
         <jsoup.version>1.12.1</jsoup.version>
         <kafka.client.version>2.3.0</kafka.client.version>
+        <jackson.version>2.9.9.1</jackson.version>
     </properties>
 
     <dependencies>
@@ -55,6 +56,12 @@
             <groupId>ir.jimbo</groupId>
             <artifactId>commons</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
     </dependencies>
