@@ -18,8 +18,8 @@ import java.util.Properties;
 public class MyConsumer extends Thread{
     private static final Logger LOGGER = LogManager.getLogger("HelloWorld");
 
-    Consumer<Long, String> consumer;
-    long pollDuration;
+    private Consumer<Long, String> consumer;
+    private long pollDuration;
 
     public MyConsumer(KafkaConfiguration data) {
         Properties consumerProperties = new Properties();
@@ -37,20 +37,19 @@ public class MyConsumer extends Thread{
 
     @Override
     public void run() {
-        while (true) {
+        while (!interrupted()) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             // Commit the offset of record to broker
             consumer.commitSync();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 // for logging we can use methods provide by ConsumerRecord class
-                TitleAndLink titleAndLink = null;
                 ObjectMapper mapper = new ObjectMapper();
                 try {
-                    titleAndLink = mapper.readValue(record.value(), TitleAndLink.class);
+                    TitleAndLink titleAndLink = mapper.readValue(record.value(), TitleAndLink.class);
+                    new ProcessLink(titleAndLink.getTitle(), titleAndLink.getUrl()).start();
                 } catch (IOException e) {
                     LOGGER.error("", e);
                 }
-                new ProcessLink(titleAndLink.getTitle(), titleAndLink.getUrl()).start();
             }
         }
     }
