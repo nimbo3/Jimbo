@@ -28,23 +28,10 @@ public class ProcessLink extends Thread{
     public void run() {
         String domain = getDomain(url);
         if (! redis.existsDomainInDB(domain)) {
-            if (checkValidUrl(url)) {
-                redis.addDomainInDb(domain, url);
-                if (checkRobots(domain)) {
-                    // thread poll
-                }
-            }
+            // add to blocking queue
         } else {
             producer.addLinkToKafka(Constants.KAFKA_LINKS_TOPIC, new TitleAndLink(title, url));
         }
-    }
-
-    private boolean checkRobots(String domain) {
-        return false;
-    }
-
-    private boolean checkValidUrl(String url) {
-        return url.endsWith(".html") || url.endsWith(".htm") || !url.substring(url.lastIndexOf('/') + 1).contains(".");
     }
 
     private String getDomain(String url) throws NoDomainFoundException {
@@ -52,5 +39,10 @@ public class ProcessLink extends Thread{
         if (matcher.matches())
             return matcher.group(4);
         throw new NoDomainFoundException();
+    }
+
+    private boolean checkValidUrl(String url) {
+        return url.endsWith(".html") || url.endsWith(".htm") || url.endsWith(".php")
+                || !url.substring(url.lastIndexOf('/') + 1).contains(".");
     }
 }
