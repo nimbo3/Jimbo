@@ -21,7 +21,7 @@ public class MyConsumer extends Thread{
     Consumer<Long, String> consumer;
     long pollDuration;
 
-    MyConsumer(KafkaConfiguration data) {
+    public MyConsumer(KafkaConfiguration data) {
         Properties consumerProperties = new Properties();
         consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));
         consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, data.getProperty("group.id"));
