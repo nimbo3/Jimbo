@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
 public class PageParserTest {
     private HttpServer server;
@@ -36,6 +37,33 @@ public class PageParserTest {
         PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals("Test page Title", page.getTitle());
+    }
+
+    @Test
+    public void testH1() {
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(1, page.getH1List().size());
+        assertEquals("Header1", page.getH1List().get(0));
+    }
+
+    @Test
+    public void testH2() {
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(1, page.getH2List().size());
+        assertEquals("Header2", page.getH1List().get(0));
+    }
+
+    @Test
+    public void testH3to6() {
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(4, page.getH3to6List().size());
+        assertTrue(page.getH3to6List().contains("Header3"));
+        assertTrue(page.getH3to6List().contains("Header4"));
+        assertTrue(page.getH3to6List().contains("Header5"));
+        assertTrue(page.getH3to6List().contains("Header6"));
     }
 
     @After

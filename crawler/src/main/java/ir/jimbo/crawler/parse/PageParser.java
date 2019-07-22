@@ -19,6 +19,12 @@ public class PageParser extends PageParse implements Runnable {
         this.url = url;
     }
 
+    public PageParser() {
+        this.url = "";
+    }
+
+
+
     @Override
     public void run() {
         boolean repeat = true;
