@@ -34,14 +34,14 @@ public class PageParserTest {
 
     @Test
     public void testTitle() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals("Test page Title", page.getTitle());
     }
 
     @Test
     public void testH1() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH1List().size());
         assertEquals("Header1", page.getH1List().get(0));
@@ -49,7 +49,7 @@ public class PageParserTest {
 
     @Test
     public void testH2() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH2List().size());
         assertEquals("Header2", page.getH2List().get(0));
@@ -57,7 +57,7 @@ public class PageParserTest {
 
     @Test
     public void testH3to6() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(4, page.getH3to6List().size());
         assertTrue(page.getH3to6List().contains("Header3"));
@@ -68,7 +68,7 @@ public class PageParserTest {
 
     @Test
     public void testPlainText() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(5, page.getPlainTextList().size());
         assertTrue(page.getPlainTextList().contains("paragraph"));
@@ -80,7 +80,7 @@ public class PageParserTest {
 
     @Test
     public void testLinks() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(2, page.getLinks().size());
         assertTrue(page.getLinks().containsKey("About"));

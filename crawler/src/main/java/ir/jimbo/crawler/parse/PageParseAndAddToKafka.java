@@ -23,15 +23,13 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
         this.urlsTopicName = urlsTopicName;
     }
 
-    public PageParser(String url) {
+    public PageParseAndAddToKafka(String url) {
         this.url = url;
     }
 
-    public PageParser() {
+    public PageParseAndAddToKafka() {
         this.url = "";
     }
-
-
 
     @Override
     public void run() {
