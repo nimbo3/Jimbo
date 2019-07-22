@@ -8,22 +8,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ProcessLink extends Thread {
+    // Please refer to RFC 3986 for more information
 
+    private String title;
+    private String url;
+    private RedisConnection redis;
+    private MyProducer producer;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-
-    String title;
-    String url;
-    RedisConnection redis;
-    MyProducer producer;
-
-    public void init(RedisConnection redis, MyProducer producer) {
-        this.redis = redis;
-        this.producer = producer;
-    }
 
     public ProcessLink(String title, String url) {
         this.title = title;
         this.url = url;
+    }
+
+    public void init(RedisConnection redis, MyProducer producer) {
+        this.redis = redis;
+        this.producer = producer;
     }
 
     @Override
