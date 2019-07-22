@@ -22,7 +22,6 @@ public class PageProcessor extends Thread {
         while (!interrupted()) {
             //TODO Read from Kafka
             Page page = new Page();
-            System.err.println("new page");
             page.getLinks().forEach((k, v) -> {
                 try {
                     hTableManager.put(k, hQualifier, v);
