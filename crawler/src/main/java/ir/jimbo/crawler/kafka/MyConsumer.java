@@ -3,6 +3,7 @@ package ir.jimbo.crawler.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.ProcessLink;
+import ir.jimbo.crawler.RedisConnection;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.serialization.LongDeserializer;
@@ -15,7 +16,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
-public class MyConsumer extends Thread{
+public class MyConsumer {
     private static final Logger LOGGER = LogManager.getLogger("HelloWorld");
 
     private Consumer<Long, String> consumer;
@@ -35,9 +36,8 @@ public class MyConsumer extends Thread{
         pollDuration = Long.parseLong(data.getProperty("poll.duration"));
     }
 
-    @Override
-    public void run() {
-        while (!interrupted()) {
+    public void run(RedisConnection redis, MyProducer producer) {
+        while (true) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             // Commit the offset of record to broker
             consumer.commitSync();
@@ -46,7 +46,7 @@ public class MyConsumer extends Thread{
                 ObjectMapper mapper = new ObjectMapper();
                 try {
                     TitleAndLink titleAndLink = mapper.readValue(record.value(), TitleAndLink.class);
-                    new ProcessLink(titleAndLink.getTitle(), titleAndLink.getUrl()).start();
+                    new ProcessLink(titleAndLink.getTitle(), titleAndLink.getUrl()).init(redis, producer);
                 } catch (IOException e) {
                     LOGGER.error("", e);
                 }

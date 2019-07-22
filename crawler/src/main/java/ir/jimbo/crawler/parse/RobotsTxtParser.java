@@ -17,7 +17,7 @@ public class RobotsTxtParser {
     public RobotsParser parse() {
         RobotsParser robotsParser = allowAll;
         try {
-            robotsParser = new RobotsParser("Jimbo-Crawler");
+            robotsParser = new RobotsParser();
             robotsParser.connect(url);
         } catch (RobotsDisallowedException e) {
             // TODO: log

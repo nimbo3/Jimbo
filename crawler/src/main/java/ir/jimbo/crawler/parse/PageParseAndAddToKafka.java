@@ -2,6 +2,7 @@ package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.PageParse;
+import ir.jimbo.crawler.kafka.MyProducer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,9 +12,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PageParser extends PageParse implements Runnable {
+public class PageParseAndAddToKafka extends PageParse implements Runnable {
 
     private String url;
+    MyProducer producer;
+    String urlsTopicName;
+
+    public PageParseAndAddToKafka(MyProducer producer, String urlsTopicName) {
+        this.producer = producer;
+        this.urlsTopicName = urlsTopicName;
+    }
 
     public PageParser(String url) {
         this.url = url;
@@ -35,7 +43,8 @@ public class PageParser extends PageParse implements Runnable {
                 repeat = false;
                 e.printStackTrace();
             }
-            Page pg = parse();
+            Page page = parse();
+            producer.addPageToKafka(urlsTopicName, page);
         }
     }
 
