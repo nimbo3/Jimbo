@@ -18,7 +18,22 @@
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
-            <version>1.4.10</version>
+            <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
         </dependency>
     </dependencies>
+    <properties>
+        <hbase.version>1.4.10</hbase.version>
+        <jackson.version>2.9.9.1</jackson.version>
+        <kafka.version>2.3.0</kafka.version>
+    </properties>
 </project>
