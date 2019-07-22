@@ -9,7 +9,7 @@ public class RedisConfiguration {
 
     private Properties properties = new Properties();
 
-    RedisConfiguration() throws IOException {
+    public RedisConfiguration() throws IOException {
         properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResource("redisConfigs.properties")).getPath()));
     }
