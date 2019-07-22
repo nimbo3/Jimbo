@@ -3,34 +3,35 @@ package ir.jimbo.crawler;
 import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.kafka.MyProducer;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ProcessLink extends Thread {
+public class ProcessLink extends PageParse {
 
+    private String title;
+    private String url;
+    private RedisConnection redis;
+    private MyProducer producer;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-
-    String title;
-    String url;
-    RedisConnection redis;
-    MyProducer producer;
-
-    public void init(RedisConnection redis, MyProducer producer) {
-        this.redis = redis;
-        this.producer = producer;
-    }
 
     public ProcessLink(String title, String url) {
         this.title = title;
         this.url = url;
     }
 
-    @Override
-    public void run() {
+    public void init(RedisConnection redis, MyProducer producer) {
+        this.redis = redis;
+        this.producer = producer;
+    }
+
+    public void process() {
         String domain = getDomain(url);
         if (!redis.existsDomainInDB(domain)) {
-            // add to blocking queue
+            try {
+                urlToParseQueue.put(url);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         } else {
             producer.addLinkToKafka("links", new TitleAndLink(title, url));
         }
@@ -47,4 +48,5 @@ public class ProcessLink extends Thread {
         return url.endsWith(".html") || url.endsWith(".htm") || url.endsWith(".php")
                 || !url.substring(url.lastIndexOf('/') + 1).contains(".");
     }
+
 }

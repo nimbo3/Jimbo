@@ -1,7 +1,8 @@
 package ir.jimbo.crawler;
 
-import com.panforge.robotstxt.RobotsTxt;
+
 import ir.jimbo.crawler.config.RedisConfiguration;
+import me.jamesfrost.robotsio.RobotsParser;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
@@ -17,7 +18,7 @@ public class RedisConnection {
     private Config config;
     private RedissonClient redissonClient;
     private RMapCache<String, String> urls;
-    private RMapCache<String, RobotsTxt> robots;
+    private RMapCache<String, RobotsParser> robots;
     private int expiredTimeDomainSecond;
     private int expiredTimerobotsHour;
 
@@ -48,7 +49,7 @@ public class RedisConnection {
         }
     }
 
-    void addRobotToDB(String hostAsKey, RobotsTxt robot) {
+    void addRobotToDB(String hostAsKey, RobotsParser robot) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -74,7 +75,7 @@ public class RedisConnection {
         return robots.containsKey(hostAsKey);
     }
 
-    RobotsTxt getRobotsOfDB(String hostAsKey) {
+    RobotsParser getRobotsOfDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }

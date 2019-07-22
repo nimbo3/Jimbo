@@ -41,12 +41,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.panforge</groupId>
-            <artifactId>robots</artifactId>
-            <version>${robots.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka.client.version}</version>
