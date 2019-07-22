@@ -2,16 +2,18 @@ package ir.jimbo.pageprocessor.manager;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class HTableManager {
+    private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
+    private static final int NUMBER_OF_VERSIONS = HConstants.ALL_VERSIONS;
+    private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
     private static Connection connection = null;
 
@@ -20,24 +22,46 @@ public class HTableManager {
         config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
     }
 
-    private Admin admin = null;
-    private HTableDescriptor table = null;
+    private Table table = null;
 
-    public HTableManager(String tableName) throws IOException {
+    public HTableManager(String tableName, String columnFamilyName) throws IOException {
         checkConnection();
-        admin = connection.getAdmin();
-        table = admin.getTableDescriptor(TableName.valueOf(tableName));
+        table = getTable(tableName, columnFamilyName);
     }
 
-    private void checkConnection() throws IOException {
+    public static void closeConnection() throws IOException {
+        if (connection != null && !connection.isClosed())
+            connection.close();
+    }
+
+    private static void checkConnection() throws IOException {
         if (connection == null || connection.isClosed())
             connection = ConnectionFactory.createConnection(config);
     }
 
+    public void put(String row, String columnFamilyName, String qualifier, String value) throws IOException {
+        table.put(new Put(row.getBytes(CHARSET)).addColumn(columnFamilyName.getBytes(CHARSET), qualifier.getBytes(
+                CHARSET), value.getBytes(CHARSET)));
+    }
+
+    private Table getTable(String tableName, String columnFamilyName) throws IOException {
+        final Admin admin = connection.getAdmin();
+        final TableName tableNameValue = TableName.valueOf(tableName);
+        if (admin.tableExists(tableNameValue)) {
+            if (!connection.getTable(tableNameValue).getTableDescriptor().hasFamily(columnFamilyName.getBytes(
+                    CHARSET)))
+                admin.addColumn(tableNameValue, new HColumnDescriptor(columnFamilyName).setCompactionCompressionType(
+                        COMPRESSION_TYPE).setMaxVersions(NUMBER_OF_VERSIONS));
+        } else {
+            admin.createTable(new HTableDescriptor(tableNameValue).addFamily(new HColumnDescriptor(columnFamilyName).
+                    setCompressionType(COMPRESSION_TYPE).setMaxVersions(NUMBER_OF_VERSIONS)));
+        }
+        admin.close();
+        return connection.getTable(tableNameValue);
+    }
+
     public void close() throws IOException {
-        if (admin != null && !admin.isAborted())
-            admin.close();
-        if (connection != null && !connection.isClosed())
-            connection.close();
+        if (table != null)
+            table.close();
     }
 }
