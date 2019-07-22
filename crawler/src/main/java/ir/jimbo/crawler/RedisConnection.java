@@ -1,4 +1,4 @@
-package ir.jimbo.crawler.connection;
+package ir.jimbo.crawler;
 
 import com.panforge.robotstxt.RobotsTxt;
 import ir.jimbo.crawler.config.RedisConfiguration;
