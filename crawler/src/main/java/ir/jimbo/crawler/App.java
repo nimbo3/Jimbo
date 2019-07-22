@@ -26,7 +26,7 @@ public class App {
         } catch (IOException e) {
             return;
         }
-        PageParse pageParse = new PageParse(appConfiguration);
+        PageParse pageParse = new PageParse(appConfiguration, redisConnection);
 
         KafkaConfiguration kafkaConfiguration;
         try {

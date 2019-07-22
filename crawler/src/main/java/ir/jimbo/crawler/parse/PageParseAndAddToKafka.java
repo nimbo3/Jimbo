@@ -1,7 +1,9 @@
 package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.PageParse;
+import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.kafka.MyProducer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -10,17 +12,23 @@ import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PageParseAndAddToKafka extends PageParse implements Runnable {
 
     private String url;
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     MyProducer producer;
     String urlsTopicName;
+    String pagesTopicName;
 
-    public PageParseAndAddToKafka(MyProducer producer, String urlsTopicName) {
+    public PageParseAndAddToKafka(MyProducer producer, String urlsTopicName, String pagesTopicName) {
         this.producer = producer;
         this.urlsTopicName = urlsTopicName;
+        this.pagesTopicName = pagesTopicName;
     }
 
     @Override
@@ -34,7 +42,13 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
                 e.printStackTrace();
             }
             Page page = parse();
-            producer.addPageToKafka(urlsTopicName, page);
+            producer.addPageToKafka(pagesTopicName, page);
+            redis.addDomainInDb(getDomain(url));
+            for (Map.Entry<String, String> values : page.getLinks().entrySet()) {
+                if (checkValidUrl(values.getValue())) {
+                    producer.addLinkToKafka(urlsTopicName, new TitleAndLink(values.getKey(), values.getValue()));
+                }
+            }
         }
     }
 
@@ -82,5 +96,17 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
         }
 
         return page;
+    }
+
+    private String getDomain(String url) throws NoDomainFoundException {
+        final Matcher matcher = domainPattern.matcher(url);
+        if (matcher.matches())
+            return matcher.group(4);
+        throw new NoDomainFoundException();
+    }
+
+    private boolean checkValidUrl(String url) {
+        return url.endsWith(".html") || url.endsWith(".htm") || url.endsWith(".php")
+                || !url.substring(url.lastIndexOf('/') + 1).contains(".");
     }
 }

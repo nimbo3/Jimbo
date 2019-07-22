@@ -3,6 +3,7 @@ package ir.jimbo.crawler;
 import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.kafka.MyProducer;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,13 +20,19 @@ public class ProcessLink extends PageParse {
         this.url = url;
     }
 
-    public void init(RedisConnection redis, MyProducer producer) {
+    public ProcessLink init(RedisConnection redis, MyProducer producer) {
         this.redis = redis;
         this.producer = producer;
+        return this;
     }
 
     public void process() {
-        String domain = getDomain(url);
+        String domain;
+        try {
+            domain = getDomain(url);
+        } catch (NoDomainFoundException e) {
+            return;
+        }
         if (!redis.existsDomainInDB(domain)) {
             try {
                 urlToParseQueue.put(url);
@@ -35,6 +42,7 @@ public class ProcessLink extends PageParse {
         } else {
             producer.addLinkToKafka("links", new TitleAndLink(title, url));
         }
+
     }
 
     private String getDomain(String url) throws NoDomainFoundException {
@@ -42,11 +50,6 @@ public class ProcessLink extends PageParse {
         if (matcher.matches())
             return matcher.group(4);
         throw new NoDomainFoundException();
-    }
-
-    private boolean checkValidUrl(String url) {
-        return url.endsWith(".html") || url.endsWith(".htm") || url.endsWith(".php")
-                || !url.substring(url.lastIndexOf('/') + 1).contains(".");
     }
 
 }
