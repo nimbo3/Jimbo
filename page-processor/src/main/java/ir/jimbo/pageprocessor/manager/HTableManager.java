@@ -22,9 +22,11 @@ public class HTableManager {
         config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
     }
 
-    private Table table = null;
+    private Table table;
+    private String columnFamilyName;
 
     public HTableManager(String tableName, String columnFamilyName) throws IOException {
+        this.columnFamilyName = columnFamilyName;
         checkConnection();
         table = getTable(tableName, columnFamilyName);
     }
@@ -39,17 +41,19 @@ public class HTableManager {
             connection = ConnectionFactory.createConnection(config);
     }
 
-    public void put(String row, String columnFamilyName, String qualifier, String value) throws IOException {
-        table.put(new Put(row.getBytes(CHARSET)).addColumn(columnFamilyName.getBytes(CHARSET), qualifier.getBytes(
-                CHARSET), value.getBytes(CHARSET)));
+    private static byte[] getBytes(String string) {
+        return string.getBytes(CHARSET);
+    }
+
+    public void put(String row, String qualifier, String value) throws IOException {
+        table.put(new Put(getBytes(row)).addColumn(getBytes(columnFamilyName), getBytes(qualifier), getBytes(value)));
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
         final Admin admin = connection.getAdmin();
         final TableName tableNameValue = TableName.valueOf(tableName);
         if (admin.tableExists(tableNameValue)) {
-            if (!connection.getTable(tableNameValue).getTableDescriptor().hasFamily(columnFamilyName.getBytes(
-                    CHARSET)))
+            if (!connection.getTable(tableNameValue).getTableDescriptor().hasFamily(getBytes(columnFamilyName)))
                 admin.addColumn(tableNameValue, new HColumnDescriptor(columnFamilyName).setCompactionCompressionType(
                         COMPRESSION_TYPE).setMaxVersions(NUMBER_OF_VERSIONS));
         } else {
