@@ -5,22 +5,17 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
 
-/**
- * load configurations for this project. configs like :
- * . expired_date (time in seconds) of urls in redis
- * . thread pools init size
- * .
- */
-public class Config {
-
+public abstract class Config {
     private Properties properties = new Properties();
+    private String prefix;
 
-    Config() throws IOException {
+    Config(String prefix) throws IOException {
+        this.prefix = prefix;
         properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().
                 getResource("configs.properties")).getPath()));
     }
 
-    private String getPropertyValue(String key) {
-        return properties.getProperty(key);
+    public String getPropertyValue(String key) {
+        return properties.getProperty(prefix + "." + key);
     }
 }
