@@ -3,11 +3,15 @@ package ir.jimbo.crawler;
 import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.kafka.MyProducer;
+import ir.jimbo.crawler.parse.PageParser;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ProcessLink extends Thread {
+public class ProcessLink extends PageParse {
 
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
@@ -26,11 +30,14 @@ public class ProcessLink extends Thread {
         this.url = url;
     }
 
-    @Override
-    public void run() {
+    public void process() {
         String domain = getDomain(url);
         if (!redis.existsDomainInDB(domain)) {
-            // add to blocking queue
+            try {
+                urlToParseQueue.put(url);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         } else {
             producer.addLinkToKafka("links", new TitleAndLink(title, url));
         }
@@ -47,4 +54,5 @@ public class ProcessLink extends Thread {
         return url.endsWith(".html") || url.endsWith(".htm") || url.endsWith(".php")
                 || !url.substring(url.lastIndexOf('/') + 1).contains(".");
     }
+
 }

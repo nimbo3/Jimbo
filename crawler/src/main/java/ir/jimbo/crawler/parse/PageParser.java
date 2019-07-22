@@ -1,6 +1,7 @@
 package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.crawler.PageParse;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -9,12 +10,22 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PageParser {
+public class PageParser extends PageParse implements Runnable {
 
     private String url;
 
-    PageParser(String url) {
-        this.url = url;
+    @Override
+    public void run() {
+        boolean repeat = true;
+        while (repeat) {
+            try {
+                this.url = urlToParseQueue.take();
+            } catch (InterruptedException e) {
+                repeat = false;
+                e.printStackTrace();
+            }
+            Page pg = parse();
+        }
     }
 
     public Page parse() {
@@ -25,7 +36,7 @@ public class PageParser {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
             Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre"));
             String text = element.text();
-            if(text == null)
+            if (text == null)
                 text = "";
             if (h3to6Tags.contains(element.tagName()))
                 page.getH3to6List().add(text);
