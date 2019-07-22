@@ -15,5 +15,10 @@
             <artifactId>commons</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>1.4.10</version>
+        </dependency>
     </dependencies>
 </project>
