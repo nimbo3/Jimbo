@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 
-public class PageParserTest {
+public class PageParseAndAddToKafkaTest {
     @Before
     public void runServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(9898), 0);

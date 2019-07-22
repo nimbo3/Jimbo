@@ -1,6 +1,8 @@
 package ir.jimbo.crawler;
 
-import ir.jimbo.crawler.parse.PageParser;
+import ir.jimbo.crawler.config.AppConfiguration;
+import ir.jimbo.crawler.kafka.MyProducer;
+import ir.jimbo.crawler.parse.PageParseAndAddToKafka;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -8,12 +10,23 @@ import java.util.concurrent.Executors;
 
 public class PageParse {
 
-    protected ArrayBlockingQueue<String> urlToParseQueue = new ArrayBlockingQueue<>(100); // 100 Must go to configuration
-    ExecutorService threadPool = Executors.newFixedThreadPool(100);
+    protected ArrayBlockingQueue<String> urlToParseQueue;
+    ExecutorService threadPool;
+    int threadsNumber;
 
-    public void start() {
-        for (int i = 0; i < 100; i++) { // 100 must change
-            threadPool.submit(new PageParser());
+    protected PageParse() {
+
+    }
+
+    PageParse(AppConfiguration data) {
+        threadsNumber = Integer.parseInt(data.getProperty("thread.pool.core.size"));
+        urlToParseQueue = new ArrayBlockingQueue<>(Integer.parseInt(data.getProperty("array.blocking.queue.init.size")));
+        threadPool = Executors.newFixedThreadPool(threadsNumber);
+    }
+
+    public void start(MyProducer producer, String urlTopicName) {
+        for (int i = 0; i < threadsNumber; i++) {
+            threadPool.submit(new PageParseAndAddToKafka(producer, urlTopicName));
         }
     }
 
