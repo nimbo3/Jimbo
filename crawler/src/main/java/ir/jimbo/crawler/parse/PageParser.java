@@ -21,31 +21,32 @@ public class PageParser {
         Document document = Jsoup.parse(url);
         Page page = new Page();
 
-        for(Element element : document.getAllElements()) {
+        for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
             Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre"));
             String text = element.text();
             if(text == null)
                 text = "";
-            if(h3to6Tags.contains(element.tagName()))
+            if (h3to6Tags.contains(element.tagName()))
                 page.getH3to6List().add(text);
-            if(plainTextTags.contains(element.tagName()))
+            if (plainTextTags.contains(element.tagName()))
                 page.getPlainTextList().add(text);
-            if(element.tagName().equals("h1"))
+            if (element.tagName().equals("h1"))
                 page.getH1List().add(text);
             if (element.tagName().equals("h2"))
                 page.getH2List().add(text);
             if (element.tagName().equals("a")) {
                 String href = element.attr("href");
-                if(href == null)
+                if (href == null)
                     href = "";
                 page.getLinks().put(text, href);
-            } if (element.tagName().equals("meta")) {
+            }
+            if (element.tagName().equals("meta")) {
                 String name = element.attr("name");
-                if(name == null)
+                if (name == null)
                     name = "";
                 String content = element.attr("content");
-                if(content == null)
+                if (content == null)
                     content = "";
                 page.getMetadata().put(name, content);
             }

@@ -8,7 +8,7 @@ import ir.jimbo.crawler.misc.Constants;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ProcessLink extends Thread{
+public class ProcessLink extends Thread {
 
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
@@ -27,7 +27,7 @@ public class ProcessLink extends Thread{
     @Override
     public void run() {
         String domain = getDomain(url);
-        if (! redis.existsDomainInDB(domain)) {
+        if (!redis.existsDomainInDB(domain)) {
             // add to blocking queue
         } else {
             producer.addLinkToKafka(Constants.KAFKA_LINKS_TOPIC, new TitleAndLink(title, url));
