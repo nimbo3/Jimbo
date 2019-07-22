@@ -6,10 +6,10 @@ import me.jamesfrost.robotsio.RobotsParser;
 import java.net.MalformedURLException;
 
 public class RobotsTxtParser {
-    private String domain;
+    private String url;
 
-    RobotsTxtParser(String domain) {
-        this.domain = domain;
+    RobotsTxtParser(String url) {
+        this.url = url;
     }
 
     private static RobotsParser allowAll = new RobotsParser("Jimbo-Crawler");
@@ -18,7 +18,7 @@ public class RobotsTxtParser {
         RobotsParser robotsParser = allowAll;
         try {
             robotsParser = new RobotsParser("Jimbo-Crawler");
-            robotsParser.connect(domain);
+            robotsParser.connect(url);
         } catch (RobotsDisallowedException e) {
             // TODO: log
             e.printStackTrace();
