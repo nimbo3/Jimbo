@@ -52,7 +52,7 @@ public class PageParserTest {
         PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH2List().size());
-        assertEquals("Header2", page.getH1List().get(0));
+        assertEquals("Header2", page.getH2List().get(0));
     }
 
     @Test
@@ -64,6 +64,29 @@ public class PageParserTest {
         assertTrue(page.getH3to6List().contains("Header4"));
         assertTrue(page.getH3to6List().contains("Header5"));
         assertTrue(page.getH3to6List().contains("Header6"));
+    }
+
+    @Test
+    public void testPlainText() {
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(5, page.getPlainTextList().size());
+        assertTrue(page.getPlainTextList().contains("paragraph"));
+        assertTrue(page.getPlainTextList().contains("pre"));
+        assertTrue(page.getPlainTextList().contains("span"));
+        assertTrue(page.getPlainTextList().contains("span strong text italic text bold text"));
+        assertTrue(page.getPlainTextList().contains("About Contact us"));
+    }
+
+    @Test
+    public void testLinks() {
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(2, page.getLinks().size());
+        assertTrue(page.getLinks().containsKey("About"));
+        assertTrue(page.getLinks().containsKey("Contact us"));
+        assertEquals(page.getLinks().get("About"), "http://localhost:9898/about");
+        assertEquals(page.getLinks().get("Contact us"), "http://localhost:9898/contact");
     }
 
     @After

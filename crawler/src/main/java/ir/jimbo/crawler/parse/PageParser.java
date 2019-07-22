@@ -67,7 +67,7 @@ public class PageParser extends PageParse implements Runnable {
             else if (element.tagName().equalsIgnoreCase("title"))
                 page.setTitle(element.text());
             else if (element.tagName().equalsIgnoreCase("a")) {
-                String href = element.attr("href");
+                String href = element.attr("abs:href");
                 if (href == null)
                     href = "";
                 page.getLinks().put(text, href);
