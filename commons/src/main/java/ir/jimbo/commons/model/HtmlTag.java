@@ -57,12 +57,11 @@ public class HtmlTag {
         if (o == null || getClass() != o.getClass()) return false;
         HtmlTag htmlTag = (HtmlTag) o;
         return Objects.equals(name, htmlTag.name) &&
-                Objects.equals(content, htmlTag.content) &&
-                Objects.equals(props, htmlTag.props);
+                Objects.equals(content, htmlTag.content);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, content, props);
+        return Objects.hash(name, content);
     }
 }

@@ -61,10 +61,10 @@ public class PageParserTest {
         PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(4, page.getH3to6List().size());
-
-        for (HtmlTag htmlTag : page.getH3to6List()) {
-
-        }
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h3", "Header3")));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h4", "Header4")));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h5", "Header5")));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h6", "Header6")));
     }
 
     @Test
@@ -72,11 +72,11 @@ public class PageParserTest {
         PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(5, page.getPlainTextList().size());
-        assertTrue(page.getPlainTextList().contains("paragraph"));
-        assertTrue(page.getPlainTextList().contains("pre"));
-        assertTrue(page.getPlainTextList().contains("span"));
-        assertTrue(page.getPlainTextList().contains("span strong text italic text bold text"));
-        assertTrue(page.getPlainTextList().contains("About Contact us"));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "paragraph")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("pre", "pre")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("span", "span")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "span strong text italic text bold text")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "About Contact us")));
     }
 
     @Test
@@ -84,10 +84,18 @@ public class PageParserTest {
         PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(2, page.getLinks().size());
-        assertTrue(page.getLinks().contains("About"));
-        assertTrue(page.getLinks().contains("Contact us"));
-//        assertEquals(page.getLinks().get("About"), "http://localhost:9898/about");
-//        assertEquals(page.getLinks().get("Contact us"), "http://localhost:9898/contact");
+        HtmlTag aboutTag = new HtmlTag("a", "About");
+        HtmlTag contactUsTag = new HtmlTag("a", "Contact us");
+        assertTrue(page.getLinks().contains(aboutTag));
+        assertTrue(page.getLinks().contains(contactUsTag));
+        if (page.getLinks().get(0).getContent().equals("About"))
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
+        else
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
+        if (page.getLinks().get(0).getContent().equals("Contact us"))
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
+        else
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
     }
 
     @After
