@@ -43,7 +43,6 @@ public class PageProcessorThread extends Thread {
                 //TODO Write to ES
                 links.addAll(record.value().getLinks());
             }
-            pageConsumer.commitSync();
             links.forEach(link -> {
                 try {
                     hTableManager.put(link.getUri(), hQualifier, link.getTitle());
@@ -52,6 +51,7 @@ public class PageProcessorThread extends Thread {
                     LOGGER.error("", e);
                 }
             });
+            pageConsumer.commitSync();
         }
     }
 }
