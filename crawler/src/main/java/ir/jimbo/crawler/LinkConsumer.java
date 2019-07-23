@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LinkConsumer implements Runnable{
+public class LinkConsumer extends Thread {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;

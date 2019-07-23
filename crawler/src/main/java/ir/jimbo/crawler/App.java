@@ -17,10 +17,23 @@ public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     static Thread[] parserThreads;
     static ArrayBlockingQueue<String> urlToParseQueue;
+    static Thread[] consumerThreads;
+    private static int consumerThreadSize;
 
     public static void main(String[] args) {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            for (Thread t : consumerThreads) {
+                t.interrupt();
+            }
+            while (true) {
+                if (urlToParseQueue.isEmpty()) {
+                    break;
+                }
+            }
+            for (Thread t : parserThreads) {
+                t.interrupt();
+            }
         }));
 
         RedisConfiguration redisConfiguration;
@@ -47,13 +60,21 @@ public class App {
             return;
         }
 
-        parserThreads = new Thread[100];
         CacheService cacheService = new CacheService(redisConfiguration);
 
-        for (int i = 0; i < 100; i++) {
+        consumerThreadSize = Integer.parseInt(appConfiguration.getProperty("consumer.threads.size"));
+        int parserThreadSize = Integer.parseInt(appConfiguration.getProperty("parser.threads.size"));
+
+        parserThreads = new Thread[parserThreadSize];
+        for (int i = 0; i < parserThreadSize; i++) {
             parserThreads[i] = new PageParserThread(urlToParseQueue, kafkaConfiguration, cacheService);
             parserThreads[i].start();
         }
 
+        consumerThreads = new Thread[consumerThreadSize];
+        for (int i = 0; i < consumerThreadSize; i++) {
+            consumerThreads[i] = new LinkConsumer(kafkaConfiguration, cacheService);
+            consumerThreads[i].start();
+        }
     }
 }
