@@ -35,6 +35,11 @@ public class LinkConsumer {
 
     public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) {
         while (true) {
+
+            //
+            System.err.println("here");
+            //
+
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             // Commit the offset of record to broker
             consumer.commitSync();

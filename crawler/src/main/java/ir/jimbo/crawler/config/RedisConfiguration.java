@@ -11,7 +11,7 @@ public class RedisConfiguration {
 
     public RedisConfiguration() throws IOException {
         properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResource("redisConfigs.properties")).getPath()));
+                .getResource("redisConfig.properties")).getPath()));
     }
 
     public String getProperty(String key) {
