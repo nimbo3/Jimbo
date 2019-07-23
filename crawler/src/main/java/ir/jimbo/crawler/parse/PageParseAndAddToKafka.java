@@ -2,8 +2,9 @@ package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.crawler.PageParse;
-import ir.jimbo.crawler.kafka.MyProducer;
+import ir.jimbo.crawler.Parsing;
+import ir.jimbo.crawler.exceptions.NoDomainFoundException;
+import ir.jimbo.crawler.kafka.PageProducer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,16 +13,21 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class PageParseAndAddToKafka extends PageParse implements Runnable {
+public class PageParseAndAddToKafka extends Parsing implements Runnable {
 
     private String url;
-    MyProducer producer;
-    String urlsTopicName;
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    private PageProducer producer;
+    private String urlsTopicName;
+    private String pagesTopicName;
 
-    public PageParseAndAddToKafka(MyProducer producer, String urlsTopicName) {
+    public PageParseAndAddToKafka(PageProducer producer, String urlsTopicName, String pagesTopicName) {
         this.producer = producer;
         this.urlsTopicName = urlsTopicName;
+        this.pagesTopicName = pagesTopicName;
     }
 
     public PageParseAndAddToKafka(String url) {
@@ -43,12 +49,13 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
                 e.printStackTrace();
             }
             Page page = parse();
-            producer.addPageToKafka(urlsTopicName, page);
+            producer.addPageToKafka(pagesTopicName, page);
+            redis.addDomainInDb(getDomain(url));
         }
     }
 
-    public Page parse() {
-        Document document = null;
+    Page parse() {
+        Document document;
         Page page = new Page();
         try {
             document = Jsoup.connect(url).get();
@@ -96,5 +103,12 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
         }
 
         return page;
+    }
+
+    private String getDomain(String url) throws NoDomainFoundException {
+        final Matcher matcher = domainPattern.matcher(url);
+        if (matcher.matches())
+            return matcher.group(4);
+        throw new NoDomainFoundException();
     }
 }

@@ -12,7 +12,7 @@ public class RobotsTxtParser {
         this.url = url;
     }
 
-    private static RobotsParser allowAll = new RobotsParser("Jimbo-Crawler");
+    private static RobotsParser allowAll = new RobotsParser();
 
     public RobotsParser parse() {
         RobotsParser robotsParser = allowAll;

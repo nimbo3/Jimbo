@@ -5,6 +5,7 @@ import ir.jimbo.crawler.config.RedisConfiguration;
 import me.jamesfrost.robotsio.RobotsParser;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
+import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
@@ -17,7 +18,7 @@ public class RedisConnection {
 
     private Config config;
     private RedissonClient redissonClient;
-    private RMapCache<String, String> urls;
+    private RSetCache<Object> domains;
     private RMapCache<String, RobotsParser> robots;
     private int expiredTimeDomainSecond;
     private int expiredTimerobotsHour;
@@ -26,30 +27,26 @@ public class RedisConnection {
         config = new Config();
         config.useSingleServer().setAddress("redis://" + data.getProperty("host.port.1"))
                 .setPassword(data.getProperty("redis.password"));
-
-//        config.useReplicatedServers().addNodeAddress("redis://" + data.getProperty("host.port.1"),
-//                "redis://" + data.getProperty("host.port.2")).setPassword(data.getProperty("redis.password"));
-
         redissonClient = Redisson.create(config);
-        urls = redissonClient.getMapCache(data.getProperty("urls.cache.map"));
         robots = redissonClient.getMapCache(data.getProperty("robots.cache.map"));
         expiredTimeDomainSecond = Integer.parseInt(data.getProperty("expired.time.for.domain.cache"));
         expiredTimerobotsHour = Integer.parseInt(data.getProperty("expired.time.for.robots.cache"));
+        domains = redissonClient.getSetCache(data.getProperty("domains.cache.set"));
     }
 
-    void addDomainInDb(String key, String value) {
+    public void addDomainInDb(String domain) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         // the result is for logging
-        boolean result = urls.fastPut(key, value, expiredTimeDomainSecond, TimeUnit.SECONDS);
+        boolean result = domains.add(domain, expiredTimeDomainSecond, TimeUnit.SECONDS);
 
         if (!result) {
             //
         }
     }
 
-    void addRobotToDB(String hostAsKey, RobotsParser robot) {
+    public void addRobotToDB(String hostAsKey, RobotsParser robot) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -65,17 +62,17 @@ public class RedisConnection {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
-        return urls.containsKey(key);
+        return domains.contains(key);
     }
 
-    boolean existsRobotInDB(String hostAsKey) {
+    public boolean existsRobotInDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
         return robots.containsKey(hostAsKey);
     }
 
-    RobotsParser getRobotsOfDB(String hostAsKey) {
+    public RobotsParser getRobotsOfDB(String hostAsKey) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
