@@ -42,9 +42,9 @@ public class App {
             return;
         }
 
-        RedisConnection redisConnection = new RedisConnection(redisConfiguration);
-        Parsing parsing = new Parsing(appConfiguration, redisConnection, kafkaConfiguration);
+        CacheService cacheService = new CacheService(redisConfiguration);
+        Parser parser = new Parser(appConfiguration, cacheService, kafkaConfiguration);
         new Cli(kafkaConfiguration).start();
-        new LinkConsumer(kafkaConfiguration).startGetLinks(redisConnection);
+        new LinkConsumer(kafkaConfiguration).startGetLinks(cacheService);
     }
 }

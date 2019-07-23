@@ -1,7 +1,5 @@
 package ir.jimbo.crawler;
 
-import ir.jimbo.crawler.ProcessLink;
-import ir.jimbo.crawler.RedisConnection;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +18,7 @@ public class LinkConsumer {
         this.kafkaConfiguration = kafkaConfiguration;
     }
 
-    public void startGetLinks(RedisConnection redis) {
+    public void startGetLinks(CacheService redis) {
         boolean repeat = true;
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         while (repeat) {

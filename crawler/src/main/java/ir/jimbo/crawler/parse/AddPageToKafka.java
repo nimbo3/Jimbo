@@ -1,7 +1,7 @@
 package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.crawler.Parsing;
+import ir.jimbo.crawler.Parser;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class AddPageToKafka extends Parsing implements Runnable {
+public class AddPageToKafka extends Parser implements Runnable {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
@@ -37,7 +37,7 @@ public class AddPageToKafka extends Parsing implements Runnable {
             ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getProperty("pages.topic.name"),
                     page);
             producer.send(record);
-            redis.addDomainInDb(getDomain(url));
+            redis.addDomain(getDomain(url));
             logger.info("page added to kafka, domain added to redis");
         }
         logger.info("starting a new Thread because thread " + Thread.currentThread().getName() + " was stopped");

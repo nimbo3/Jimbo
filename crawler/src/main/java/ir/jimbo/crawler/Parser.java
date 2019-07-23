@@ -10,19 +10,19 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Parsing {
+public class Parser {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     protected ArrayBlockingQueue<String> urlToParseQueue;
     private ExecutorService threadPool;
-    protected RedisConnection redis;
+    protected CacheService redis;
     protected KafkaConfiguration kafkaConfiguration;
 
-    protected Parsing() {
+    protected Parser() {
 
     }
 
-    Parsing(AppConfiguration data, RedisConnection redis, KafkaConfiguration kafkaConfiguration) {
+    Parser(AppConfiguration data, CacheService redis, KafkaConfiguration kafkaConfiguration) {
         int threadsNumber = Integer.parseInt(data.getProperty("thread.pool.core.size"));
         urlToParseQueue = new ArrayBlockingQueue<>(Integer.parseInt(data.getProperty("array.blocking.queue.init.size")));
         threadPool = Executors.newFixedThreadPool(threadsNumber);
