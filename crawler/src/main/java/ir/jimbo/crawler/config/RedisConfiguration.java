@@ -1,6 +1,5 @@
 package ir.jimbo.crawler.config;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
@@ -10,8 +9,8 @@ public class RedisConfiguration {
     private Properties properties = new Properties();
 
     public RedisConfiguration() throws IOException {
-        properties.load(new FileInputStream(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResource("redisConfig.properties")).getPath()));
+        properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                "redisConfig.properties")));
     }
 
     public String getProperty(String key) {
