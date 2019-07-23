@@ -8,7 +8,7 @@ import ir.jimbo.crawler.kafka.PageProducer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PageParseAndAddToKafka extends Parsing implements Runnable {
+public class AddPageToKafka extends Parsing implements Runnable {
 
     private String url;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
@@ -16,17 +16,17 @@ public class PageParseAndAddToKafka extends Parsing implements Runnable {
     private String urlsTopicName;
     private String pagesTopicName;
 
-    public PageParseAndAddToKafka(PageProducer producer, String urlsTopicName, String pagesTopicName) {
+    public AddPageToKafka(PageProducer producer, String urlsTopicName, String pagesTopicName) {
         this.producer = producer;
         this.urlsTopicName = urlsTopicName;
         this.pagesTopicName = pagesTopicName;
     }
 
-    public PageParseAndAddToKafka(String url) {
+    public AddPageToKafka(String url) {
         this.url = url;
     }
 
-    public PageParseAndAddToKafka() {
+    public AddPageToKafka() {
         this.url = "";
     }
 

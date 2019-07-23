@@ -2,7 +2,7 @@ package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.kafka.PageProducer;
-import ir.jimbo.crawler.parse.PageParseAndAddToKafka;
+import ir.jimbo.crawler.parse.AddPageToKafka;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -28,7 +28,7 @@ public class Parsing {
 
     void init(PageProducer producer, String urlTopicName, String pagesTopicName) {
         for (int i = 0; i < threadsNumber; i++) {
-            threadPool.submit(new PageParseAndAddToKafka(producer, urlTopicName, pagesTopicName));
+            threadPool.submit(new AddPageToKafka(producer, urlTopicName, pagesTopicName));
         }
     }
 
