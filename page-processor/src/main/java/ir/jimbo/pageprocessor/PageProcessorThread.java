@@ -23,7 +23,7 @@ public class PageProcessorThread extends Thread {
     private final String hQualifier;
     private Consumer<Long, Page> pageConsumer;
     private Producer<Long, String> linkProducer;
-    private KafkaConfiguration kafkaConfiguration;
+    private KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
     private Long pollDuration;
 
     public PageProcessorThread(String hTableName, String hColumnFamily, String hQualifier) throws IOException {
@@ -47,7 +47,7 @@ public class PageProcessorThread extends Thread {
             links.forEach(link -> {
                 try {
                     hTableManager.put(link.getUri(), hQualifier, link.getTitle());
-                    linkProducer.send(new ProducerRecord<Long, String>("link", link.getUri()));//todo get name from config
+                    linkProducer.send(new ProducerRecord<>("link", link.getUri()));//todo get name from config
                 } catch (IOException e) {
                     LOGGER.error("", e);
                 }
