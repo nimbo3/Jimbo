@@ -19,9 +19,9 @@ public class PageParseAndAddToKafka extends Parsing implements Runnable {
 
     private String url;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    PageProducer producer;
-    String urlsTopicName;
-    String pagesTopicName;
+    private PageProducer producer;
+    private String urlsTopicName;
+    private String pagesTopicName;
 
     public PageParseAndAddToKafka(PageProducer producer, String urlsTopicName, String pagesTopicName) {
         this.producer = producer;

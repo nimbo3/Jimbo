@@ -35,18 +35,16 @@ public class LinkConsumer {
 
     public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) {
         while (true) {
-
             //
             System.err.println("here");
             //
-
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             // Commit the offset of record to broker
-            consumer.commitSync();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 // for logging we can use methods provide by ConsumerRecord class
                 new ProcessLink(record.value()).init(redis, producer).process(linksTopicName);
             }
+            consumer.commitSync();
         }
     }
 }
