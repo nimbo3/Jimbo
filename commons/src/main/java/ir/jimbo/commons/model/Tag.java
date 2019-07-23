@@ -1,17 +1,42 @@
 package ir.jimbo.commons.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import java.util.HashMap;
 import java.util.Map;
 
-@Setter
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Tag {
-    public String content;
-    public Map<String, String> attrs;
+    private String name;
+    private String content;
+    private Map<String, String> attrs;
+
+    public String getName() {
+        return name;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public Map<String, String> getAttrs() {
+        return attrs;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAttrs(Map<String, String> attrs) {
+        this.attrs = attrs;
+    }
+
+    public Tag(String name, String content) {
+        this.name = name;
+        this.content = content;
+        this.attrs = new HashMap<>();
+    }
+
+
 }

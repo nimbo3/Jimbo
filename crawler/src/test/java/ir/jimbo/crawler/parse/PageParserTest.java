@@ -83,8 +83,8 @@ public class PageParserTest {
         PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(2, page.getLinks().size());
-        assertTrue(page.getLinks().containsKey("About"));
-        assertTrue(page.getLinks().containsKey("Contact us"));
+        assertTrue(page.getLinks().contains("About"));
+        assertTrue(page.getLinks().contains("Contact us"));
         assertEquals(page.getLinks().get("About"), "http://localhost:9898/about");
         assertEquals(page.getLinks().get("Contact us"), "http://localhost:9898/contact");
     }
