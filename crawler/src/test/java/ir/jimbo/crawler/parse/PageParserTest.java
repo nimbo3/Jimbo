@@ -35,14 +35,14 @@ public class PageParserTest {
 
     @Test
     public void testTitle() {
-        AddPageToKafka pageParser = new AddPageToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals("Test page Title", page.getTitle());
     }
 
     @Test
     public void testH1() {
-        AddPageToKafka pageParser = new AddPageToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH1List().size());
         assertEquals("Header1", page.getH1List().get(0).getContent());
@@ -50,7 +50,7 @@ public class PageParserTest {
 
     @Test
     public void testH2() {
-        AddPageToKafka pageParser = new AddPageToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH2List().size());
         assertEquals("Header2", page.getH2List().get(0).getContent());
@@ -58,7 +58,7 @@ public class PageParserTest {
 
     @Test
     public void testH3to6() {
-        AddPageToKafka pageParser = new AddPageToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(4, page.getH3to6List().size());
         assertTrue(page.getH3to6List().contains(new HtmlTag("h3", "Header3")));
@@ -69,7 +69,7 @@ public class PageParserTest {
 
     @Test
     public void testPlainText() {
-        AddPageToKafka pageParser = new AddPageToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(5, page.getPlainTextList().size());
         assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "paragraph")));
@@ -81,7 +81,7 @@ public class PageParserTest {
 
     @Test
     public void testLinks() {
-        AddPageToKafka pageParser = new AddPageToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(2, page.getLinks().size());
         HtmlTag aboutTag = new HtmlTag("a", "About");
