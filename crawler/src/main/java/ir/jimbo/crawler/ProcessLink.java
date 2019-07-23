@@ -20,14 +20,10 @@ public class ProcessLink extends Parser {
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
 
-    public ProcessLink(String url) {
+    ProcessLink(String url, RedisConnection redis, KafkaConfiguration kafkaConfiguration) {
         this.url = url;
-    }
-
-    public ProcessLink init(CacheService redis, KafkaConfiguration kafkaConfiguration) {
         this.redis = redis;
         this.kafkaConfiguration = kafkaConfiguration;
-        return this;
     }
 
     public void process() {

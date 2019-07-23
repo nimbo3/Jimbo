@@ -9,9 +9,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class App {
+
     private static final Logger LOGGER = LogManager.getLogger(App.class);
+    static Thread[] parserThreads;
+    static ArrayBlockingQueue<String> urlToParseQueue;
 
     public static void main(String[] args) {
 

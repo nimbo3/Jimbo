@@ -12,7 +12,7 @@ public class LinkConsumer {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;
-    KafkaConfiguration kafkaConfiguration;
+    private KafkaConfiguration kafkaConfiguration;
 
     public LinkConsumer(KafkaConfiguration kafkaConfiguration) {
         pollDuration = Long.parseLong(kafkaConfiguration.getProperty("poll.duration"));
@@ -31,9 +31,9 @@ public class LinkConsumer {
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 logger.debug("the link readed from kafka : " + record.value());
                 // for logging we can use methods provide by ConsumerRecord class
-                new ProcessLink(record.value()).init(redis, kafkaConfiguration).process();
+                new ProcessLink(record.value(), redis, kafkaConfiguration).process();
             }
-            consumer.commitSync();
+//            consumer.commitSync();
         }
     }
 }
