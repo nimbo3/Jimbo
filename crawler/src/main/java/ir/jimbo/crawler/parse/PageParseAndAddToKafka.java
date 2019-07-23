@@ -59,7 +59,7 @@ public class PageParseAndAddToKafka extends Parsing implements Runnable {
         }
     }
 
-    private Page parse() {
+    Page parse() {
         Document document;
         Page page = new Page();
         try {
