@@ -21,7 +21,7 @@ public class LinkConsumer extends Thread {
     private CacheService cacheService;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
-    public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
+    LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;

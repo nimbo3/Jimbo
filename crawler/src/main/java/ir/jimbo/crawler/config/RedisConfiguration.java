@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.Properties;
 
 public class RedisConfiguration {
-    private Properties properties = new Properties();
     private List<String> nodes;
     private boolean isStandAlone = false;
     private String password;
@@ -15,6 +14,7 @@ public class RedisConfiguration {
     private String setName;
 
     public RedisConfiguration() throws IOException {
+        Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "redisConfig.properties")));
         nodes = Arrays.asList(properties.getProperty("redis.url").split("."));
@@ -24,33 +24,12 @@ public class RedisConfiguration {
         setName = properties.getProperty("cache.domain.set.name");
     }
 
-    public String getProperty(String key) {
-        return properties.getProperty(key);
-    }
-
-
-    public Properties getProperties() {
-        return properties;
-    }
-
-    public void setProperties(Properties properties) {
-        this.properties = properties;
-    }
-
     public List<String> getNodes() {
         return nodes;
     }
 
-    public void setNodes(List<String> nodes) {
-        this.nodes = nodes;
-    }
-
     public boolean isStandAlone() {
         return isStandAlone;
-    }
-
-    public void setStandAlone(boolean standAlone) {
-        isStandAlone = standAlone;
     }
 
     public String getPassword() {
