@@ -1,7 +1,7 @@
 package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.crawler.kafka.MyProducer;
+import ir.jimbo.crawler.kafka.PageProducer;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,20 +10,20 @@ public class ProcessLink extends Parsing {
 
     private String url;
     private RedisConnection redis;
-    private MyProducer producer;
+    private PageProducer producer;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     public ProcessLink(String url) {
         this.url = url;
     }
 
-    public ProcessLink init(RedisConnection redis, MyProducer producer) {
+    public ProcessLink init(RedisConnection redis, PageProducer producer) {
         this.redis = redis;
         this.producer = producer;
         return this;
     }
 
-    public void process() {
+    public void process(String linksTopicName) {
         String domain;
         try {
             domain = getDomain(url);
@@ -37,7 +37,7 @@ public class ProcessLink extends Parsing {
                 e.printStackTrace();
             }
         } else {
-            producer.addLinkToKafka("links", url);
+            producer.addLinkToKafka(linksTopicName, url);
         }
 
     }

@@ -13,13 +13,13 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
 
-public class MyConsumer {
-    private static final Logger LOGGER = LogManager.getLogger("HelloWorld");
+public class LinkConsumer {
+    private static final Logger LOGGER = LogManager.getLogger(LinkConsumer.class);
 
     private Consumer<Long, String> consumer;
     private long pollDuration;
 
-    public MyConsumer(KafkaConfiguration data) {
+    public LinkConsumer(KafkaConfiguration data) {
         Properties consumerProperties = new Properties();
         consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));
         consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, data.getProperty("group.id"));
@@ -33,7 +33,7 @@ public class MyConsumer {
         pollDuration = Long.parseLong(data.getProperty("poll.duration"));
     }
 
-    public void run(RedisConnection redis, MyProducer producer) {
+    public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) {
         while (true) {
 
             //
@@ -45,7 +45,7 @@ public class MyConsumer {
             consumer.commitSync();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 // for logging we can use methods provide by ConsumerRecord class
-                new ProcessLink(record.value()).init(redis, producer).process();
+                new ProcessLink(record.value()).init(redis, producer).process(linksTopicName);
             }
         }
     }

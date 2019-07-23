@@ -4,8 +4,8 @@ package ir.jimbo.crawler;
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
-import ir.jimbo.crawler.kafka.MyConsumer;
-import ir.jimbo.crawler.kafka.MyProducer;
+import ir.jimbo.crawler.kafka.LinkConsumer;
+import ir.jimbo.crawler.kafka.PageProducer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,12 +42,12 @@ public class App {
             return;
         }
 
-        MyProducer producer = new MyProducer(kafkaConfiguration);
+        PageProducer producer = new PageProducer(kafkaConfiguration);
         parsing.init(producer, kafkaConfiguration.getProperty("links.topic.name"),
                 kafkaConfiguration.getProperty("pages.topic.name"));
-        MyConsumer consumer = new MyConsumer(kafkaConfiguration);
+        LinkConsumer consumer = new LinkConsumer(kafkaConfiguration);
 
-        consumer.run(redisConnection, producer);
+        consumer.startGetLinks(redisConnection, producer, kafkaConfiguration.getProperty("links.topic.name"));
 
     }
 }
