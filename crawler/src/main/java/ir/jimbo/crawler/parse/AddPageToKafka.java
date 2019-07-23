@@ -3,7 +3,8 @@ package ir.jimbo.crawler.parse;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.Parsing;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.crawler.kafka.PageAndLinkProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,42 +14,34 @@ import java.util.regex.Pattern;
 public class AddPageToKafka extends Parsing implements Runnable {
 
     private Logger logger = LogManager.getLogger(this.getClass());
-
-    private String url;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    private PageAndLinkProducer producer;
-    private String urlsTopicName;
-    private String pagesTopicName;
-
-    public AddPageToKafka(PageAndLinkProducer producer, String urlsTopicName, String pagesTopicName) {
-        this.producer = producer;
-        this.urlsTopicName = urlsTopicName;
-        this.pagesTopicName = pagesTopicName;
-    }
-
-    public AddPageToKafka(String url) {
-        this.url = url;
-    }
 
     public AddPageToKafka() {
-        this.url = "";
+
     }
 
     @Override
     public void run() {
         boolean repeat = true;
+        Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
         while (repeat) {
+            String url = "";
             try {
-                this.url = urlToParseQueue.take();
+                url = urlToParseQueue.take();
             } catch (InterruptedException e) {
+                logger.error("exception in taking url from blocking queue. stoping thread : "
+                        + Thread.currentThread().getName(), e);
                 repeat = false;
-                e.printStackTrace();
             }
-            Page page = new PageParser(this.url).parse();
-            producer.addPageToKafka(pagesTopicName, page);
+            Page page = new PageParser(url).parse();
+            ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getProperty("pages.topic.name"),
+                    page);
+            producer.send(record);
             redis.addDomainInDb(getDomain(url));
-            System.out.println("page added to kafka, domain added to redis");
+            logger.info("page added to kafka, domain added to redis");
         }
+        logger.info("starting a new Thread because thread " + Thread.currentThread().getName() + " was stopped");
+        // start a thread
     }
 
     private String getDomain(String url) throws NoDomainFoundException {

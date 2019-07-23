@@ -1,17 +1,19 @@
 package ir.jimbo.crawler;
 
-import ir.jimbo.crawler.kafka.PageAndLinkProducer;
+import ir.jimbo.crawler.config.KafkaConfiguration;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.Scanner;
 
 public class Cli extends Thread {
 
-    PageAndLinkProducer producer;
-    String topicName;
+    private Producer<Long, String> producer;
+    private String topicName;
 
-    Cli(PageAndLinkProducer producer, String topicName) {
-        this.producer = producer;
-        this.topicName = topicName;
+    Cli(KafkaConfiguration kafkaConfiguration) {
+        this.producer = kafkaConfiguration.getLinkProducer();
+        this.topicName = kafkaConfiguration.getProperty("links.topic.name");
     }
 
     @Override
@@ -19,7 +21,8 @@ public class Cli extends Thread {
         Scanner jin = new Scanner(System.in);
         while (true) {
             System.out.println("enter url to add to kafka : ");
-            producer.addLinkToKafka(topicName, jin.nextLine());
+            ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, jin.nextLine());
+            producer.send(record);
         }
     }
 }

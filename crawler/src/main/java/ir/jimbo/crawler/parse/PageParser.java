@@ -37,8 +37,7 @@ public class PageParser {
         try {
             document = Jsoup.connect(url).get();
         } catch (IOException e) {
-            // TODO: Log
-            e.printStackTrace();
+            logger.error("exception in connection to url. empty page instance returned", e);
             return page;
         }
 

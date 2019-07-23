@@ -1,6 +1,0 @@
-ir/jimbo/commons/model/HtmlTag.class
-me/jamesfrost/robotsio/RobotsParser.class
-me/jamesfrost/robotsio/RobotsTxtReader.class
-me/jamesfrost/robotsio/RobotsDisallowedException.class
-ir/jimbo/commons/model/Page.class
-ir/jimbo/commons/exceptions/JimboException.class

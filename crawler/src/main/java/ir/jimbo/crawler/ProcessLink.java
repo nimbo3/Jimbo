@@ -1,7 +1,9 @@
 package ir.jimbo.crawler;
 
+import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.crawler.kafka.PageAndLinkProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,7 +15,7 @@ public class ProcessLink extends Parsing {
     private Logger logger = LogManager.getLogger(this.getClass());
     private String url;
     private RedisConnection redis;
-    private PageAndLinkProducer producer;
+    private KafkaConfiguration kafkaConfiguration;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
 
@@ -21,13 +23,13 @@ public class ProcessLink extends Parsing {
         this.url = url;
     }
 
-    public ProcessLink init(RedisConnection redis, PageAndLinkProducer producer) {
+    public ProcessLink init(RedisConnection redis, KafkaConfiguration kafkaConfiguration) {
         this.redis = redis;
-        this.producer = producer;
+        this.kafkaConfiguration = kafkaConfiguration;
         return this;
     }
 
-    public void process(String linksTopicName) {
+    public void process() {
         String domain;
         try {
             domain = getDomain(url);
@@ -36,14 +38,18 @@ public class ProcessLink extends Parsing {
         }
         if (!redis.existsDomainInDB(domain)) {
             try {
-                System.out.println("add url to blocking queue");
+                logger.info("add a url to blocking queue started... waiting for blocking queue for place");
                 urlToParseQueue.put(url);
+                logger.info("add url to blocking queue ended.");
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error("exception in adding url to blocking queue", e);
             }
         } else {
-            System.out.println("add link to kafka because already crawled");
-            producer.addLinkToKafka(linksTopicName, url);
+            logger.info("add link to kafka again because already crawled");
+            Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
+            ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getProperty("links.topic.name"),
+                    url);
+            producer.send(record);
         }
 
     }

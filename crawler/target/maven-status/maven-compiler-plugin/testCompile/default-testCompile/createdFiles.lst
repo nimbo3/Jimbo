@@ -1,4 +1,0 @@
-ir/jimbo/crawler/AppTest.class
-ir/jimbo/crawler/RedisConnectionTest.class
-ir/jimbo/crawler/parse/PageParserTest.class
-ir/jimbo/crawler/LoadConfigsTest.class
