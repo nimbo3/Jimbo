@@ -10,7 +10,7 @@ public class AppConfiguration {
 
     public AppConfiguration() throws IOException {
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("appConfigs.properties")));
+                .getResourceAsStream("appConfig.properties")));
     }
 
     public String getProperty(String key) {

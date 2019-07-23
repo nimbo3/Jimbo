@@ -10,7 +10,7 @@ public class KafkaConfiguration {
 
     public KafkaConfiguration() throws IOException {
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("kafkaConfigs.properties")));
+                .getResourceAsStream("kafkaConfig.properties")));
     }
 
     public String getProperty(String key) {
