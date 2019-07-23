@@ -16,6 +16,9 @@ public class KafkaJsonSerializer implements Serializer {
 
     }
 
+    public KafkaJsonSerializer() {
+    }
+
     @Override
     public byte[] serialize(String s, Object o) {
         byte[] retVal = null;

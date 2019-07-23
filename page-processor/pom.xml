@@ -9,11 +9,17 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>page-processor</artifactId>
+    <description>"page processor module"</description>
     <dependencies>
         <dependency>
             <groupId>ir.jimbo</groupId>
             <artifactId>commons</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>transport</artifactId>
+            <version>${elasticsearch.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -35,5 +41,6 @@
         <hbase.version>1.4.10</hbase.version>
         <jackson.version>2.9.9.1</jackson.version>
         <kafka.version>2.3.0</kafka.version>
+        <elasticsearch.version>6.3.2</elasticsearch.version>
     </properties>
 </project>

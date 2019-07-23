@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import java.util.Map;
 
 public class KafkaJsonDeserializer<T> implements Deserializer {
+    public KafkaJsonDeserializer() {
+    }
 
     private Logger logger = LogManager.getLogger(this.getClass());
 
