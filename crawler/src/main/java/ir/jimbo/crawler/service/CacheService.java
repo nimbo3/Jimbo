@@ -1,4 +1,4 @@
-package ir.jimbo.crawler;
+package ir.jimbo.crawler.service;
 
 
 import ir.jimbo.crawler.config.RedisConfiguration;
@@ -54,7 +54,7 @@ public class CacheService {
         }
     }
 
-    boolean isDomainExist(String key) {
+    public boolean isDomainExist(String key) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }

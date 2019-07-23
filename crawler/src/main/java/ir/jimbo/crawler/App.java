@@ -4,8 +4,9 @@ package ir.jimbo.crawler;
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
-import ir.jimbo.crawler.parse.AddPageToKafka;
+import ir.jimbo.crawler.thread.PageParserThread;
 import org.apache.logging.log4j.LogManager;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
@@ -20,7 +21,6 @@ public class App {
     public static void main(String[] args) {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-
         }));
 
         RedisConfiguration redisConfiguration;
@@ -48,12 +48,12 @@ public class App {
         }
 
         parserThreads = new Thread[100];
+        CacheService cacheService = new CacheService(redisConfiguration);
 
         for (int i = 0; i < 100; i++) {
-            parserThreads[i] = new Thread(new AddPageToKafka());
+            parserThreads[i] = new PageParserThread(urlToParseQueue, kafkaConfiguration, cacheService);
             parserThreads[i].start();
         }
 
-        CacheService cacheService = new CacheService(redisConfiguration);
     }
 }

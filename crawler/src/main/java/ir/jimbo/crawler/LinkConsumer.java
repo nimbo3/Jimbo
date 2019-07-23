@@ -1,6 +1,7 @@
 package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.KafkaConfiguration;
+import ir.jimbo.crawler.service.CacheService;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.Producer;
