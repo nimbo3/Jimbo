@@ -6,7 +6,7 @@ import java.util.Map;
 public class Tag {
     private String name;
     private String content;
-    private Map<String, String> attrs;
+    private Map<String, String> props;
 
     public String getName() {
         return name;
@@ -16,8 +16,8 @@ public class Tag {
         return content;
     }
 
-    public Map<String, String> getAttrs() {
-        return attrs;
+    public Map<String, String> getProps() {
+        return props;
     }
 
     public void setContent(String content) {
@@ -28,15 +28,25 @@ public class Tag {
         this.name = name;
     }
 
-    public void setAttrs(Map<String, String> attrs) {
-        this.attrs = attrs;
+    public void setProps(Map<String, String> props) {
+        this.props = props;
     }
 
     public Tag(String name, String content) {
         this.name = name;
         this.content = content;
-        this.attrs = new HashMap<>();
+        this.props = new HashMap<>();
     }
 
+    public Tag(String name) {
+        this.name = name;
+        this.content = "";
+        this.props = new HashMap<>();
+    }
 
+    public Tag() {
+        this.name = "";
+        this.content = "";
+        this.props = new HashMap<>();
+    }
 }
