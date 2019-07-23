@@ -17,7 +17,6 @@ public class AddPageToKafka extends Parsing implements Runnable {
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     public AddPageToKafka() {
-
     }
 
     @Override

@@ -1,7 +1,5 @@
 package ir.jimbo.crawler;
 
-import ir.jimbo.crawler.ProcessLink;
-import ir.jimbo.crawler.RedisConnection;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.logging.log4j.LogManager;
@@ -9,18 +7,18 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 
-public class LinkConsumer {
+class LinkConsumer {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;
-    KafkaConfiguration kafkaConfiguration;
+    private KafkaConfiguration kafkaConfiguration;
 
-    public LinkConsumer(KafkaConfiguration kafkaConfiguration) {
+    LinkConsumer(KafkaConfiguration kafkaConfiguration) {
         pollDuration = Long.parseLong(kafkaConfiguration.getProperty("poll.duration"));
         this.kafkaConfiguration = kafkaConfiguration;
     }
 
-    public void startGetLinks(RedisConnection redis) {
+    void startGetLinks(RedisConnection redis) {
         boolean repeat = true;
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         while (repeat) {
@@ -32,9 +30,9 @@ public class LinkConsumer {
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 logger.debug("the link readed from kafka : " + record.value());
                 // for logging we can use methods provide by ConsumerRecord class
-                new ProcessLink(record.value()).init(redis, kafkaConfiguration).process();
+                new ProcessLink(record.value(), redis, kafkaConfiguration).process();
             }
-            consumer.commitSync();
+//            consumer.commitSync();
         }
     }
 }

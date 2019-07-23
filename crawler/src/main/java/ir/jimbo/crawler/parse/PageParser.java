@@ -77,7 +77,6 @@ public class PageParser {
                 page.getMetadata().add(metaTag);
             }
         }
-
         return page;
     }
 }

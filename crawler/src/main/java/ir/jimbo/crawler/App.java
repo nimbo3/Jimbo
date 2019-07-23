@@ -8,9 +8,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class App {
+
     private static final Logger LOGGER = LogManager.getLogger(App.class);
+    static Thread[] parserThreads;
+    static ArrayBlockingQueue<String> urlToParseQueue;
 
     public static void main(String[] args) {
 
@@ -42,8 +46,12 @@ public class App {
             return;
         }
 
+        parserThreads = new Thread[Integer.parseInt(appConfiguration.getProperty("threads.array.size"))];
+        urlToParseQueue = new ArrayBlockingQueue<>(Integer.parseInt(appConfiguration.getProperty("array.blocking.queue.init.size")));
+
+
         RedisConnection redisConnection = new RedisConnection(redisConfiguration);
-        Parsing parsing = new Parsing(appConfiguration, redisConnection, kafkaConfiguration);
+        new Parsing(appConfiguration, redisConnection, kafkaConfiguration);
         new Cli(kafkaConfiguration).start();
         new LinkConsumer(kafkaConfiguration).startGetLinks(redisConnection);
     }
