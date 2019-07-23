@@ -40,7 +40,7 @@ public class KafkaConfiguration extends Config {
                 "servers"));
         consumerProperties.put(ConsumerConfig.GROUP_ID_CONFIG, getPropertyValue("consumer.group.id"));
         consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
-        consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, new KafkaJsonDeserializer<Page>(Page.class));
+        consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaJsonDeserializer.class);
         consumerProperties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, Integer.parseInt(getPropertyValue(
                 "consumer.max.poll.record")));
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, getPropertyValue("consumer.auto" +
