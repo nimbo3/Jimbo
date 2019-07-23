@@ -20,10 +20,11 @@ import java.util.Properties;
 public class KafkaConfiguration {
 
     private Properties properties = new Properties();
-
+    private String PageTopicName;
     public KafkaConfiguration() throws IOException {
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("kafkaConfig.properties")));
+        PageTopicName = properties.getProperty("pages.topic.name");
     }
 
     public String getProperty(String key) {
@@ -60,5 +61,9 @@ public class KafkaConfiguration {
         Consumer<Long, String> consumer = new KafkaConsumer<>(consumerProperties);
         consumer.subscribe(Collections.singletonList(properties.getProperty("links.topic.name")));
         return consumer;
+    }
+
+    public String getPageTopicName() {
+        return PageTopicName;
     }
 }

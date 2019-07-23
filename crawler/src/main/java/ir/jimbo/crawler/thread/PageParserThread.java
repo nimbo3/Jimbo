@@ -1,7 +1,12 @@
-package ir.jimbo.crawler.parse;
+package ir.jimbo.crawler.thread;
 
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.crawler.config.KafkaConfiguration;
+import ir.jimbo.crawler.exceptions.NoDomainFoundException;
+import ir.jimbo.crawler.service.CacheService;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -12,25 +17,61 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class PageParser {
+public class PageParserThread extends Thread{
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     private Logger logger = LogManager.getLogger(this.getClass());
-    private String url;
+    private ArrayBlockingQueue<String> queue;
+    private KafkaConfiguration kafkaConfiguration;
+    private CacheService cacheService;
 
-    public PageParser(String url) {
-        this.url = url;
+
+    public PageParserThread(ArrayBlockingQueue<String> queue,
+                            KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
+        this.queue = queue;
+        this.kafkaConfiguration = kafkaConfiguration;
+        this.cacheService = cacheService;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    @Override
+    public void run() {
+        Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
+        while (true) {
+            String uri = null;
+            try {
+                uri = queue.take();
+            } catch (InterruptedException e) {
+                logger.error("interrupt exception in page parser",e);
+            }
+            if (uri == null)
+                continue;
+            Page page = parse(uri);
+
+            ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
+                    page);
+            producer.send(record);
+
+            cacheService.addDomain(getDomain(uri));
+
+            logger.info("page added to kafka, domain added to redis");
+        }
     }
 
-    public String getUrl() {
-        return url;
+
+
+    private String getDomain(String url) throws NoDomainFoundException {
+        final Matcher matcher = domainPattern.matcher(url);
+        if (matcher.matches())
+            return matcher.group(4);
+        throw new NoDomainFoundException();
     }
 
-    public Page parse() {
+
+    private Page parse(String url) {// todo refactor this function
         System.out.println("start parsing");
         Document document;
         Page page = new Page();
@@ -77,7 +118,6 @@ public class PageParser {
                 page.getMetadata().add(metaTag);
             }
         }
-
         return page;
     }
 }

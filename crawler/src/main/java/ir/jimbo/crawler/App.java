@@ -4,6 +4,7 @@ package ir.jimbo.crawler;
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,7 +16,6 @@ public class App {
     public static void main(String[] args) {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-
         }));
 
         RedisConfiguration redisConfiguration;
@@ -44,7 +44,6 @@ public class App {
 
         CacheService cacheService = new CacheService(redisConfiguration);
         Parser parser = new Parser(appConfiguration, cacheService, kafkaConfiguration);
-        new Cli(kafkaConfiguration).start();
         new LinkConsumer(kafkaConfiguration).startGetLinks(cacheService);
     }
 }

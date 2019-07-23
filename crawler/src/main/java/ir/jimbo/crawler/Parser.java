@@ -2,7 +2,7 @@ package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
-import ir.jimbo.crawler.parse.AddPageToKafka;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Parser {
-
     private Logger logger = LogManager.getLogger(this.getClass());
     protected ArrayBlockingQueue<String> urlToParseQueue;
     private ExecutorService threadPool;

@@ -1,6 +1,7 @@
 package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.KafkaConfiguration;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
