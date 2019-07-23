@@ -16,65 +16,78 @@ public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     static Thread[] parserThreads;
-    static ArrayBlockingQueue<String> urlToParseQueue;
+    static ArrayBlockingQueue<String> linkQueue;
     static Thread[] consumerThreads;
     private static int consumerThreadSize;
+    private static RedisConfiguration redisConfiguration;
+    private static KafkaConfiguration kafkaConfiguration;
+    private static AppConfiguration appConfiguration;
 
     public static void main(String[] args) {
+        addShutDownHook();
+        initializeConfigurations();
+        CacheService cacheService = new CacheService(redisConfiguration);
 
+        consumerThreadSize = appConfiguration.getLinkConsumerSize();
+        int parserThreadSize = appConfiguration.getPageParserSize();
+        parserThreads = new Thread[parserThreadSize];
+        for (int i = 0; i < parserThreadSize; i++) {
+            parserThreads[i] = new PageParserThread(linkQueue, kafkaConfiguration, cacheService);
+            parserThreads[i].start();
+        }
+        consumerThreads = new Thread[consumerThreadSize];
+        for (int i = 0; i < consumerThreadSize; i++) {
+            consumerThreads[i] = new LinkConsumer(kafkaConfiguration, cacheService);
+            consumerThreads[i].start();
+        }
+    }
+
+    private static void addShutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             for (Thread t : consumerThreads) {
                 t.interrupt();
             }
             while (true) {
-                if (urlToParseQueue.isEmpty()) {
+                if (linkQueue.isEmpty()) {
                     break;
+                }
+                else {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        LOGGER.error("error in thread.sleep", e);
+                    }
                 }
             }
             for (Thread t : parserThreads) {
                 t.interrupt();
             }
         }));
+    }
 
-        RedisConfiguration redisConfiguration;
+    private static void initializeConfigurations() {
+        redisConfiguration = null;
         try {
             redisConfiguration = new RedisConfiguration();
         } catch (IOException e) {
             LOGGER.error("", e);
-            return;
+            System.exit(-1);
         }
 
-        KafkaConfiguration kafkaConfiguration;
+        kafkaConfiguration = null;
         try {
             kafkaConfiguration = new KafkaConfiguration();
         } catch (IOException e) {
             LOGGER.error("", e);
-            return;
+            System.exit(-1);
         }
 
-        AppConfiguration appConfiguration;
+        appConfiguration = null;
         try {
             appConfiguration = new AppConfiguration();
         } catch (IOException e) {
             LOGGER.error("", e);
-            return;
-        }
-
-        CacheService cacheService = new CacheService(redisConfiguration);
-
-        consumerThreadSize = Integer.parseInt(appConfiguration.getProperty("consumer.threads.size"));
-        int parserThreadSize = Integer.parseInt(appConfiguration.getProperty("parser.threads.size"));
-
-        parserThreads = new Thread[parserThreadSize];
-        for (int i = 0; i < parserThreadSize; i++) {
-            parserThreads[i] = new PageParserThread(urlToParseQueue, kafkaConfiguration, cacheService);
-            parserThreads[i].start();
-        }
-
-        consumerThreads = new Thread[consumerThreadSize];
-        for (int i = 0; i < consumerThreadSize; i++) {
-            consumerThreads[i] = new LinkConsumer(kafkaConfiguration, cacheService);
-            consumerThreads[i].start();
+            System.exit(-1);
         }
     }
 }

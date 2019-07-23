@@ -20,11 +20,24 @@ import java.util.Properties;
 public class KafkaConfiguration {
 
     private Properties properties = new Properties();
-    private String PageTopicName;
+    private String pageTopicName;
+    private String linkTopicName;
+    private int pollDuration;
+
     public KafkaConfiguration() throws IOException {
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("kafkaConfig.properties")));
-        PageTopicName = properties.getProperty("pages.topic.name");
+        pageTopicName = properties.getProperty("pages.topic.name");
+        pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
+        linkTopicName = properties.getProperty("links.topic.name");
+    }
+
+    public int getPollDuration() {
+        return pollDuration;
+    }
+
+    public String getLinkTopicName() {
+        return linkTopicName;
     }
 
     public String getProperty(String key) {
@@ -64,6 +77,6 @@ public class KafkaConfiguration {
     }
 
     public String getPageTopicName() {
-        return PageTopicName;
+        return pageTopicName;
     }
 }

@@ -22,18 +22,17 @@ public class LinkConsumer extends Thread {
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
-        pollDuration = Long.parseLong(kafkaConfiguration.getProperty("poll.duration"));
+        pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;
     }
 
     @Override
     public void run() {
-        boolean repeat = true;
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         String uri;
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
-        while (repeat) {
+        while (true) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             logger.info("get link from kafka numbers taken : " + consumerRecords.count());
             for (ConsumerRecord<Long, String> record : consumerRecords) {
@@ -42,10 +41,10 @@ public class LinkConsumer extends Thread {
                 // for logging we can use methods provide by ConsumerRecord class
                 try {
                     if (politenessChecker(getDomain(uri))) {
-                        App.urlToParseQueue.put(uri);
+                        App.linkQueue.put(uri);
                     } else {
                         ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
-                                kafkaConfiguration.getProperty("links.topic.name"), uri);
+                                kafkaConfiguration.getLinkTopicName(), uri);
                         producer.send(producerRecord);
                     }
                 } catch (NoDomainFoundException e) {
