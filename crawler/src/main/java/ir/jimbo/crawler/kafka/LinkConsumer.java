@@ -41,6 +41,7 @@ public class LinkConsumer {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             // Commit the offset of record to broker
             for (ConsumerRecord<Long, String> record : consumerRecords) {
+                System.err.println(record.value());
                 // for logging we can use methods provide by ConsumerRecord class
                 new ProcessLink(record.value()).init(redis, producer).process(linksTopicName);
             }
