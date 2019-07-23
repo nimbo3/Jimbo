@@ -5,16 +5,21 @@ import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
-public class PageProducer {
+public class PageAndLinkProducer {
+
+    private Logger logger = LogManager.getLogger(this.getClass());
+
 
     private Producer<Long, Page> pageProducer;
     private Producer<Long, String> linkProducer;
 
-    public PageProducer(KafkaConfiguration data) {
+    public PageAndLinkProducer(KafkaConfiguration data) {
         Properties producerProperties = new Properties();
         producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));
         producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, data.getProperty("client.id"));
@@ -23,10 +28,11 @@ public class PageProducer {
         pageProducer = new KafkaProducer<>(producerProperties);
 
         producerProperties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        linkProducer = new KafkaProducer<>(producerProperties);
     }
 
     public void addPageToKafka(String topicName, Page value) {
-
+        System.out.println("adding a page to kafka...");
         ProducerRecord<Long, Page> record = new ProducerRecord<>(topicName, value);
         // use metadata for log
         RecordMetadata metadata;
@@ -38,6 +44,7 @@ public class PageProducer {
     }
 
     public void addLinkToKafka(String topicName, String link) {
+        System.out.println("adding a link to kafka...");
         ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, link);
         // use metadata for log
         RecordMetadata metadata;

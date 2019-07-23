@@ -3,6 +3,8 @@ package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.RedisConfiguration;
 import me.jamesfrost.robotsio.RobotsParser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RSetCache;
@@ -16,6 +18,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class RedisConnection {
 
+    private Logger logger = LogManager.getLogger(this.getClass());
     private Config config;
     private RedissonClient redissonClient;
     private RSetCache<Object> domains;
@@ -32,6 +35,7 @@ public class RedisConnection {
         expiredTimeDomainSecond = Integer.parseInt(data.getProperty("expired.time.for.domain.cache"));
         expiredTimerobotsHour = Integer.parseInt(data.getProperty("expired.time.for.robots.cache"));
         domains = redissonClient.getSetCache(data.getProperty("domains.cache.set"));
+        System.out.println("redis connection created");
     }
 
     public void addDomainInDb(String domain) {

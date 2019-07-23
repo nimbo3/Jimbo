@@ -1,0 +1,5 @@
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/test/java/ir/jimbo/crawler/RedisConnectionTest.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/test/java/ir/jimbo/crawler/PageParseAndAddToKafkaTest.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/test/java/ir/jimbo/crawler/parse/PageParserTest.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/test/java/ir/jimbo/crawler/LoadConfigsTest.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/test/java/ir/jimbo/crawler/AppTest.java

@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.Properties;
 
 public class LinkConsumer {
-    private static final Logger LOGGER = LogManager.getLogger(LinkConsumer.class);
+    private Logger logger = LogManager.getLogger(this.getClass());
 
     private Consumer<Long, String> consumer;
     private long pollDuration;
@@ -33,13 +33,13 @@ public class LinkConsumer {
         pollDuration = Long.parseLong(data.getProperty("poll.duration"));
     }
 
-    public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) {
+    public void startGetLinks(RedisConnection redis, PageAndLinkProducer producer, String linksTopicName) {
         while (true) {
-            //
-            System.err.println("here");
-            //
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             // Commit the offset of record to broker
+
+            System.out.println("get link from kafka numbers taken : " + consumerRecords.count());
+
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 System.err.println(record.value());
                 // for logging we can use methods provide by ConsumerRecord class

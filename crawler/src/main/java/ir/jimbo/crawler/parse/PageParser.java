@@ -2,6 +2,8 @@ package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -12,6 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PageParser {
+
+    private Logger logger = LogManager.getLogger(this.getClass());
     private String url;
 
     public PageParser(String url) {
@@ -27,6 +31,7 @@ public class PageParser {
     }
 
     public Page parse() {
+        System.out.println("start parsing");
         Document document;
         Page page = new Page();
         try {

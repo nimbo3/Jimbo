@@ -1,0 +1,15 @@
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/parse/RobotsTxtParser.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/App.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/Parsing.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/parse/AddPageToKafka.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/parse/PageParser.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/config/AppConfiguration.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/ProcessLink.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/parse/SerializableRobotsTxt.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/config/RedisConfiguration.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/kafka/PageProducer.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/config/KafkaConfiguration.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/kafka/PageSerializer.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/kafka/LinkConsumer.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/RedisConnection.java
+/home/nimbo/IdeaProjects/Jimbo/crawler/src/main/java/ir/jimbo/crawler/exceptions/NoDomainFoundException.java

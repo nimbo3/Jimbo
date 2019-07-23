@@ -1,23 +1,26 @@
 package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.crawler.kafka.PageProducer;
+import ir.jimbo.crawler.kafka.PageAndLinkProducer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ProcessLink extends Parsing {
 
+    private Logger logger = LogManager.getLogger(this.getClass());
     private String url;
     private RedisConnection redis;
-    private PageProducer producer;
+    private PageAndLinkProducer producer;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     public ProcessLink(String url) {
         this.url = url;
     }
 
-    public ProcessLink init(RedisConnection redis, PageProducer producer) {
+    public ProcessLink init(RedisConnection redis, PageAndLinkProducer producer) {
         this.redis = redis;
         this.producer = producer;
         return this;
@@ -32,11 +35,13 @@ public class ProcessLink extends Parsing {
         }
         if (!redis.existsDomainInDB(domain)) {
             try {
+                System.out.println("add url to blocking queue");
                 urlToParseQueue.put(url);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         } else {
+            System.out.println("add link to kafka because already crawled");
             producer.addLinkToKafka(linksTopicName, url);
         }
 
