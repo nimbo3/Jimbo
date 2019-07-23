@@ -3,7 +3,7 @@ package ir.jimbo.commons.model;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Tag {
+public class HtmlTag {
     private String name;
     private String content;
     private Map<String, String> props;
@@ -32,19 +32,19 @@ public class Tag {
         this.props = props;
     }
 
-    public Tag(String name, String content) {
+    public HtmlTag(String name, String content) {
         this.name = name;
         this.content = content;
         this.props = new HashMap<>();
     }
 
-    public Tag(String name) {
+    public HtmlTag(String name) {
         this.name = name;
         this.content = "";
         this.props = new HashMap<>();
     }
 
-    public Tag() {
+    public HtmlTag() {
         this.name = "";
         this.content = "";
         this.props = new HashMap<>();

@@ -14,10 +14,10 @@ import java.util.List;
 public class Page {
     private String url;
     private String title;
-    private List<Tag> metadata = new ArrayList<>();
-    private List<Tag> links = new ArrayList<>();
-    private List<Tag> h1List = new ArrayList<>();
-    private List<Tag> h2List = new ArrayList<>();
-    private List<Tag> h3to6List = new ArrayList<>();
-    private List<Tag> plainTextList = new ArrayList<>(); //<p>, <pre> and <span> tags
+    private List<HtmlTag> metadata = new ArrayList<>();
+    private List<HtmlTag> links = new ArrayList<>();
+    private List<HtmlTag> h1List = new ArrayList<>();
+    private List<HtmlTag> h2List = new ArrayList<>();
+    private List<HtmlTag> h3to6List = new ArrayList<>();
+    private List<HtmlTag> plainTextList = new ArrayList<>(); //<p>, <pre> and <span> tags
 }

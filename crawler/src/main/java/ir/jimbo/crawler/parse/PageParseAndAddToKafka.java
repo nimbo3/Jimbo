@@ -1,5 +1,6 @@
 package ir.jimbo.crawler.parse;
 
+import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.PageParse;
 import ir.jimbo.crawler.kafka.MyProducer;
@@ -64,20 +65,22 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
             if (text == null)
                 text = "";
             if (h3to6Tags.contains(element.tagName().toLowerCase()))
-                page.getH3to6List().add(text);
+                page.getH3to6List().add(new HtmlTag(element.tagName(), element.text()));
             else if (plainTextTags.contains(element.tagName().toLowerCase()))
-                page.getPlainTextList().add(text);
+                page.getPlainTextList().add(new HtmlTag(element.tagName(), element.text()));
             else if (element.tagName().equalsIgnoreCase("h1"))
-                page.getH1List().add(text);
+                page.getH1List().add(new HtmlTag("h1", element.text()));
             else if (element.tagName().equalsIgnoreCase("h2"))
-                page.getH2List().add(text);
+                page.getH2List().add(new HtmlTag("h2", element.text()));
             else if (element.tagName().equalsIgnoreCase("title"))
                 page.setTitle(element.text());
             else if (element.tagName().equalsIgnoreCase("a")) {
                 String href = element.attr("abs:href");
                 if (href == null)
                     href = "";
-                page.getLinks().put(text, href);
+                HtmlTag linkTag = new HtmlTag("a", element.text());
+                linkTag.getProps().put("href", href);
+                page.getLinks().add(linkTag);
             } else if (element.tagName().equalsIgnoreCase("meta")) {
                 String name = element.attr("name");
                 if (name == null)
@@ -85,7 +88,10 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
                 String content = element.attr("content");
                 if (content == null)
                     content = "";
-                page.getMetadata().put(name, content);
+                HtmlTag metaTag = new HtmlTag("meta");
+                metaTag.getProps().put("name", element.attr("name"));
+                metaTag.getProps().put("content", element.attr("content"));
+                page.getMetadata().add(metaTag);
             }
         }
 
