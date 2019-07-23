@@ -1,7 +1,6 @@
 package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.crawler.Parser;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
