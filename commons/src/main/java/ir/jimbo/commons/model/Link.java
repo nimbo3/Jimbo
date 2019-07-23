@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TitleAndLink {
+public class Link {
     String title;
-    String url;
+    String uri;
 }

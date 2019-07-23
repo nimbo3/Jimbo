@@ -26,7 +26,7 @@ public class App {
         String hQualifier = hConfig.getPropertyValue("qualifier");
 
         for (int i = 0; i < 10; i++) {
-            new PageProcessor(hTableName, hColumnFamily, hQualifier).start();
+            new PageProcessorThread(hTableName, hColumnFamily, hQualifier).start();
         }
     }
 }
