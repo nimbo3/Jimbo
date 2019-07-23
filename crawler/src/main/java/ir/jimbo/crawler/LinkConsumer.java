@@ -53,6 +53,7 @@ public class LinkConsumer extends Thread {
                     logger.error("error in putting uri to queue", e);
                 }
             }
+            consumer.commitSync();
         }
     }
 
