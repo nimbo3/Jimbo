@@ -41,7 +41,7 @@ public class KafkaConfiguration {
         maxPollRecord = Integer.parseInt(properties.getProperty("max.poll.record"));
         groupId = properties.getProperty("group.id");
         clientId = properties.getProperty("client.id");
-        bootstrapServers = properties.getProperty("bootstrap.server");
+        bootstrapServers = properties.getProperty("bootstrap.servers");
     }
 
     public int getPollDuration() {

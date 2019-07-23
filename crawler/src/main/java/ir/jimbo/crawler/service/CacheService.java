@@ -60,4 +60,8 @@ public class CacheService {
         }
         return domains.contains(key);
     }
+
+    public void close() {
+        redissonClient.shutdown();
+    }
 }
