@@ -43,13 +43,7 @@ public class MyConsumer {
             consumer.commitSync();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 // for logging we can use methods provide by ConsumerRecord class
-                ObjectMapper mapper = new ObjectMapper();
-                try {
-                    TitleAndLink titleAndLink = mapper.readValue(record.value(), TitleAndLink.class);
-                    new ProcessLink(titleAndLink.getTitle(), titleAndLink.getUrl()).init(redis, producer).process();
-                } catch (IOException e) {
-                    LOGGER.error("", e);
-                }
+                new ProcessLink(record.value()).init(redis, producer).process();
             }
         }
     }

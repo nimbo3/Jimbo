@@ -1,8 +1,7 @@
 package ir.jimbo.crawler.parse;
 
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.commons.model.TitleAndLink;
-import ir.jimbo.crawler.PageParse;
+import ir.jimbo.crawler.Parsing;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.kafka.MyProducer;
 import org.jsoup.Jsoup;
@@ -17,7 +16,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PageParseAndAddToKafka extends PageParse implements Runnable {
+public class PageParseAndAddToKafka extends Parsing implements Runnable {
 
     private String url;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
@@ -46,14 +45,14 @@ public class PageParseAndAddToKafka extends PageParse implements Runnable {
             redis.addDomainInDb(getDomain(url));
             for (Map.Entry<String, String> values : page.getLinks().entrySet()) {
                 if (checkValidUrl(values.getValue())) {
-                    producer.addLinkToKafka(urlsTopicName, new TitleAndLink(values.getKey(), values.getValue()));
+                    producer.addLinkToKafka(urlsTopicName, url);
                 }
             }
         }
     }
 
-    public Page parse() {
-        Document document = null;
+    private Page parse() {
+        Document document;
         Page page = new Page();
         try {
             document = Jsoup.connect(url).get();

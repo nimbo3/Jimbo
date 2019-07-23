@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.commons.model.TitleAndLink;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.LongSerializer;
@@ -15,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 public class MyProducer {
 
-    Producer<Long, String> producer;
+    private Producer<Long, String> producer;
 
     public MyProducer(KafkaConfiguration data) {
         Properties producerProperties = new Properties();
@@ -46,15 +45,8 @@ public class MyProducer {
         }
     }
 
-    public void addLinkToKafka(String topicName, TitleAndLink titleAndLink) {
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String titleAndLinkJson = null; // ?/
-        try {
-            titleAndLinkJson = ow.writeValueAsString(titleAndLink);
-        } catch (JsonProcessingException e) {
-            // log
-        }
-        ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, titleAndLinkJson);
+    public void addLinkToKafka(String topicName, String link) {
+        ProducerRecord<Long, String> record = new ProducerRecord<>(topicName, link);
         // use metadata for log
         RecordMetadata metadata;
         try {

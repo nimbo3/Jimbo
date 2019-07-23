@@ -26,7 +26,7 @@ public class App {
         } catch (IOException e) {
             return;
         }
-        PageParse pageParse = new PageParse(appConfiguration, redisConnection);
+        Parsing parsing = new Parsing(appConfiguration, redisConnection);
 
         KafkaConfiguration kafkaConfiguration;
         try {
@@ -36,7 +36,8 @@ public class App {
         }
 
         MyProducer producer = new MyProducer(kafkaConfiguration);
-        pageParse.start(producer, kafkaConfiguration.getProperty("urls.topic.name"));
+        parsing.init(producer, kafkaConfiguration.getProperty("links.topic.name"),
+                kafkaConfiguration.getProperty("pages.topic.name"));
         MyConsumer consumer = new MyConsumer(kafkaConfiguration);
 
         consumer.run(redisConnection, producer);
