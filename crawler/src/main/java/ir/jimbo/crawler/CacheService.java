@@ -2,13 +2,12 @@ package ir.jimbo.crawler;
 
 
 import ir.jimbo.crawler.config.RedisConfiguration;
-import me.jamesfrost.robotsio.RobotsParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.redisson.Redisson;
-import org.redisson.api.RMapCache;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
+import org.redisson.config.ClusterServersConfig;
 import org.redisson.config.Config;
 
 import java.util.concurrent.TimeUnit;
@@ -16,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * class for connecting to redis database (LRU cache)
  */
-public class RedisConnection {
+public class CacheService {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private Config config;
@@ -24,17 +23,26 @@ public class RedisConnection {
     private RSetCache<Object> domains;
     private int expiredTimeDomainSecond;
 
-    public RedisConnection(RedisConfiguration data) {
+    public CacheService(RedisConfiguration redisConfiguration) {
         config = new Config();
-        config.useSingleServer().setAddress("redis://" + data.getProperty("host.port.1"))
-                .setPassword(data.getProperty("redis.password"));
+        if (redisConfiguration.isStandAlone()) {
+            config.useSingleServer().setAddress("redis://" + redisConfiguration.getNodes().get(0))
+                    .setPassword(redisConfiguration.getPassword());
+        } else {
+            ClusterServersConfig clusterServersConfig = config.useClusterServers();
+            clusterServersConfig.setScanInterval(200);
+            for (String node : redisConfiguration.getNodes()) {
+                clusterServersConfig.addNodeAddress("redis://" + node);
+            }
+            clusterServersConfig.setPassword(redisConfiguration.getPassword());
+        }
         redissonClient = Redisson.create(config);
-        expiredTimeDomainSecond = Integer.parseInt(data.getProperty("expired.time.for.domain.cache"));
-        domains = redissonClient.getSetCache(data.getProperty("domains.cache.set"));
+        expiredTimeDomainSecond = redisConfiguration.getExpiredTime();
+        domains = redissonClient.getSetCache(redisConfiguration.getSetName());
         logger.info("redis connection created.");
     }
 
-    public void addDomainInDb(String domain) {
+    public void addDomain(String domain) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }
@@ -46,7 +54,7 @@ public class RedisConnection {
         }
     }
 
-    boolean existsDomainInDB(String key) {
+    boolean isDomainExist(String key) {
         if (redissonClient.isShutdown()) {
             redissonClient = Redisson.create(config);
         }

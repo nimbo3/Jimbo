@@ -46,13 +46,9 @@ public class App {
             return;
         }
 
-        parserThreads = new Thread[Integer.parseInt(appConfiguration.getProperty("threads.array.size"))];
-        urlToParseQueue = new ArrayBlockingQueue<>(Integer.parseInt(appConfiguration.getProperty("array.blocking.queue.init.size")));
-
-
-        RedisConnection redisConnection = new RedisConnection(redisConfiguration);
-        new Parsing(appConfiguration, redisConnection, kafkaConfiguration);
+        CacheService cacheService = new CacheService(redisConfiguration);
+        Parser parser = new Parser(appConfiguration, cacheService, kafkaConfiguration);
         new Cli(kafkaConfiguration).start();
-        new LinkConsumer(kafkaConfiguration).startGetLinks(redisConnection);
+        new LinkConsumer(kafkaConfiguration).startGetLinks(cacheService);
     }
 }

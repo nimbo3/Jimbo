@@ -7,18 +7,18 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 
-class LinkConsumer {
+public class LinkConsumer {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
 
-    LinkConsumer(KafkaConfiguration kafkaConfiguration) {
+    public LinkConsumer(KafkaConfiguration kafkaConfiguration) {
         pollDuration = Long.parseLong(kafkaConfiguration.getProperty("poll.duration"));
         this.kafkaConfiguration = kafkaConfiguration;
     }
 
-    void startGetLinks(RedisConnection redis) {
+    public void startGetLinks(CacheService redis) {
         boolean repeat = true;
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         while (repeat) {

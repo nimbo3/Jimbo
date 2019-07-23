@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class RedisConnectionTest {
+public class CacheServiceTest {
 
     @BeforeClass
     public static void init() {

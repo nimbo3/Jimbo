@@ -10,11 +10,11 @@ import org.apache.logging.log4j.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ProcessLink extends Parsing {
+public class ProcessLink extends Parser {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private String url;
-    private RedisConnection redis;
+    private CacheService redis;
     private KafkaConfiguration kafkaConfiguration;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
@@ -32,7 +32,7 @@ public class ProcessLink extends Parsing {
         } catch (NoDomainFoundException e) {
             return;
         }
-        if (!redis.existsDomainInDB(domain)) {
+        if (!redis.isDomainExist(domain)) {
             try {
                 logger.info("add a url to blocking queue started... waiting for blocking queue for place");
                 urlToParseQueue.put(url);
