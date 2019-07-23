@@ -1,6 +1,7 @@
 package ir.jimbo.crawler.parse;
 
 import com.sun.net.httpserver.HttpServer;
+import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import org.junit.After;
 import org.junit.Before;
@@ -18,7 +19,6 @@ public class PageParserTest {
 
     @Before
     public void startServer() throws IOException {
-        // Getting simple page content
         String data = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Test page Title</title> <meta name=\"title\" content=\"Test page meta tag\"/> <meta name=\"description\" content=\"Test page description tag\"/> <meta name=\"keywords\" content=\"test, java, junit\"></head><body><h1>Header1</h1><h2>Header2</h2><h3>Header3</h3><h4>Header4</h4><h5>Header5</h5><h6>Header6</h6><p>paragraph</p><pre>pre</pre><p> <span>span</span> <strong>strong text</strong> <i>italic text</i> <b>bold text</b></p><p> <a href=\"/about\">About</a> <a href=\"/contact\">Contact us</a></p></body></html>";
 
         // Starting http server
@@ -34,59 +34,67 @@ public class PageParserTest {
 
     @Test
     public void testTitle() {
-        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals("Test page Title", page.getTitle());
     }
 
     @Test
     public void testH1() {
-        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH1List().size());
-        assertEquals("Header1", page.getH1List().get(0));
+        assertEquals("Header1", page.getH1List().get(0).getContent());
     }
 
     @Test
     public void testH2() {
-        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(1, page.getH2List().size());
-        assertEquals("Header2", page.getH2List().get(0));
+        assertEquals("Header2", page.getH2List().get(0).getContent());
     }
 
     @Test
     public void testH3to6() {
-        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(4, page.getH3to6List().size());
-        assertTrue(page.getH3to6List().contains("Header3"));
-        assertTrue(page.getH3to6List().contains("Header4"));
-        assertTrue(page.getH3to6List().contains("Header5"));
-        assertTrue(page.getH3to6List().contains("Header6"));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h3", "Header3")));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h4", "Header4")));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h5", "Header5")));
+        assertTrue(page.getH3to6List().contains(new HtmlTag("h6", "Header6")));
     }
 
     @Test
     public void testPlainText() {
-        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(5, page.getPlainTextList().size());
-        assertTrue(page.getPlainTextList().contains("paragraph"));
-        assertTrue(page.getPlainTextList().contains("pre"));
-        assertTrue(page.getPlainTextList().contains("span"));
-        assertTrue(page.getPlainTextList().contains("span strong text italic text bold text"));
-        assertTrue(page.getPlainTextList().contains("About Contact us"));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "paragraph")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("pre", "pre")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("span", "span")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "span strong text italic text bold text")));
+        assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "About Contact us")));
     }
 
     @Test
     public void testLinks() {
-        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        PageParser pageParser = new PageParser("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals(2, page.getLinks().size());
-        assertTrue(page.getLinks().containsKey("About"));
-        assertTrue(page.getLinks().containsKey("Contact us"));
-        assertEquals(page.getLinks().get("About"), "http://localhost:9898/about");
-        assertEquals(page.getLinks().get("Contact us"), "http://localhost:9898/contact");
+        HtmlTag aboutTag = new HtmlTag("a", "About");
+        HtmlTag contactUsTag = new HtmlTag("a", "Contact us");
+        assertTrue(page.getLinks().contains(aboutTag));
+        assertTrue(page.getLinks().contains(contactUsTag));
+        if (page.getLinks().get(0).getContent().equals("About"))
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
+        else
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
+        if (page.getLinks().get(0).getContent().equals("Contact us"))
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
+        else
+            assertEquals(page.getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
     }
 
     @After
