@@ -12,6 +12,7 @@ public class ProcessLink extends Parsing {
     private RedisConnection redis;
     private PageProducer producer;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    //Please refer to RFC 3986 - Appendix B for more information
 
     public ProcessLink(String url) {
         this.url = url;
