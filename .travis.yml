@@ -1,7 +1,7 @@
 language: java
 
 jdk:
-- oraclejdk8
+- oraclejdk9
 
 install: true
 
@@ -11,3 +11,9 @@ branches:
 
 notifications:
   email: false
+cache:
+  directories:
+  - $HOME/.m2
+
+before_install:
+ - mvn clean install;cd commons; mvn clean install;
