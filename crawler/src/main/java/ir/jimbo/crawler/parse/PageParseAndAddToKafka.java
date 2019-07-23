@@ -30,6 +30,14 @@ public class PageParseAndAddToKafka extends Parsing implements Runnable {
         this.pagesTopicName = pagesTopicName;
     }
 
+    public PageParseAndAddToKafka(String url) {
+        this.url = url;
+    }
+
+    public PageParseAndAddToKafka() {
+        this.url = "";
+    }
+
     @Override
     public void run() {
         boolean repeat = true;
@@ -79,7 +87,7 @@ public class PageParseAndAddToKafka extends Parsing implements Runnable {
             else if (element.tagName().equalsIgnoreCase("title"))
                 page.setTitle(element.text());
             else if (element.tagName().equalsIgnoreCase("a")) {
-                String href = element.attr("href");
+                String href = element.attr("abs:href");
                 if (href == null)
                     href = "";
                 page.getLinks().put(text, href);

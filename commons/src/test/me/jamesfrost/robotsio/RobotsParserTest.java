@@ -1,4 +1,4 @@
-package test.me.jamesfrost.robotsio;
+package me.jamesfrost.robotsio;
 
 import me.jamesfrost.robotsio.RobotsDisallowedException;
 import me.jamesfrost.robotsio.RobotsParser;

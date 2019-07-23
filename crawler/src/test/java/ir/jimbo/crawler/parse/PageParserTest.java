@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
 public class PageParserTest {
     private HttpServer server;
@@ -33,9 +34,59 @@ public class PageParserTest {
 
     @Test
     public void testTitle() {
-        PageParser pageParser = new PageParser("http://localhost:9898/test");
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
         Page page = pageParser.parse();
         assertEquals("Test page Title", page.getTitle());
+    }
+
+    @Test
+    public void testH1() {
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(1, page.getH1List().size());
+        assertEquals("Header1", page.getH1List().get(0));
+    }
+
+    @Test
+    public void testH2() {
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(1, page.getH2List().size());
+        assertEquals("Header2", page.getH2List().get(0));
+    }
+
+    @Test
+    public void testH3to6() {
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(4, page.getH3to6List().size());
+        assertTrue(page.getH3to6List().contains("Header3"));
+        assertTrue(page.getH3to6List().contains("Header4"));
+        assertTrue(page.getH3to6List().contains("Header5"));
+        assertTrue(page.getH3to6List().contains("Header6"));
+    }
+
+    @Test
+    public void testPlainText() {
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(5, page.getPlainTextList().size());
+        assertTrue(page.getPlainTextList().contains("paragraph"));
+        assertTrue(page.getPlainTextList().contains("pre"));
+        assertTrue(page.getPlainTextList().contains("span"));
+        assertTrue(page.getPlainTextList().contains("span strong text italic text bold text"));
+        assertTrue(page.getPlainTextList().contains("About Contact us"));
+    }
+
+    @Test
+    public void testLinks() {
+        PageParseAndAddToKafka pageParser = new PageParseAndAddToKafka("http://localhost:9898/test");
+        Page page = pageParser.parse();
+        assertEquals(2, page.getLinks().size());
+        assertTrue(page.getLinks().containsKey("About"));
+        assertTrue(page.getLinks().containsKey("Contact us"));
+        assertEquals(page.getLinks().get("About"), "http://localhost:9898/about");
+        assertEquals(page.getLinks().get("Contact us"), "http://localhost:9898/contact");
     }
 
     @After
