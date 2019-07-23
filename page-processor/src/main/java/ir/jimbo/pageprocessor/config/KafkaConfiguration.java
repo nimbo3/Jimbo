@@ -67,7 +67,7 @@ public class KafkaConfiguration extends Config {
     }
 
     public KafkaProducer<Long, String> getLinkProducer() {
-        return new KafkaProducer<Long, String>(getLinkProducerProperties());
+        return new KafkaProducer<>(getLinkProducerProperties());
     }
 
     public static KafkaConfiguration getInstance() {

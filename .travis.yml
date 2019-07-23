@@ -1,0 +1,24 @@
+language: java
+
+
+jdk:
+- openjdk8
+
+
+install: true
+
+branches:
+  only:
+  - master
+
+notifications:
+  email: false
+cache:
+  directories:
+  - $HOME/.m2
+
+script:
+  - cd commons; mvn test -B; cd ../crawler; mvn test -B; cd ../page-processor; mvn test -B;
+
+before_install:
+ - mvn clean install;cd commons; mvn clean install;cd ..;
