@@ -1,7 +1,7 @@
 package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.AppConfiguration;
-import ir.jimbo.crawler.kafka.MyProducer;
+import ir.jimbo.crawler.kafka.PageProducer;
 import ir.jimbo.crawler.parse.PageParseAndAddToKafka;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -26,7 +26,7 @@ public class Parsing {
         this.redis = redis;
     }
 
-    void init(MyProducer producer, String urlTopicName, String pagesTopicName) {
+    void init(PageProducer producer, String urlTopicName, String pagesTopicName) {
         for (int i = 0; i < threadsNumber; i++) {
             threadPool.submit(new PageParseAndAddToKafka(producer, urlTopicName, pagesTopicName));
         }

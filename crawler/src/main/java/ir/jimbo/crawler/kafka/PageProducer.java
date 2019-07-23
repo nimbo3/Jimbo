@@ -12,11 +12,11 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
-public class MyProducer {
+public class PageProducer {
 
     private Producer<Long, String> producer;
 
-    public MyProducer(KafkaConfiguration data) {
+    public PageProducer(KafkaConfiguration data) {
         Properties producerProperties = new Properties();
         producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, data.getProperty("bootstrap.servers"));
         producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, data.getProperty("client.id"));
