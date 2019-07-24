@@ -14,7 +14,7 @@ import java.io.IOException;
 public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         RedisConfiguration redisConfiguration;
         try {

@@ -33,7 +33,8 @@ public class LinkConsumer {
         pollDuration = Long.parseLong(data.getProperty("poll.duration"));
     }
 
-    public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) {
+    public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) throws
+            InterruptedException {
         while (true) {
             //
             System.err.println("here");
