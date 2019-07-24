@@ -15,10 +15,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
-    static Thread[] parserThreads;
+    private static Thread[] parserThreads;
     static LinkedBlockingQueue<String> linkQueue;
-    static Thread[] consumerThreads;
-    private static int consumerThreadSize;
+    private static Thread[] consumerThreads;
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
@@ -31,7 +30,7 @@ public class App {
 
         linkQueue = new LinkedBlockingQueue<>();
 
-        consumerThreadSize = appConfiguration.getLinkConsumerSize();
+        int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
         parserThreads = new Thread[parserThreadSize];
         for (int i = 0; i < parserThreadSize; i++) {
@@ -56,7 +55,7 @@ public class App {
                 } else {
                     try {
                         Thread.sleep(500);
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                         LOGGER.error("error in thread.sleep", e);
                     }
                 }

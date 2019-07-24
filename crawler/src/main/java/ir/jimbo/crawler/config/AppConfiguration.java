@@ -27,7 +27,7 @@ public class AppConfiguration {
         return linkConsumerSize;
     }
 
-    public String getProperty(String key) {
+    private String getProperty(String key) {
         return properties.getProperty(key);
     }
 

@@ -13,7 +13,7 @@ public class PageSerializer implements Serializer {
 
     @Override
     public void configure(Map map, boolean b) {
-
+        //
     }
 
     @Override
@@ -30,7 +30,7 @@ public class PageSerializer implements Serializer {
 
     @Override
     public void close() {
-
+        //
     }
 }
 
