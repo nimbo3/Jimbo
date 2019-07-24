@@ -18,18 +18,19 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PageParserThread extends Thread{
 
     private Logger logger = LogManager.getLogger(this.getClass());
-    private ArrayBlockingQueue<String> queue;
+    private LinkedBlockingQueue<String> queue;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
-    public PageParserThread(ArrayBlockingQueue<String> queue,
+    public PageParserThread(LinkedBlockingQueue<String> queue,
                             KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;

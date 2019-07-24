@@ -17,10 +17,10 @@ public class RedisConfiguration {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "redisConfig.properties")));
-        nodes = Arrays.asList(properties.getProperty("redis.url").split("."));
+        nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
         isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
-        expiredTime = Integer.parseInt("cache.expired_time");
+        expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
         setName = properties.getProperty("cache.domain.set.name");
     }
 
