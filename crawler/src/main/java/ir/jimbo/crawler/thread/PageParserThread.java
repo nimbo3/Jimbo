@@ -69,7 +69,7 @@ public class PageParserThread extends Thread{
     }
 
     private Page parse(String url) { // TODO refactor this function
-        System.out.println("start parsing");
+        logger.info("start parsing...");
         Document document;
         Page page = new Page();
         try {
@@ -110,11 +110,12 @@ public class PageParserThread extends Thread{
                 if (content == null)
                     content = "";
                 HtmlTag metaTag = new HtmlTag("meta");
-                metaTag.getProps().put("name", element.attr("name"));
-                metaTag.getProps().put("content", element.attr("content"));
+                metaTag.getProps().put("name",name);
+                metaTag.getProps().put("content", content);
                 page.getMetadata().add(metaTag);
             }
         }
+        logger.info("parsing page done.");
         return page;
     }
 }
