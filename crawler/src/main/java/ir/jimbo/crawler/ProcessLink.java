@@ -2,11 +2,14 @@ package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.kafka.PageProducer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ProcessLink extends Parsing {
+    private static final Logger LOGGER = LogManager.getLogger(ProcessLink.class);
 
     private String url;
     private RedisConnection redis;
@@ -24,7 +27,7 @@ public class ProcessLink extends Parsing {
         return this;
     }
 
-    public void process(String linksTopicName) {
+    public void process(String linksTopicName) throws InterruptedException {
         String domain;
         try {
             domain = getDomain(url);
@@ -35,7 +38,8 @@ public class ProcessLink extends Parsing {
             try {
                 urlToParseQueue.put(url);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error("", e);
+                throw e;
             }
         } else {
             producer.addLinkToKafka(linksTopicName, url);
