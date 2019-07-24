@@ -11,6 +11,9 @@ public class ElasticPage {
     private List<String> h3to6List;
     private StringBuilder text;
 
+    public ElasticPage() {
+    }
+
     // Map page to ElasticPage
     private ElasticPage(Page page) {
         this.url = page.getUrl();
@@ -55,5 +58,29 @@ public class ElasticPage {
 
     public StringBuilder getText() {
         return text;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setH1List(List<String> h1List) {
+        this.h1List = h1List;
+    }
+
+    public void setH2List(List<String> h2List) {
+        this.h2List = h2List;
+    }
+
+    public void setH3to6List(List<String> h3to6List) {
+        this.h3to6List = h3to6List;
+    }
+
+    public void setText(StringBuilder text) {
+        this.text = text;
     }
 }
