@@ -2,6 +2,7 @@ package ir.jimbo.pageprocessor;
 
 import ir.jimbo.pageprocessor.config.Config;
 import ir.jimbo.pageprocessor.config.HConfig;
+import ir.jimbo.pageprocessor.config.JConfig;
 import ir.jimbo.pageprocessor.manager.HTableManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +13,7 @@ public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
 
     public static void main(String[] args) throws IOException {
+        final JConfig jConfig = JConfig.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 HTableManager.closeConnection();
@@ -25,7 +27,7 @@ public class App {
         String hColumnFamily = hConfig.getPropertyValue("columnFamily");
         String hQualifier = hConfig.getPropertyValue("qualifier");
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < Integer.parseInt(jConfig.getPropertyValue("processor.threads.num")); i++) {
             new PageProcessorThread(hTableName, hColumnFamily, hQualifier).start();
         }
     }
