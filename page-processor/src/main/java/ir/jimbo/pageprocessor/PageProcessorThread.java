@@ -35,13 +35,7 @@ public class PageProcessorThread extends Thread {
         while (!interrupted()) {
             ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
             for (ConsumerRecord<Long, Page> record : records) {
-                record.value().getLinks().forEach(o -> {
-                    try {
-                        hTableManager.put(o.getProps().get("href"), record.value().getUrl(), o.getContent());
-                    } catch (IOException e) {
-                        LOGGER.error("", e);
-                    }
-                });
+                System.err.println(record.value().getTitle());
                 //TODO Write to ES
 //                links.addAll(record.value().getLinks());
             }
