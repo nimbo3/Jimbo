@@ -1,0 +1,44 @@
+{
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "analyzer": "english"
+        },
+        "url": {
+          "type": "text",
+          "analyzer": "standard"
+        },
+        "h1List": {
+          "type": "text",
+          "analyzer": "english"
+        },
+        "h2List": {
+          "type": "text",
+          "analyzer": "english"
+        },
+        "h3to6List": {
+          "type": "text",
+          "analyzer": "english"
+        },
+        "text": {
+          "type": "text",
+          "analyzer": "english"
+        },
+        "metaTags": {
+          "properties": {
+            "name": {
+              "type": "text",
+              "analyzer": "english"
+            },
+            "content": {
+              "type": "text",
+              "analyzer": "english"
+            }
+          }
+        }
+      }
+    }
+  }
+}

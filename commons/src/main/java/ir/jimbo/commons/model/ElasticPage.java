@@ -24,7 +24,7 @@ public class ElasticPage {
         this.metaTags = new HashMap<>();
     }
 
-    // Map page to ElasticPage
+    // page to ElasticPage
     private ElasticPage(Page page) {
         this.url = page.getUrl();
         this.title = page.getTitle();
@@ -74,8 +74,8 @@ public class ElasticPage {
         return h3to6List;
     }
 
-    public StringBuilder getText() {
-        return text;
+    public String getText() {
+        return text.toString();
     }
 
     public void setUrl(String url) {
@@ -102,7 +102,7 @@ public class ElasticPage {
         this.h3to6List = h3to6List;
     }
 
-    public void setText(StringBuilder text) {
-        this.text = text;
+    public void setText(String text) {
+        this.text = new StringBuilder(text);
     }
 }
