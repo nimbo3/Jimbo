@@ -24,7 +24,7 @@ public class App {
             }
         }));
         Config hConfig = HConfig.getInstance();
-        ElasticSearchConfiguration elasticSearchConfiguration = new ElasticSearchConfiguration();
+        ElasticSearchConfiguration elasticSearchConfiguration = ElasticSearchConfiguration.getInstance();
         ElasticSearchService elasticSearchService = new ElasticSearchService(elasticSearchConfiguration);
 
         String hTableName = hConfig.getPropertyValue("tableName");

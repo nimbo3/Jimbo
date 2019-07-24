@@ -3,6 +3,7 @@ package ir.jimbo.pageprocessor.manager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.pageprocessor.config.ElasticSearchConfiguration;
 import ir.jimbo.pageprocessor.config.HConfig;
@@ -26,7 +27,7 @@ public class ElasticSearchService {
     private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
-    private int requestTimeOutNanos = 100000000;
+    private int requestTimeOutNanos;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
@@ -40,7 +41,7 @@ public class ElasticSearchService {
         ObjectWriter writer = new ObjectMapper().writer();
         for (Page page : pages) {
             IndexRequest doc = new IndexRequest(indexName, "_doc", getMd5(page.getUrl()));
-            byte[] bytes = null;
+            byte[] bytes;
             try {
                 bytes = writer.writeValueAsBytes(page);
             } catch (JsonProcessingException e) {
@@ -60,20 +61,20 @@ public class ElasticSearchService {
         }
     }
 
-    public String getMd5(String input) {
+    private String getMd5(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
             byte[] messageDigest = md.digest(input.getBytes());
 
             BigInteger no = new BigInteger(1, messageDigest);
-            String hashtext = no.toString(16);
-            while (hashtext.length() < 32) {
-                hashtext = "0" + hashtext;
+            StringBuilder hashText = new StringBuilder(no.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
             }
-            return hashtext;
+            return hashText.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("fail in creating hash");
+            throw new JimboException("fail in creating hash");
         }
     }
 }

@@ -17,8 +17,11 @@ import java.util.Objects;
 import java.util.Properties;
 
 @Getter
-public class ElasticSearchConfiguration {
+public class ElasticSearchConfiguration extends Config {
     private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
+    private static final String PREFIX = "elasticsearch";
+    private static ElasticSearchConfiguration instance = null;
+
     private List<String> urls;
     private String indexName;
     private String clusterName;
@@ -27,13 +30,20 @@ public class ElasticSearchConfiguration {
     private Properties properties = new Properties();
     private int requestTimeOutNanos;
 
-    public ElasticSearchConfiguration() throws IOException {
+    public static ElasticSearchConfiguration getInstance() throws IOException {
+        if (instance == null)
+            instance = new ElasticSearchConfiguration();
+        return instance;
+    }
+
+    private ElasticSearchConfiguration() throws IOException {
+        super(PREFIX);
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("configs.properties")));
-        requestTimeOutNanos = Integer.parseInt(properties.getProperty("elasticsearch.request.timeout"));
-        urls = Arrays.asList(properties.getProperty("elasticsearch.nodes.url").split(","));
-        indexName = properties.getProperty("elasticsearch.index.name");
-        clusterName = properties.getProperty("elasticsearch.cluster.name");
+        requestTimeOutNanos = Integer.parseInt(properties.getProperty("request.timeout"));
+        urls = Arrays.asList(properties.getProperty("nodes.url").split(","));
+        indexName = properties.getProperty("index.name");
+        clusterName = properties.getProperty("cluster.name");
     }
 
     public TransportClient getClient() {
