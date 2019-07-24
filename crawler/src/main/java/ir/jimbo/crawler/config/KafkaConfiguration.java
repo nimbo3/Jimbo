@@ -12,6 +12,7 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
@@ -33,6 +34,20 @@ public class KafkaConfiguration {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("kafkaConfig.properties")));
+        pageTopicName = properties.getProperty("pages.topic.name");
+        pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
+        linkTopicName = properties.getProperty("links.topic.name");
+        autoOffsetReset = properties.getProperty("auto.offset.reset");
+        autoCommit = properties.getProperty("auto.commit");
+        maxPollRecord = Integer.parseInt(properties.getProperty("max.poll.record"));
+        groupId = properties.getProperty("group.id");
+        clientId = properties.getProperty("client.id");
+        bootstrapServers = properties.getProperty("bootstrap.servers");
+    }
+
+    public KafkaConfiguration(String path) throws IOException {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(path));
         pageTopicName = properties.getProperty("pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
         linkTopicName = properties.getProperty("links.topic.name");

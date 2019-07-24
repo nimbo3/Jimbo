@@ -1,5 +1,6 @@
 package ir.jimbo.crawler.config;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,15 @@ public class RedisConfiguration {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "redisConfig.properties")));
+        nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
+        isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
+        password = properties.getProperty("redis.password");
+        expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
+    }
+
+    public RedisConfiguration(String path) throws IOException {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(path));
         nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
         isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
