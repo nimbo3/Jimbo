@@ -33,8 +33,7 @@ public class LinkConsumer {
         pollDuration = Long.parseLong(data.getProperty("poll.duration"));
     }
 
-    public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) throws
-            InterruptedException {
+    public void startGetLinks(RedisConnection redis, PageProducer producer, String linksTopicName) {
         while (true) {
             //
             System.err.println("here");
@@ -44,7 +43,11 @@ public class LinkConsumer {
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 System.err.println(record.value());
                 // for logging we can use methods provide by ConsumerRecord class
-                new ProcessLink(record.value()).init(redis, producer).process(linksTopicName);
+                try {
+                    new ProcessLink(record.value()).init(redis, producer).process(linksTopicName);
+                } catch (InterruptedException e) {
+                    LOGGER.error("", e);
+                }
             }
             consumer.commitSync();
         }
