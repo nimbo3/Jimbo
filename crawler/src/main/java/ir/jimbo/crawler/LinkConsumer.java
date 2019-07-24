@@ -36,13 +36,19 @@ public class LinkConsumer extends Thread {
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         while (! interrupted()) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
-            logger.info("get link from kafka numbers taken : " + consumerRecords.count() + consumer.listTopics());
+//            logger.info("get link from kafka numbers taken : " + consumerRecords.count() + consumer.listTopics());
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
-                logger.debug("the link readed from kafka : " + uri);
+//                logger.debug("the link readed from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
                         App.linkQueue.put(uri);
+                        try {
+                            cacheService.addDomain(getDomain(uri));
+                            logger.info("uri \"" + uri + "\" added to queue");
+                        } catch (NoDomainFoundException e) {
+                            logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
+                        }
                     } else {
                         ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
                                 kafkaConfiguration.getLinkTopicName(), uri);

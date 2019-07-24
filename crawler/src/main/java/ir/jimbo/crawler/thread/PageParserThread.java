@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,14 +25,14 @@ import java.util.regex.Pattern;
 public class PageParserThread extends Thread{
 
     private Logger logger = LogManager.getLogger(this.getClass());
-    private LinkedBlockingQueue<String> queue;
+    private ArrayBlockingQueue<String> queue;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     // Regex pattern to extract domain from URL
     // Please refer to RFC 3986 - Appendix B for more information
 
-    public PageParserThread(LinkedBlockingQueue<String> queue,
+    public PageParserThread(ArrayBlockingQueue<String> queue,
                             KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
@@ -59,11 +60,7 @@ public class PageParserThread extends Thread{
             ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
                     page);
             producer.send(record);
-            try {
-                cacheService.addDomain(getDomain(uri));
-            } catch (NoDomainFoundException e) {
-                logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
-            }
+
             logger.info("page added to kafka, domain added to redis");
             addLinkToKafka(page, kafkaConfiguration);
         }

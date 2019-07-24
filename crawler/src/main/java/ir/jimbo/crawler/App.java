@@ -10,13 +10,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     private static Thread[] parserThreads;
-    static LinkedBlockingQueue<String> linkQueue;
+    static ArrayBlockingQueue<String> linkQueue;
     private static Thread[] consumerThreads;
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
@@ -28,7 +28,7 @@ public class App {
         initializeConfigurations(args);
         CacheService cacheService = new CacheService(redisConfiguration);
 
-        linkQueue = new LinkedBlockingQueue<>();
+        linkQueue = new ArrayBlockingQueue<String>(appConfiguration.getQueueSize());
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();

@@ -9,6 +9,7 @@ public class AppConfiguration {
 
     private int pageParserSize;
     private int linkConsumerSize;
+    private int queueSize;
 
     public AppConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -17,6 +18,7 @@ public class AppConfiguration {
 
         linkConsumerSize = Integer.parseInt(properties.getProperty("consumer.threads.size"));
         pageParserSize = Integer.parseInt(properties.getProperty("parser.threads.size"));
+        queueSize = Integer.parseInt(properties.getProperty("queue.size"));
 
     }
 
@@ -36,4 +38,7 @@ public class AppConfiguration {
         return linkConsumerSize;
     }
 
+    public int getQueueSize() {
+        return queueSize;
+    }
 }
