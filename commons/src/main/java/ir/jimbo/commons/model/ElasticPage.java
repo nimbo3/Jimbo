@@ -1,17 +1,27 @@
 package ir.jimbo.commons.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ElasticPage {
     private String url;
     private String title;
+    private Map<String, String> metaTags;
     private List<String> h1List;
     private List<String> h2List;
     private List<String> h3to6List;
     private StringBuilder text;
 
     public ElasticPage() {
+        this.url = "";
+        this.title = "";
+        this.h1List = new ArrayList<>();
+        this.h2List = new ArrayList<>();
+        this.h3to6List = new ArrayList<>();
+        this.text = new StringBuilder();
+        this.metaTags = new HashMap<>();
     }
 
     // Map page to ElasticPage
@@ -22,6 +32,10 @@ public class ElasticPage {
         this.h2List = new ArrayList<>();
         this.h3to6List = new ArrayList<>();
         this.text = new StringBuilder();
+        this.metaTags = new HashMap<>();
+        for (HtmlTag meta : page.getMetadata()) {
+            metaTags.put(meta.getProps().get("name"), meta.getProps().get("content"));
+        }
         for (HtmlTag htmlTag : page.getH1List()) {
             h1List.add(htmlTag.getContent());
         }
@@ -42,6 +56,10 @@ public class ElasticPage {
 
     public String getTitle() {
         return title;
+    }
+
+    public Map<String, String> getMetaTags() {
+        return metaTags;
     }
 
     public List<String> getH1List() {
@@ -66,6 +84,10 @@ public class ElasticPage {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public void setMetaTags(Map<String, String> metaTags) {
+        this.metaTags = metaTags;
     }
 
     public void setH1List(List<String> h1List) {
