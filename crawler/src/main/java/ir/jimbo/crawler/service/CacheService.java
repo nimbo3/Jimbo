@@ -20,6 +20,10 @@ public class CacheService {
     private int expiredTimeDomainMilis;
 
     public CacheService(RedisConfiguration redisConfiguration) {
+
+        // On closing app
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> redissonClient.shutdown()));
+
         Config config = new Config();
         if (redisConfiguration.isStandAlone()) {
             config.useSingleServer().setAddress("redis://" + redisConfiguration.getNodes().get(0))

@@ -59,6 +59,8 @@ public class LinkConsumer extends Thread {
             }
             consumer.commitSync();
         }
+        producer.close();
+        consumer.close();
     }
 
     private boolean politenessChecker(String uri) {

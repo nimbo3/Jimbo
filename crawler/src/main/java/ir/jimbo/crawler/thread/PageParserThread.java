@@ -65,6 +65,7 @@ public class PageParserThread extends Thread{
             logger.info("page added to kafka, domain added to redis");
             addLinkToKafka(page, kafkaConfiguration);
         }
+        producer.close();
     }
 
     private void addLinkToKafka(Page page, KafkaConfiguration kafkaConfiguration) {

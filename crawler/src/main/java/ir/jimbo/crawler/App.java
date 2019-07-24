@@ -45,11 +45,15 @@ public class App {
     }
 
     private static void addShutDownHook() {
+        LOGGER.info("starting shutdown hook...");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("start interrupting consumer threads");
             for (Thread t : consumerThreads) {
                 t.interrupt();
             }
+            LOGGER.info("end interrupting consumer threads");
             while (true) {
+                LOGGER.info("waiting for queue to become empty...");
                 if (linkQueue.isEmpty()) {
                     break;
                 } else {
@@ -60,9 +64,11 @@ public class App {
                     }
                 }
             }
+            LOGGER.info("queue is empty now\nstart interrupting parser threads...");
             for (Thread t : parserThreads) {
                 t.interrupt();
             }
+            LOGGER.info("parser threads interrupted");
         }));
     }
 
