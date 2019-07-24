@@ -11,12 +11,14 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     static Thread[] parserThreads;
-    static ArrayBlockingQueue<String> linkQueue;
+    static LinkedBlockingQueue<String> linkQueue;
     static Thread[] consumerThreads;
     private static int consumerThreadSize;
     private static RedisConfiguration redisConfiguration;
@@ -27,6 +29,8 @@ public class App {
         addShutDownHook();
         initializeConfigurations();
         CacheService cacheService = new CacheService(redisConfiguration);
+
+        linkQueue = new LinkedBlockingQueue<>();
 
         consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
