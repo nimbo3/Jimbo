@@ -7,7 +7,6 @@ import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.protocol.types.Field;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -79,6 +78,9 @@ public class PageParserThread extends Thread{
         }
     }
 
+    /**
+     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri dont have any extension.
+     */
     private boolean isValidUri(String link) {
         while (link.endsWith("/")) {
             link = link.substring(0, link.length() - 1);
@@ -102,7 +104,7 @@ public class PageParserThread extends Thread{
         throw new NoDomainFoundException();
     }
 
-    private Page parse(String url) { // TODO refactor this function
+    public Page parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Document document;
         Page page = new Page();
