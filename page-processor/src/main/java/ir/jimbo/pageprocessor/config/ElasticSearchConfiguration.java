@@ -3,9 +3,6 @@ package ir.jimbo.pageprocessor.config;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.client.ElasticsearchClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
@@ -28,11 +25,12 @@ public class ElasticSearchConfiguration {
     private TransportClient client;
 
     private Properties properties = new Properties();
+    private int requestTimeOutNanos;
 
     public ElasticSearchConfiguration() throws IOException {
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("configs.properties")));
-
+        requestTimeOutNanos = Integer.parseInt(properties.getProperty("elasticsearch.request.timeout"));
         urls = Arrays.asList(properties.getProperty("elasticsearch.nodes.url").split(","));
         indexName = properties.getProperty("elasticsearch.index.name");
         clusterName = properties.getProperty("elasticsearch.cluster.name");
@@ -54,4 +52,11 @@ public class ElasticSearchConfiguration {
         return client;
     }
 
+    public int getRequestTimeOutNanos() {
+        return requestTimeOutNanos;
+    }
+
+    public void setRequestTimeOutNanos(int requestTimeOutNanos) {
+        this.requestTimeOutNanos = requestTimeOutNanos;
+    }
 }

@@ -13,6 +13,7 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.math.BigInteger;
@@ -25,9 +26,11 @@ public class ElasticSearchService {
     private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
+    private int requestTimeOutNanos = 100000000;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
+        requestTimeOutNanos = configuration.getRequestTimeOutNanos();
         client = configuration.getClient();
     }
 
@@ -47,6 +50,7 @@ public class ElasticSearchService {
             doc.source(bytes, XContentType.JSON);
             bulkRequest.add(doc);
         }
+        bulkRequest.timeout(TimeValue.timeValueNanos(requestTimeOutNanos));
         ActionFuture<BulkResponse> bulk = client.bulk(bulkRequest);
         try {
             return !bulk.get().hasFailures();
