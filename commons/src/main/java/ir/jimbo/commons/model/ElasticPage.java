@@ -24,7 +24,7 @@ public class ElasticPage {
         this.metaTags = new HashMap<>();
     }
 
-    // Map page to ElasticPage
+    // page to ElasticPage
     private ElasticPage(Page page) {
         this.url = page.getUrl();
         this.title = page.getTitle();
