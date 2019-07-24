@@ -4,14 +4,12 @@ package ir.jimbo.crawler;
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
+import ir.jimbo.crawler.service.CacheService;
 import ir.jimbo.crawler.thread.PageParserThread;
 import org.apache.logging.log4j.LogManager;
-import ir.jimbo.crawler.service.CacheService;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class App {
@@ -26,6 +24,7 @@ public class App {
     private static AppConfiguration appConfiguration;
 
     public static void main(String[] args) {
+        LOGGER.info("hello");
         addShutDownHook();
         initializeConfigurations();
         CacheService cacheService = new CacheService(redisConfiguration);
@@ -54,8 +53,7 @@ public class App {
             while (true) {
                 if (linkQueue.isEmpty()) {
                     break;
-                }
-                else {
+                } else {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {

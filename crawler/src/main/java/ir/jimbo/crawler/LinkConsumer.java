@@ -38,6 +38,7 @@ public class LinkConsumer extends Thread {
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
                 logger.debug("the link readed from kafka : " + uri);
+                System.err.println(uri);
                 // for logging we can use methods provide by ConsumerRecord class
                 try {
                     if (politenessChecker(getDomain(uri))) {
