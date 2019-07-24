@@ -3,6 +3,7 @@ package ir.jimbo.crawler.thread;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,6 +25,11 @@ public class RobotsTxtParserTest {
             os.close();
         });
         server.start();
+    }
+
+    @Test
+    public void testDisallowUrl() {
+        // TODO: implement
     }
 
     @After
