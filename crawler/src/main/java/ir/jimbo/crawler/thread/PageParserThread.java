@@ -36,6 +36,11 @@ public class PageParserThread extends Thread{
         this.cacheService = cacheService;
     }
 
+    // For Test
+    public PageParserThread() {
+
+    }
+
     @Override
     public void run() {
         Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
@@ -64,7 +69,7 @@ public class PageParserThread extends Thread{
         throw new NoDomainFoundException();
     }
 
-    private Page parse(String url) { // TODO refactor this function
+    public Page parse(String url) { // TODO refactor this function
         System.out.println("start parsing");
         Document document;
         Page page = new Page();
