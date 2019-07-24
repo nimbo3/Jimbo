@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 public class HTableManager {
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
-    private static final int NUMBER_OF_VERSIONS = HConstants.ALL_VERSIONS;
+    private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
     private static Connection connection = null;
