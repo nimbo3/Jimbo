@@ -11,7 +11,6 @@ public class RedisConfiguration {
     private boolean isStandAlone;
     private String password;
     private int expiredTime;
-    private String setName;
 
     public RedisConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -21,7 +20,6 @@ public class RedisConfiguration {
         isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
         expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
-        setName = properties.getProperty("cache.domain.set.name");
     }
 
     public List<String> getNodes() {
@@ -38,9 +36,5 @@ public class RedisConfiguration {
 
     public int getExpiredTime() {
         return expiredTime;
-    }
-
-    public String getSetName() {
-        return setName;
     }
 }

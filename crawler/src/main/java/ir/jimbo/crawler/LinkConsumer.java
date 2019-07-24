@@ -36,12 +36,10 @@ public class LinkConsumer extends Thread {
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         while (! interrupted()) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
-            logger.info("get link from kafka numbers taken : " + consumerRecords.count());
+            logger.info("get link from kafka numbers taken : " + consumerRecords.count() + consumer.listTopics());
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
                 logger.debug("the link readed from kafka : " + uri);
-                System.err.println(uri);
-                // for logging we can use methods provide by ConsumerRecord class
                 try {
                     if (politenessChecker(getDomain(uri))) {
                         App.linkQueue.put(uri);
@@ -54,6 +52,9 @@ public class LinkConsumer extends Thread {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
                     logger.error("error in putting uri to queue (interrupted exception : )", e);
+                    ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
+                            kafkaConfiguration.getLinkTopicName(), uri);
+                    producer.send(producerRecord);
                 }
             }
             consumer.commitSync();

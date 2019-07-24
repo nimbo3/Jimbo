@@ -37,7 +37,7 @@ public class PageParserThread extends Thread{
     }
 
     // For Test
-    public PageParserThread() {
+    PageParserThread() {
 
     }
 

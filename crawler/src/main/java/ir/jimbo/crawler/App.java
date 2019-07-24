@@ -23,7 +23,7 @@ public class App {
     private static AppConfiguration appConfiguration;
 
     public static void main(String[] args) {
-        LOGGER.info("hello");
+        LOGGER.info("crawler app starting...");
         addShutDownHook();
         initializeConfigurations();
         CacheService cacheService = new CacheService(redisConfiguration);
@@ -71,7 +71,7 @@ public class App {
         try {
             redisConfiguration = new RedisConfiguration();
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("error loading redis configs", e);
             System.exit(-1);
         }
 
@@ -79,7 +79,7 @@ public class App {
         try {
             kafkaConfiguration = new KafkaConfiguration();
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("error loading kafka configs", e);
             System.exit(-1);
         }
 
@@ -87,7 +87,7 @@ public class App {
         try {
             appConfiguration = new AppConfiguration();
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("error loading app configs", e);
             System.exit(-1);
         }
     }
