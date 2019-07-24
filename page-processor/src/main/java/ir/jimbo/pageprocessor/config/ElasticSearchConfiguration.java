@@ -27,7 +27,6 @@ public class ElasticSearchConfiguration extends Config {
     private String clusterName;
     private TransportClient client;
 
-    private Properties properties = new Properties();
     private int requestTimeOutNanos;
 
     public static ElasticSearchConfiguration getInstance() throws IOException {
@@ -38,12 +37,10 @@ public class ElasticSearchConfiguration extends Config {
 
     private ElasticSearchConfiguration() throws IOException {
         super(PREFIX);
-        properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("configs.properties")));
-        requestTimeOutNanos = Integer.parseInt(properties.getProperty("request.timeout"));
-        urls = Arrays.asList(properties.getProperty("nodes.url").split(","));
-        indexName = properties.getProperty("index.name");
-        clusterName = properties.getProperty("cluster.name");
+        requestTimeOutNanos = Integer.parseInt(getPropertyValue("request.timeout"));
+        urls = Arrays.asList(getPropertyValue("nodes.url").split(","));
+        indexName = getPropertyValue("index.name");
+        clusterName = getPropertyValue("cluster.name");
     }
 
     public TransportClient getClient() {

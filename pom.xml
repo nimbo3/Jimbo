@@ -95,9 +95,8 @@
                 <version>3.2.1</version>
                 <configuration>
                     <transformers>
-                        <transformer implementation=
-                                             "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.pageprocessor.App</mainClass>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <mainClass>ir.jimbo.pageprocessor.App</mainClass>
                         </transformer>
                     </transformers>
                 </configuration>
