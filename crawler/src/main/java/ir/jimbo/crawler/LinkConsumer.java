@@ -20,6 +20,8 @@ public class LinkConsumer extends Thread {
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    // Regex pattern to extract domain from URL
+    // Please refer to RFC 3986 - Appendix B for more information
 
     LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
         pollDuration = kafkaConfiguration.getPollDuration();
@@ -38,6 +40,7 @@ public class LinkConsumer extends Thread {
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
                 logger.debug("the link readed from kafka : " + uri);
+                System.err.println(uri);
                 // for logging we can use methods provide by ConsumerRecord class
                 try {
                     if (politenessChecker(getDomain(uri))) {
