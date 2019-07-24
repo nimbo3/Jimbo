@@ -28,6 +28,8 @@ public class PageParserThread extends Thread{
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    // Regex pattern to extract domain from URL
+    // Please refer to RFC 3986 - Appendix B for more information
 
     public PageParserThread(LinkedBlockingQueue<String> queue,
                             KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
@@ -37,7 +39,7 @@ public class PageParserThread extends Thread{
     }
 
     // For Test
-    public PageParserThread() {
+    PageParserThread() {
 
     }
 
@@ -60,10 +62,42 @@ public class PageParserThread extends Thread{
             try {
                 cacheService.addDomain(getDomain(uri));
             } catch (NoDomainFoundException e) {
-                logger.error("cant extract domain in PageParserThread", e);
+                logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
             }
             logger.info("page added to kafka, domain added to redis");
+            addLinkToKafka(page, kafkaConfiguration);
         }
+        producer.close();
+    }
+
+    private void addLinkToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
+        Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
+        for (HtmlTag htmlTag : page.getLinks()) {
+            String link = htmlTag.getProps().get("href");
+            if (isValidUri(link)) {
+                ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
+                producer.send(record);
+            }
+        }
+    }
+
+    /**
+     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri dont have any extension.
+     */
+    private boolean isValidUri(String link) {
+        while (link.endsWith("/")) {
+            link = link.substring(0, link.length() - 1);
+        }
+        try {
+            if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
+                    || ! link.substring(link.lastIndexOf('/') + 1).contains(".")) {
+                return true;
+            }
+        } catch (IndexOutOfBoundsException e) {
+            logger.info("invalid uri : " + link);
+            return false;
+        }
+        return false;
     }
 
     private String getDomain(String url) {
@@ -73,17 +107,17 @@ public class PageParserThread extends Thread{
         throw new NoDomainFoundException();
     }
 
-    public Page parse(String url) { // TODO refactor this function
-        System.out.println("start parsing");
+    Page parse(String url) { // TODO refactor this function
+        logger.info("start parsing...");
         Document document;
         Page page = new Page();
+        page.setUrl(url);
         try {
             document = Jsoup.connect(url).get();
         } catch (IOException e) {
             logger.error("exception in connection to url. empty page instance returned", e);
             return page;
         }
-
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
             Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre"));
@@ -115,11 +149,12 @@ public class PageParserThread extends Thread{
                 if (content == null)
                     content = "";
                 HtmlTag metaTag = new HtmlTag("meta");
-                metaTag.getProps().put("name", element.attr("name"));
-                metaTag.getProps().put("content", element.attr("content"));
+                metaTag.getProps().put("name",name);
+                metaTag.getProps().put("content", content);
                 page.getMetadata().add(metaTag);
             }
         }
+        logger.info("parsing page done.");
         return page;
     }
 }

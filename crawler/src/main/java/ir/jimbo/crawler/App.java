@@ -23,9 +23,9 @@ public class App {
     private static AppConfiguration appConfiguration;
 
     public static void main(String[] args) {
-        LOGGER.info("hello");
+        LOGGER.info("crawler app starting...");
         addShutDownHook();
-        initializeConfigurations();
+        initializeConfigurations(args);
         CacheService cacheService = new CacheService(redisConfiguration);
 
         linkQueue = new LinkedBlockingQueue<>();
@@ -45,11 +45,15 @@ public class App {
     }
 
     private static void addShutDownHook() {
+        LOGGER.info("starting shutdown hook...");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("start interrupting consumer threads");
             for (Thread t : consumerThreads) {
                 t.interrupt();
             }
+            LOGGER.info("end interrupting consumer threads");
             while (true) {
+                LOGGER.info("waiting for queue to become empty...");
                 if (linkQueue.isEmpty()) {
                     break;
                 } else {
@@ -60,34 +64,71 @@ public class App {
                     }
                 }
             }
+            LOGGER.info("queue is empty now\nstart interrupting parser threads...");
             for (Thread t : parserThreads) {
                 t.interrupt();
             }
+            LOGGER.info("parser threads interrupted");
         }));
     }
 
-    private static void initializeConfigurations() {
+    private static void initializeConfigurations(String[] args) {
+
+        String redisPath = null;
+        String kafkaPath = null;
+        String appPath = null;
+
+        for (String path : args) {
+            String key = path.split(":")[0];
+            String value = path.split(":")[1];
+            switch (key) {
+                case "redis":
+                    redisPath = value;
+                    break;
+                case "kafka":
+                    kafkaPath = value;
+                    break;
+                case "app":
+                    appPath = value;
+                    break;
+                default:
+                    //
+            }
+        }
+
         redisConfiguration = null;
         try {
-            redisConfiguration = new RedisConfiguration();
+            if (redisPath == null) {
+                redisConfiguration = new RedisConfiguration();
+            } else {
+                redisConfiguration = new RedisConfiguration(redisPath);
+            }
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("error loading redis configs", e);
             System.exit(-1);
         }
 
         kafkaConfiguration = null;
         try {
-            kafkaConfiguration = new KafkaConfiguration();
+            if (kafkaPath == null) {
+                kafkaConfiguration = new KafkaConfiguration();
+            } else {
+                kafkaConfiguration = new KafkaConfiguration(kafkaPath);
+            }
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("error loading kafka configs", e);
             System.exit(-1);
         }
 
         appConfiguration = null;
         try {
-            appConfiguration = new AppConfiguration();
+            if (appPath == null) {
+                appConfiguration = new AppConfiguration();
+            } else {
+                appConfiguration = new AppConfiguration(appPath);
+            }
         } catch (IOException e) {
-            LOGGER.error("", e);
+            LOGGER.error("error loading app configs", e);
             System.exit(-1);
         }
     }

@@ -1,5 +1,6 @@
 package ir.jimbo.crawler.config;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +12,6 @@ public class RedisConfiguration {
     private boolean isStandAlone;
     private String password;
     private int expiredTime;
-    private String setName;
 
     public RedisConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -21,7 +21,15 @@ public class RedisConfiguration {
         isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
         expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
-        setName = properties.getProperty("cache.domain.set.name");
+    }
+
+    public RedisConfiguration(String path) throws IOException {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(path));
+        nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
+        isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
+        password = properties.getProperty("redis.password");
+        expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
     }
 
     public List<String> getNodes() {
@@ -38,9 +46,5 @@ public class RedisConfiguration {
 
     public int getExpiredTime() {
         return expiredTime;
-    }
-
-    public String getSetName() {
-        return setName;
     }
 }
