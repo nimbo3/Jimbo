@@ -8,7 +8,7 @@ import java.util.Properties;
 
 public class RedisConfiguration {
     private List<String> nodes;
-    private boolean isStandAlone = false;
+    private boolean isStandAlone;
     private String password;
     private int expiredTime;
     private String setName;

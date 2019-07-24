@@ -32,7 +32,7 @@ public class LinkConsumer extends Thread {
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         String uri;
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
-        while (true) {
+        while (! interrupted()) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             logger.info("get link from kafka numbers taken : " + consumerRecords.count());
             for (ConsumerRecord<Long, String> record : consumerRecords) {
@@ -49,8 +49,8 @@ public class LinkConsumer extends Thread {
                     }
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
-                } catch (InterruptedException e) {
-                    logger.error("error in putting uri to queue", e);
+                } catch (Exception e) {
+                    logger.error("error in putting uri to queue (interrupted exception : )", e);
                 }
             }
             consumer.commitSync();
@@ -61,7 +61,7 @@ public class LinkConsumer extends Thread {
         return ! cacheService.isDomainExist(uri);
     }
 
-    private String getDomain(String url) throws NoDomainFoundException {
+    private String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);

@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,11 +39,11 @@ public class PageParserThread extends Thread{
     @Override
     public void run() {
         Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
-        while (true) {
+        while (! interrupted()) {
             String uri = null;
             try {
                 uri = queue.take();
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 logger.error("interrupt exception in page parser",e);
             }
             if (uri == null)
@@ -53,12 +52,16 @@ public class PageParserThread extends Thread{
             ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
                     page);
             producer.send(record);
-            cacheService.addDomain(getDomain(uri));
+            try {
+                cacheService.addDomain(getDomain(uri));
+            } catch (NoDomainFoundException e) {
+                logger.error("cant extract domain in PageParserThread", e);
+            }
             logger.info("page added to kafka, domain added to redis");
         }
     }
 
-    private String getDomain(String url) throws NoDomainFoundException {
+    private String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
