@@ -1,6 +1,5 @@
 package ir.jimbo.pageprocessor;
 
-import ir.jimbo.commons.model.Link;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.pageprocessor.config.KafkaConfiguration;
 import ir.jimbo.pageprocessor.manager.HTableManager;
@@ -8,14 +7,11 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PageProcessorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageProcessorThread.class);
@@ -28,7 +24,7 @@ public class PageProcessorThread extends Thread {
 
     public PageProcessorThread(String hTableName, String hColumnFamily, String hQualifier) throws IOException {
         hTableManager = new HTableManager(hTableName, hColumnFamily);
-        pageConsumer= kafkaConfiguration.getPageConsumer();
+        pageConsumer = kafkaConfiguration.getPageConsumer();
         linkProducer = kafkaConfiguration.getLinkProducer();
         this.hQualifier = hQualifier;
         pollDuration = Long.parseLong(kafkaConfiguration.getPropertyValue("consumer.poll.duration"));
@@ -38,20 +34,24 @@ public class PageProcessorThread extends Thread {
     public void run() {
         while (!interrupted()) {
             ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
-            List<Link> links = new ArrayList<>();
             for (ConsumerRecord<Long, Page> record : records) {
+                record.value().getLinks().forEach(o -> {
+                    try {
+                        hTableManager.put(o.getProps().get("href"), record.value().getUrl(), o.getContent());
+                    } catch (IOException e) {
+                        LOGGER.error("", e);
+                    }
+                });
                 //TODO Write to ES
-                links.addAll(record.value().getLinks());
+//                links.addAll(record.value().getLinks());
             }
-            links.forEach(link -> {
-                try {
-                    hTableManager.put(link.getUri(), hQualifier, link.getTitle());
-                    linkProducer.send(new ProducerRecord<>("link", link.getUri()));//todo get name from config
-                } catch (IOException e) {
-                    LOGGER.error("", e);
-                }
-            });
             pageConsumer.commitSync();
+//            links.forEach(link -> {
+//                try {
+//                    hTableManager.put(link.getUri(), hQualifier, link.getTitle());
+//                } catch (IOException e) {
+//                    LOGGER.error("", e);
+//                }
         }
     }
 }
