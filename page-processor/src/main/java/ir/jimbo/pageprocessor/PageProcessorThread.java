@@ -51,6 +51,7 @@ public class PageProcessorThread extends Thread {
                 } catch (IOException e) {
                     LOGGER.error("", e);
                 }
+                LOGGER.info("All the links in page with URL " + page.getUrl() + " were added to HBase");
             }));
             boolean isAdded = esService.insertPages(pages);
             pageConsumer.commitSync();

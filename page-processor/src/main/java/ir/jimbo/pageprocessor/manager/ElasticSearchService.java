@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.exceptions.JimboException;
+import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.pageprocessor.config.ElasticSearchConfiguration;
 import ir.jimbo.pageprocessor.config.HConfig;
@@ -43,7 +44,7 @@ public class ElasticSearchService {
             IndexRequest doc = new IndexRequest(indexName, "_doc", getMd5(page.getUrl()));
             byte[] bytes;
             try {
-                bytes = writer.writeValueAsBytes(page);
+                bytes = writer.writeValueAsBytes(new ElasticPage(page));
             } catch (JsonProcessingException e) {
                 LOGGER.error("error in parsing page with url with jackson:" + page.getUrl(), e);
                 continue;

@@ -25,7 +25,7 @@ public class ElasticPage {
     }
 
     // Map page to ElasticPage
-    private ElasticPage(Page page) {
+    public ElasticPage(Page page) {
         this.url = page.getUrl();
         this.title = page.getTitle();
         this.h1List = new ArrayList<>();
