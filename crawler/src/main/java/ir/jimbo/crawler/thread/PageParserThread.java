@@ -36,6 +36,11 @@ public class PageParserThread extends Thread{
         this.cacheService = cacheService;
     }
 
+    // For Test
+    public PageParserThread() {
+
+    }
+
     @Override
     public void run() {
         Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
