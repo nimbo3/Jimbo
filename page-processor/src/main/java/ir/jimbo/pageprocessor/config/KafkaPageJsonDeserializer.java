@@ -1,21 +1,22 @@
 package ir.jimbo.pageprocessor.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ir.jimbo.commons.model.Page;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
-public class KafkaJsonDeserializer<T> implements Deserializer {
-    public KafkaJsonDeserializer() {
+public class KafkaPageJsonDeserializer implements Deserializer {
+    public KafkaPageJsonDeserializer() {
     }
 
     private Logger logger = LogManager.getLogger(this.getClass());
 
-    private Class <T> type;
+    private Class type = Page.class;
 
-    public KafkaJsonDeserializer(Class type) {
+    public KafkaPageJsonDeserializer(Class type) {
         this.type = type;
     }
 
@@ -27,9 +28,9 @@ public class KafkaJsonDeserializer<T> implements Deserializer {
     @Override
     public Object deserialize(String s, byte[] bytes) {
         ObjectMapper mapper = new ObjectMapper();
-        T obj = null;
+        Page obj = null;
         try {
-            obj = mapper.readValue(bytes, type);
+            obj = (Page) mapper.readValue(bytes, type);
         } catch (Exception e) {
 
             logger.error(e.getMessage());
