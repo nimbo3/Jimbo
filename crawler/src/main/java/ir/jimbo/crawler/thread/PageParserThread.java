@@ -7,6 +7,7 @@ import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.protocol.types.Field;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -60,10 +61,38 @@ public class PageParserThread extends Thread{
             try {
                 cacheService.addDomain(getDomain(uri));
             } catch (NoDomainFoundException e) {
-                logger.error("cant extract domain in PageParserThread", e);
+                logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
             }
             logger.info("page added to kafka, domain added to redis");
+            addLinkToKafka(page, kafkaConfiguration);
         }
+    }
+
+    private void addLinkToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
+        Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
+        for (HtmlTag htmlTag : page.getLinks()) {
+            String link = htmlTag.getProps().get("href");
+            if (isValidUri(link)) {
+                ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
+                producer.send(record);
+            }
+        }
+    }
+
+    private boolean isValidUri(String link) {
+        while (link.endsWith("/")) {
+            link = link.substring(0, link.length() - 1);
+        }
+        try {
+            if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
+                    || ! link.substring(link.lastIndexOf('/') + 1).contains(".")) {
+                return true;
+            }
+        } catch (IndexOutOfBoundsException e) {
+            logger.info("invalid uri : " + link);
+            return false;
+        }
+        return false;
     }
 
     private String getDomain(String url) {
@@ -77,13 +106,13 @@ public class PageParserThread extends Thread{
         logger.info("start parsing...");
         Document document;
         Page page = new Page();
+        page.setUrl(url);
         try {
             document = Jsoup.connect(url).get();
         } catch (IOException e) {
             logger.error("exception in connection to url. empty page instance returned", e);
             return page;
         }
-
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
             Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre"));
