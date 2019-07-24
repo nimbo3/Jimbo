@@ -28,6 +28,8 @@ public class PageParserThread extends Thread{
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    // Regex pattern to extract domain from URL
+    // Please refer to RFC 3986 - Appendix B for more information
 
     public PageParserThread(LinkedBlockingQueue<String> queue,
                             KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
