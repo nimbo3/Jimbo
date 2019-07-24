@@ -1,4 +1,4 @@
-//package ir.jimbo.crawler.thread;
+package ir.jimbo.crawler.thread;
 //
 //import com.sun.net.httpserver.HttpServer;
 //import ir.jimbo.commons.model.HtmlTag;
@@ -14,7 +14,7 @@
 //import static junit.framework.TestCase.assertEquals;
 //import static junit.framework.TestCase.assertTrue;
 //
-//public class PageParserThreadTest {
+public class PageParserThreadTest {
 //    private HttpServer server;
 //
 //    @Before
@@ -101,4 +101,4 @@
 //    public void stopServer() {
 //        server.stop(0);
 //    }
-//}
+}

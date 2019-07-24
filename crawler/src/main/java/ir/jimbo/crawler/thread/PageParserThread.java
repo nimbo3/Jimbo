@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,7 +64,7 @@ public class PageParserThread extends Thread{
         throw new NoDomainFoundException();
     }
 
-    private Page parse(String url) {// todo refactor this function
+    private Page parse(String url) { // TODO refactor this function
         System.out.println("start parsing");
         Document document;
         Page page = new Page();
