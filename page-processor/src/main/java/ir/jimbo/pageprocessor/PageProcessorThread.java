@@ -24,12 +24,14 @@ public class PageProcessorThread extends Thread {
     private Producer<Long, String> linkProducer;
     private KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
     private ElasticSearchService esService;
+
     private Long pollDuration;
 
-    public PageProcessorThread(String hTableName, String hColumnFamily, String hQualifier) throws IOException {
+    public PageProcessorThread(String hTableName, String hColumnFamily, String hQualifier, ElasticSearchService esService) throws IOException {
         hTableManager = new HTableManager(hTableName, hColumnFamily);
         pageConsumer = kafkaConfiguration.getPageConsumer();
         linkProducer = kafkaConfiguration.getLinkProducer();
+        this.esService = esService;
         this.hQualifier = hQualifier;
         pollDuration = Long.parseLong(kafkaConfiguration.getPropertyValue("consumer.poll.duration"));
     }
@@ -39,10 +41,17 @@ public class PageProcessorThread extends Thread {
         while (!interrupted()) {
             ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
             List<Page> pages = new ArrayList<>();
-            for (ConsumerRecord<Long, Page> record : records) {
+            for (ConsumerRecord<Long, Page> record : records)
                 pages.add(record.value());
-                System.err.println(record.value());
-            }
+            pages.forEach(page -> page.getLinks().forEach(link -> {
+                try {
+                    final String href = link.getProps().get("href");
+                    if (href != null && !href.isEmpty())
+                        hTableManager.put(href, page.getUrl(), link.getContent());
+                } catch (IOException e) {
+                    LOGGER.error("", e);
+                }
+            }));
             boolean isAdded = esService.insertPages(pages);
             pageConsumer.commitSync();
         }
