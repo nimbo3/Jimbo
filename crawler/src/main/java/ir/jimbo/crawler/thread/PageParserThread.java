@@ -82,20 +82,20 @@ public class PageParserThread extends Thread{
             if (text == null)
                 text = "";
             if (h3to6Tags.contains(element.tagName().toLowerCase()))
-                page.getH3to6List().add(new HtmlTag(element.tagName(), element.text()));
+                page.getH3to6List().add(new HtmlTag(element.tagName(), text));
             else if (plainTextTags.contains(element.tagName().toLowerCase()))
-                page.getPlainTextList().add(new HtmlTag(element.tagName(), element.text()));
+                page.getPlainTextList().add(new HtmlTag(element.tagName(), text));
             else if (element.tagName().equalsIgnoreCase("h1"))
-                page.getH1List().add(new HtmlTag("h1", element.text()));
+                page.getH1List().add(new HtmlTag("h1", text));
             else if (element.tagName().equalsIgnoreCase("h2"))
-                page.getH2List().add(new HtmlTag("h2", element.text()));
+                page.getH2List().add(new HtmlTag("h2", text));
             else if (element.tagName().equalsIgnoreCase("title"))
-                page.setTitle(element.text());
+                page.setTitle(text);
             else if (element.tagName().equalsIgnoreCase("a")) {
                 String href = element.attr("abs:href");
                 if (href == null)
                     href = "";
-                HtmlTag linkTag = new HtmlTag("a", element.text());
+                HtmlTag linkTag = new HtmlTag("a", text);
                 linkTag.getProps().put("href", href);
                 page.getLinks().add(linkTag);
             } else if (element.tagName().equalsIgnoreCase("meta")) {
