@@ -107,7 +107,7 @@ public class PageParserThread extends Thread{
         throw new NoDomainFoundException();
     }
 
-    public Page parse(String url) { // TODO refactor this function
+    Page parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Document document;
         Page page = new Page();
