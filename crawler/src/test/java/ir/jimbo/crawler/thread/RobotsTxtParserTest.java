@@ -1,4 +1,4 @@
-package ir.jimbo.crawler.parse;
+package ir.jimbo.crawler.thread;
 
 import com.sun.net.httpserver.HttpServer;
 import org.junit.After;

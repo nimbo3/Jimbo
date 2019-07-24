@@ -4,50 +4,94 @@ package ir.jimbo.crawler;
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
-import ir.jimbo.crawler.kafka.LinkConsumer;
-import ir.jimbo.crawler.kafka.PageProducer;
+import ir.jimbo.crawler.thread.PageParserThread;
 import org.apache.logging.log4j.LogManager;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class App {
+
     private static final Logger LOGGER = LogManager.getLogger(App.class);
+    static Thread[] parserThreads;
+    static LinkedBlockingQueue<String> linkQueue;
+    static Thread[] consumerThreads;
+    private static int consumerThreadSize;
+    private static RedisConfiguration redisConfiguration;
+    private static KafkaConfiguration kafkaConfiguration;
+    private static AppConfiguration appConfiguration;
 
     public static void main(String[] args) {
+        addShutDownHook();
+        initializeConfigurations();
+        CacheService cacheService = new CacheService(redisConfiguration);
 
-        RedisConfiguration redisConfiguration;
+        linkQueue = new LinkedBlockingQueue<>();
+
+        consumerThreadSize = appConfiguration.getLinkConsumerSize();
+        int parserThreadSize = appConfiguration.getPageParserSize();
+        parserThreads = new Thread[parserThreadSize];
+        for (int i = 0; i < parserThreadSize; i++) {
+            parserThreads[i] = new PageParserThread(linkQueue, kafkaConfiguration, cacheService);
+            parserThreads[i].start();
+        }
+        consumerThreads = new Thread[consumerThreadSize];
+        for (int i = 0; i < consumerThreadSize; i++) {
+            consumerThreads[i] = new LinkConsumer(kafkaConfiguration, cacheService);
+            consumerThreads[i].start();
+        }
+    }
+
+    private static void addShutDownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            for (Thread t : consumerThreads) {
+                t.interrupt();
+            }
+            while (true) {
+                if (linkQueue.isEmpty()) {
+                    break;
+                }
+                else {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        LOGGER.error("error in thread.sleep", e);
+                    }
+                }
+            }
+            for (Thread t : parserThreads) {
+                t.interrupt();
+            }
+        }));
+    }
+
+    private static void initializeConfigurations() {
+        redisConfiguration = null;
         try {
             redisConfiguration = new RedisConfiguration();
         } catch (IOException e) {
             LOGGER.error("", e);
-            return;
+            System.exit(-1);
         }
-        RedisConnection redisConnection = new RedisConnection(redisConfiguration);
 
-        AppConfiguration appConfiguration;
-        try {
-            appConfiguration = new AppConfiguration();
-        } catch (IOException e) {
-            LOGGER.error("", e);
-            return;
-        }
-        Parsing parsing = new Parsing(appConfiguration, redisConnection);
-
-        KafkaConfiguration kafkaConfiguration;
+        kafkaConfiguration = null;
         try {
             kafkaConfiguration = new KafkaConfiguration();
         } catch (IOException e) {
             LOGGER.error("", e);
-            return;
+            System.exit(-1);
         }
 
-        PageProducer producer = new PageProducer(kafkaConfiguration);
-        parsing.init(producer, kafkaConfiguration.getProperty("links.topic.name"),
-                kafkaConfiguration.getProperty("pages.topic.name"));
-        LinkConsumer consumer = new LinkConsumer(kafkaConfiguration);
-
-        consumer.startGetLinks(redisConnection, producer, kafkaConfiguration.getProperty("links.topic.name"));
-
+        appConfiguration = null;
+        try {
+            appConfiguration = new AppConfiguration();
+        } catch (IOException e) {
+            LOGGER.error("", e);
+            System.exit(-1);
+        }
     }
 }
