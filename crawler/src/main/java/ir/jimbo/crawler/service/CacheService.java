@@ -5,10 +5,14 @@ import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.redisson.Redisson;
+import org.redisson.api.ClusterNode;
+import org.redisson.api.RAtomicLong;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.ClusterServersConfig;
 import org.redisson.config.Config;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * class for connecting to redis database (LRU cache)
@@ -42,17 +46,21 @@ public class CacheService {
     }
 
     public void addDomain(String domain) {
-        RBucket<Object> bucket = redissonClient.getBucket(domain);
+        RBucket<Long> bucket = redissonClient.getBucket(domain);
         long timeMillis = System.currentTimeMillis();
         bucket.set(timeMillis);
-        logger.info("a domain added");
+        logger.info("a domain added to redis. domain : " + domain);
     }
 
     public boolean isDomainExist(String key) {
-        RBucket<Object> bucket = redissonClient.getBucket(key);
-        Long lastTime = (Long) bucket.get();
-        if (lastTime == null)
-            return false;
+        RBucket<Long> bucket = redissonClient.getBucket(key);
+        long lastTime = 0;
+        try {
+            lastTime = bucket.getAndSet(1L);
+        } catch (Exception e) {
+            return true;
+        }
+        bucket.set(lastTime);
         long currentTime = System.currentTimeMillis();
         logger.info("checking politeness. current time : " + currentTime + " lastTime : " + lastTime);
         return currentTime - lastTime < expiredTimeDomainMilis;

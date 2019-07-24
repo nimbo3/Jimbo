@@ -39,10 +39,11 @@ public class LinkConsumer extends Thread {
 //            logger.info("get link from kafka numbers taken : " + consumerRecords.count() + consumer.listTopics());
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
-//                logger.debug("the link readed from kafka : " + uri);
+                logger.debug("the link readed from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
                         App.linkQueue.put(uri);
+                        System.out.println(uri);
                         try {
                             cacheService.addDomain(getDomain(uri));
                             logger.info("uri \"" + uri + "\" added to queue");
@@ -50,6 +51,7 @@ public class LinkConsumer extends Thread {
                             logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
                         }
                     } else {
+                        logger.info("it was not polite crawling this uri : " + uri + "\n\n\n");
                         ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
                                 kafkaConfiguration.getLinkTopicName(), uri);
                         producer.send(producerRecord);
@@ -57,7 +59,7 @@ public class LinkConsumer extends Thread {
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
-                    logger.error("error in putting uri to queue (interrupted exception : )", e);
+                    logger.error("error in putting uri to queue (interrupted exception) uri : " + uri, e);
                     ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
                             kafkaConfiguration.getLinkTopicName(), uri);
                     producer.send(producerRecord);

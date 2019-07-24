@@ -22,31 +22,36 @@ public class App {
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         LOGGER.info("crawler app starting...");
         addShutDownHook();
         initializeConfigurations(args);
         CacheService cacheService = new CacheService(redisConfiguration);
 
-        linkQueue = new ArrayBlockingQueue<String>(appConfiguration.getQueueSize());
+        linkQueue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
+
+        Thread.sleep(1000);
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
-        parserThreads = new Thread[parserThreadSize];
-        for (int i = 0; i < parserThreadSize; i++) {
-            parserThreads[i] = new PageParserThread(linkQueue, kafkaConfiguration, cacheService);
-            parserThreads[i].start();
-        }
+
         consumerThreads = new Thread[consumerThreadSize];
         for (int i = 0; i < consumerThreadSize; i++) {
             consumerThreads[i] = new LinkConsumer(kafkaConfiguration, cacheService);
             consumerThreads[i].start();
         }
+
+        parserThreads = new Thread[parserThreadSize];
+        for (int i = 0; i < parserThreadSize; i++) {
+            parserThreads[i] = new PageParserThread(linkQueue, kafkaConfiguration);
+            parserThreads[i].start();
+        }
+
     }
 
     private static void addShutDownHook() {
-        LOGGER.info("starting shutdown hook...");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("starting shutdown hook...");
             LOGGER.info("start interrupting consumer threads");
             for (Thread t : consumerThreads) {
                 t.interrupt();

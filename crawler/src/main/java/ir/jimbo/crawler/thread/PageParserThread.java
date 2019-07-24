@@ -3,8 +3,6 @@ package ir.jimbo.crawler.thread;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
-import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -18,25 +16,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PageParserThread extends Thread{
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private ArrayBlockingQueue<String> queue;
     private KafkaConfiguration kafkaConfiguration;
-    private CacheService cacheService;
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    // Regex pattern to extract domain from URL
-    // Please refer to RFC 3986 - Appendix B for more information
 
     public PageParserThread(ArrayBlockingQueue<String> queue,
-                            KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
+                            KafkaConfiguration kafkaConfiguration) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
-        this.cacheService = cacheService;
     }
 
     // For Test
@@ -95,13 +85,6 @@ public class PageParserThread extends Thread{
             return false;
         }
         return false;
-    }
-
-    private String getDomain(String url) {
-        final Matcher matcher = domainPattern.matcher(url);
-        if (matcher.matches())
-            return matcher.group(4);
-        throw new NoDomainFoundException();
     }
 
     Page parse(String url) { // TODO refactor this function
