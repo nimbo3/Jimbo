@@ -1,4 +1,4 @@
-package ir.jimbo.crawler.kafka;
+package ir.jimbo.crawler.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serializer;
