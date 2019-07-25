@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class PageProcessorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageProcessorThread.class);
@@ -25,6 +27,7 @@ public class PageProcessorThread extends Thread {
     private Producer<Long, String> linkProducer;
     private KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
     private ElasticSearchService esService;
+    private BlockingQueue<Page> pagesQueue;
 
     private Long pollDuration;
 
@@ -35,28 +38,39 @@ public class PageProcessorThread extends Thread {
         this.esService = esService;
         this.hQualifier = hQualifier;
         pollDuration = Long.parseLong(kafkaConfiguration.getPropertyValue("consumer.poll.duration"));
+        pagesQueue = new LinkedBlockingQueue<>();
     }
 
     @Override
     public void run() {
+        new Thread(() -> {
+            try {
+                Page page = pagesQueue.take();
+                for (HtmlTag link : page.getLinks()) {
+                    final String href = link.getProps().get("href");
+                    if (href != null && !href.isEmpty())
+                        hTableManager.put(href, page.getUrl(), link.getContent());
+                    LOGGER.info("All the links in page with URL " + page.getUrl() + " were added to HBase");
+                }
+            } catch (InterruptedException | IOException e) {
+                LOGGER.error("", e);
+            }
+        }).start();
         while (!interrupted()) {
             ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
             final long currentTimeMillis = System.currentTimeMillis();
             List<Page> pages = new ArrayList<>();
-            for (ConsumerRecord<Long, Page> record : records)
+            for (ConsumerRecord<Long, Page> record : records) {
                 pages.add(record.value());
-            for (Page page : pages)
-                for (HtmlTag link : page.getLinks()) {
                 try {
-                    final String href = link.getProps().get("href");
-                    if (href != null && !href.isEmpty())
-                        hTableManager.put(href, page.getUrl(), link.getContent());
-                } catch (IOException e) {
+                    pagesQueue.put(record.value());
+                } catch (InterruptedException e) {
                     LOGGER.error("", e);
                 }
-                LOGGER.info("All the links in page with URL " + page.getUrl() + " were added to HBase");
             }
             boolean isAdded = esService.insertPages(pages);
+            if (!isAdded)
+                LOGGER.info("ES insertion failed.");
             LOGGER.info(System.currentTimeMillis() - currentTimeMillis);
             pageConsumer.commitSync();
         }
