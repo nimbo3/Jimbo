@@ -51,13 +51,13 @@ public class PageParserThread extends Thread{
                     page);
             producer.send(record);
 
-            logger.info("page added to kafka, domain added to redis");
-            addLinkToKafka(page, kafkaConfiguration);
+            logger.info("page added to kafka");
+            addLinksToKafka(page, kafkaConfiguration);
         }
         producer.close();
     }
 
-    private void addLinkToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
+    private void addLinksToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();

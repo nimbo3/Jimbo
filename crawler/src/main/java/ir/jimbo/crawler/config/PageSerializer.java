@@ -16,6 +16,10 @@ public class PageSerializer implements Serializer {
         //
     }
 
+    public PageSerializer() {
+        //
+    }
+
     @Override
     public byte[] serialize(String s, Object o) {
         byte[] retVal = null;
