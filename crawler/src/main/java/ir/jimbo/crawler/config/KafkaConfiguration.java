@@ -26,6 +26,7 @@ public class KafkaConfiguration {
     private String autoOffsetReset;
     private String autoCommit;
     private int maxPollRecord;
+    private int maxPollInterval;
     private String groupId;
     private String clientId;
     private String bootstrapServers;
@@ -43,6 +44,7 @@ public class KafkaConfiguration {
         groupId = properties.getProperty("group.id");
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
+        maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
     }
 
     public KafkaConfiguration(String path) throws IOException {
@@ -92,6 +94,7 @@ public class KafkaConfiguration {
         consumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class.getName());
         consumerProperties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProperties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecord);
+        consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollInterval);
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
         Consumer<Long, String> consumer = new KafkaConsumer<>(consumerProperties);
