@@ -27,7 +27,7 @@ public class AppConfiguration {
         properties.load(new FileInputStream(path));
         linkConsumerSize = Integer.parseInt(properties.getProperty("consumer.threads.size"));
         pageParserSize = Integer.parseInt(properties.getProperty("parser.threads.size"));
-
+        queueSize = Integer.parseInt(properties.getProperty("queue.size"));
     }
 
     public int getPageParserSize() {
