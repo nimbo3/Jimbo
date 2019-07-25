@@ -52,6 +52,8 @@ public class ElasticSearchService {
             doc.source(bytes, XContentType.JSON);
             bulkRequest.add(doc);
         }
+        if (bulkRequest.requests().isEmpty())
+            return true;
         bulkRequest.timeout(TimeValue.timeValueNanos(requestTimeOutNanos));
         ActionFuture<BulkResponse> bulk = client.bulk(bulkRequest);
         try {

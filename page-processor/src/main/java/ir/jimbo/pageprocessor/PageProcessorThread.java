@@ -1,5 +1,6 @@
 package ir.jimbo.pageprocessor;
 
+import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.pageprocessor.config.KafkaConfiguration;
 import ir.jimbo.pageprocessor.manager.ElasticSearchService;
@@ -40,10 +41,12 @@ public class PageProcessorThread extends Thread {
     public void run() {
         while (!interrupted()) {
             ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
+            final long currentTimeMillis = System.currentTimeMillis();
             List<Page> pages = new ArrayList<>();
             for (ConsumerRecord<Long, Page> record : records)
                 pages.add(record.value());
-            pages.forEach(page -> page.getLinks().forEach(link -> {
+            for (Page page : pages)
+                for (HtmlTag link : page.getLinks()) {
                 try {
                     final String href = link.getProps().get("href");
                     if (href != null && !href.isEmpty())
@@ -52,8 +55,9 @@ public class PageProcessorThread extends Thread {
                     LOGGER.error("", e);
                 }
                 LOGGER.info("All the links in page with URL " + page.getUrl() + " were added to HBase");
-            }));
+            }
             boolean isAdded = esService.insertPages(pages);
+            LOGGER.info(System.currentTimeMillis() - currentTimeMillis);
             pageConsumer.commitSync();
         }
     }
