@@ -73,10 +73,10 @@ public class PageParserThread extends Thread{
      * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri do not have any extension.
      */
     private boolean isValidUri(String link) {
-        while (link.endsWith("/")) {
-            link = link.substring(0, link.length() - 1);
-        }
         try {
+            while (link.endsWith("/")) {
+                link = link.substring(0, link.length() - 1);
+            }
             if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
                     || ! link.substring(link.lastIndexOf('/') + 1).contains(".")) {
                 return true;
