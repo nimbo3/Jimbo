@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,14 +20,17 @@ public class LinkConsumer extends Thread {
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
+    static boolean repeat = true;
+    private CountDownLatch countDownLatch;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     // Regex pattern to extract domain from URL
     // Please refer to RFC 3986 - Appendix B for more information
 
-    LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
+    LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch) {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;
+        countDownLatch = consumerLatch;
     }
 
     @Override
@@ -34,24 +38,16 @@ public class LinkConsumer extends Thread {
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         String uri;
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
-        while (! interrupted()) {
+        while (repeat) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
-//            logger.info("get link from kafka numbers taken : " + consumerRecords.count() + consumer.listTopics());
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
-                logger.debug("the link readed from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
                         App.linkQueue.put(uri);
-                        System.out.println(uri);
-                        try {
-                            cacheService.addDomain(getDomain(uri));
-                            logger.info("uri \"" + uri + "\" added to queue");
-                        } catch (NoDomainFoundException e) {
-                            logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
-                        }
+                        cacheService.addDomain(getDomain(uri));
+                        logger.info("uri \"" + uri + "\" added to queue");
                     } else {
-                        logger.info("it was not polite crawling this uri : " + uri + "\n\n\n");
                         ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
                                 kafkaConfiguration.getLinkTopicName(), uri);
                         producer.send(producerRecord);
@@ -59,20 +55,33 @@ public class LinkConsumer extends Thread {
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
-                    logger.error("error in putting uri to queue (interrupted exception) uri : " + uri, e);
+                    logger.error("error in putting uri to queue (interrupted exception) uri : " + uri);
                     ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
                             kafkaConfiguration.getLinkTopicName(), uri);
                     producer.send(producerRecord);
                 }
             }
-            consumer.commitSync();
+            try {
+                consumer.commitSync();
+            } catch (Exception e) {
+                logger.info("unable to commit.##################################################################");
+            }
         }
-        producer.close();
-        consumer.close();
+        countDownLatch.countDown();
+        try {
+            producer.close();
+        } catch (Exception e) {
+            logger.info("error in closing producer");
+        }
+        try {
+            consumer.close();
+        } catch (Exception e) {
+            logger.info("error in closing consumer");
+        }
     }
 
     private boolean politenessChecker(String uri) {
-        return ! cacheService.isDomainExist(uri);
+        return !cacheService.isDomainExist(uri);
     }
 
     private String getDomain(String url) {

@@ -16,17 +16,21 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 public class PageParserThread extends Thread{
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private ArrayBlockingQueue<String> queue;
     private KafkaConfiguration kafkaConfiguration;
+    public static boolean repeat = true;
+    private CountDownLatch countDownLatch;
 
     public PageParserThread(ArrayBlockingQueue<String> queue,
-                            KafkaConfiguration kafkaConfiguration) {
+                            KafkaConfiguration kafkaConfiguration, CountDownLatch parserLatch) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
+        countDownLatch = parserLatch;
     }
 
     // For Test
@@ -37,7 +41,7 @@ public class PageParserThread extends Thread{
     @Override
     public void run() {
         Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
-        while (! interrupted()) {
+        while (repeat) {
             String uri = null;
             try {
                 uri = queue.take();
@@ -47,6 +51,9 @@ public class PageParserThread extends Thread{
             if (uri == null)
                 continue;
             Page page = parse(uri);
+            if (page == null) {
+                continue;
+            }
             ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
                     page);
             producer.send(record);
@@ -54,7 +61,12 @@ public class PageParserThread extends Thread{
             logger.info("page added to kafka");
             addLinksToKafka(page, kafkaConfiguration);
         }
-        producer.close();
+        countDownLatch.countDown();
+        try {
+            producer.close();
+        } catch (Exception e) {
+            logger.info("error in closing producer");
+        }
     }
 
     private void addLinksToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
@@ -62,7 +74,7 @@ public class PageParserThread extends Thread{
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();
             if (isValidUri(link)) {
-                logger.info("link extracted from page an now adding to kafka. link : " + link);
+//                logger.info("link extracted from page an now adding to kafka. link : " + link);
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
                 producer.send(record);
             }

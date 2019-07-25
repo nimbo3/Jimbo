@@ -11,61 +11,56 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
-    private static Thread[] parserThreads;
     static ArrayBlockingQueue<String> linkQueue;
-    private static Thread[] consumerThreads;
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
 
     public static void main(String[] args) throws InterruptedException {
         LOGGER.info("crawler app starting...");
-        addShutDownHook();
         initializeConfigurations(args);
         CacheService cacheService = new CacheService(redisConfiguration);
 
         linkQueue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
 
-        Thread.sleep(1000);
-
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
 
-        consumerThreads = new Thread[consumerThreadSize];
-        for (int i = 0; i < consumerThreadSize; i++) {
-            consumerThreads[i] = new LinkConsumer(kafkaConfiguration, cacheService);
-            consumerThreads[i].start();
-        }
+        CountDownLatch parserLatch = new CountDownLatch(parserThreadSize);
+        CountDownLatch consumerLatch = new CountDownLatch(consumerThreadSize);
 
-        parserThreads = new Thread[parserThreadSize];
-        for (int i = 0; i < parserThreadSize; i++) {
-            parserThreads[i] = new PageParserThread(linkQueue, kafkaConfiguration);
-            parserThreads[i].start();
-        }
+        addShutDownHook(parserLatch, consumerLatch);
+
+        Thread.sleep(1000);
+
+        new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch).start();
+        new PageParserThread(linkQueue, kafkaConfiguration, parserLatch).start();
 
     }
 
-    private static void addShutDownHook() {
+    private static void addShutDownHook(CountDownLatch parserLatch, CountDownLatch consumerLatch) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("starting shutdown hook...");
-            consumerThreadInterruption();
+            consumerThreadInterruption(consumerLatch);
             queueEmptyChecker();
-            parserThreadInterruption();
+            parserThreadInterruption(parserLatch);
         }));
     }
 
-    private static void parserThreadInterruption() {
+    private static void parserThreadInterruption(CountDownLatch parserThreadSize) {
+
         LOGGER.info("start interrupting parser threads...");
-        for (Thread t : parserThreads) {
-            try {
-                t.interrupt();
-            } catch (Exception e) {
-                LOGGER.info("one interrupted exception while closing parser threads");
-            }
+        PageParserThread.repeat = false;
+        try {
+            Thread.sleep(1000);
+            parserThreadSize.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
         LOGGER.info("parser threads interrupted");
     }
@@ -86,14 +81,14 @@ public class App {
         LOGGER.info("queue is empty now");
     }
 
-    private static void consumerThreadInterruption() {
+    private static void consumerThreadInterruption(CountDownLatch consumerThreadSize) {
         LOGGER.info("start interrupting consumer threads");
-        for (Thread t : consumerThreads) {
-            try {
-                t.interrupt();
-            } catch (Exception e) {
-                LOGGER.info("one interrupted exception while closing consumer threads");
-            }
+        LinkConsumer.repeat = false;
+        try {
+            Thread.sleep(1000);
+            consumerThreadSize.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
         LOGGER.info("end interrupting consumer threads");
     }

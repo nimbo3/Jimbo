@@ -46,7 +46,7 @@ public class CacheService {
         RBucket<Long> bucket = redissonClient.getBucket(domain);
         long timeMillis = System.currentTimeMillis();
         bucket.set(timeMillis);
-        logger.info("a domain added to redis. domain : " + domain);
+//        logger.info("a domain added to redis. domain : " + domain);
     }
 
     public boolean isDomainExist(String key) {
@@ -59,7 +59,7 @@ public class CacheService {
         }
         bucket.set(lastTime);
         long currentTime = System.currentTimeMillis();
-        logger.info("checking politeness. current time : " + currentTime + " lastTime : " + lastTime);
+//        logger.info("checking politeness. current time : " + currentTime + " lastTime : " + lastTime);
         return currentTime - lastTime < expiredTimeDomainMilis;
     }
 }
