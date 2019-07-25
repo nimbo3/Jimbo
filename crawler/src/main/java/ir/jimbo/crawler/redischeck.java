@@ -14,7 +14,6 @@ public class redischeck {
 //        }
 //        CacheService cacheService = new CacheService(redisConfiguration);
 //        cacheService.addDomain("ir.smska.com");
-//        Thread.sleep(10000);
 //        System.out.println(cacheService.isDomainExist("ir.smska.com"));
 //        Thread.sleep(10000);
 //        System.out.println(cacheService.isDomainExist("ir.smska.com"));
@@ -22,6 +21,8 @@ public class redischeck {
 //        System.out.println(cacheService.isDomainExist("ir.smska.com"));
 //        Thread.sleep(10000);
 //        System.out.println(cacheService.isDomainExist("ir.smska.com"));
-//        System.exit(-1);
+//        Thread.sleep(10000);
+//        System.out.println(cacheService.isDomainExist("ir.smska.com"));
+//        System.exit(0);
 //    }
 }

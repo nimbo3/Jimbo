@@ -5,14 +5,11 @@ import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.redisson.Redisson;
-import org.redisson.api.ClusterNode;
-import org.redisson.api.RAtomicLong;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.ClusterServersConfig;
 import org.redisson.config.Config;
 
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * class for connecting to redis database (LRU cache)
@@ -54,7 +51,7 @@ public class CacheService {
 
     public boolean isDomainExist(String key) {
         RBucket<Long> bucket = redissonClient.getBucket(key);
-        long lastTime = 0;
+        long lastTime;
         try {
             lastTime = bucket.getAndSet(1L);
         } catch (Exception e) {

@@ -52,29 +52,50 @@ public class App {
     private static void addShutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("starting shutdown hook...");
-            LOGGER.info("start interrupting consumer threads");
-            for (Thread t : consumerThreads) {
+            consumerThreadInterruption();
+            queueEmptyChecker();
+            parserThreadInterruption();
+        }));
+    }
+
+    private static void parserThreadInterruption() {
+        LOGGER.info("start interrupting parser threads...");
+        for (Thread t : parserThreads) {
+            try {
                 t.interrupt();
+            } catch (Exception e) {
+                LOGGER.info("one interrupted exception while closing parser threads");
             }
-            LOGGER.info("end interrupting consumer threads");
-            while (true) {
-                LOGGER.info("waiting for queue to become empty...");
-                if (linkQueue.isEmpty()) {
-                    break;
-                } else {
-                    try {
-                        Thread.sleep(500);
-                    } catch (Exception e) {
-                        LOGGER.error("error in thread.sleep", e);
-                    }
+        }
+        LOGGER.info("parser threads interrupted");
+    }
+
+    private static void queueEmptyChecker() {
+        while (true) {
+            LOGGER.info("waiting for queue to become empty...");
+            if (linkQueue.isEmpty()) {
+                break;
+            } else {
+                try {
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                    LOGGER.error("error in thread.sleep", e);
                 }
             }
-            LOGGER.info("queue is empty now\nstart interrupting parser threads...");
-            for (Thread t : parserThreads) {
+        }
+        LOGGER.info("queue is empty now");
+    }
+
+    private static void consumerThreadInterruption() {
+        LOGGER.info("start interrupting consumer threads");
+        for (Thread t : consumerThreads) {
+            try {
                 t.interrupt();
+            } catch (Exception e) {
+                LOGGER.info("one interrupted exception while closing consumer threads");
             }
-            LOGGER.info("parser threads interrupted");
-        }));
+        }
+        LOGGER.info("end interrupting consumer threads");
     }
 
     private static void initializeConfigurations(String[] args) {

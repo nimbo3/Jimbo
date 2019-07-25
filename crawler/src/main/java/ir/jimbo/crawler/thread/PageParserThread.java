@@ -42,7 +42,7 @@ public class PageParserThread extends Thread{
             try {
                 uri = queue.take();
             } catch (Exception e) {
-                logger.error("interrupt exception in page parser",e);
+                logger.error("interrupt exception in page parser", e);
             }
             if (uri == null)
                 continue;
@@ -60,8 +60,9 @@ public class PageParserThread extends Thread{
     private void addLinkToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         for (HtmlTag htmlTag : page.getLinks()) {
-            String link = htmlTag.getProps().get("href");
+            String link = htmlTag.getProps().get("href").trim();
             if (isValidUri(link)) {
+                logger.info("link extracted from page an now adding to kafka. link : " + link);
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
                 producer.send(record);
             }
@@ -69,7 +70,7 @@ public class PageParserThread extends Thread{
     }
 
     /**
-     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri dont have any extension.
+     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri do not have any extension.
      */
     private boolean isValidUri(String link) {
         while (link.endsWith("/")) {
