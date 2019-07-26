@@ -20,6 +20,8 @@ public class App {
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
+    private static LinkConsumer[] consumers;
+    private static PageParserThread[] producers;
 
     public static void main(String[] args) throws InterruptedException {
         LOGGER.info("crawler app starting...");
@@ -34,28 +36,39 @@ public class App {
         CountDownLatch parserLatch = new CountDownLatch(parserThreadSize);
         CountDownLatch consumerLatch = new CountDownLatch(consumerThreadSize);
 
-        addShutDownHook(parserLatch, consumerLatch);
+        addShutDownHook(parserLatch, parserThreadSize, consumerLatch, consumerThreadSize);
 
-        Thread.sleep(1000);
+        LOGGER.info("starting parser threads");
+        producers = new PageParserThread[parserThreadSize];
+        for (int i = 0; i < parserThreadSize; i++) {
+            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch);
+            producers[i].start();
+        }
 
-        new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch).start();
-        new PageParserThread(linkQueue, kafkaConfiguration, parserLatch).start();
-
+        consumers = new LinkConsumer[consumerThreadSize];
+        LOGGER.info("started consumer threads");
+        for (int i = 0; i < consumerThreadSize; i++) {
+            consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch);
+            consumers[i].start();
+        }
+        LOGGER.info("end starting threads");
     }
 
-    private static void addShutDownHook(CountDownLatch parserLatch, CountDownLatch consumerLatch) {
+    private static void addShutDownHook(CountDownLatch parserLatch, int parserThreadSize, CountDownLatch consumerLatch, int consumerThreadSize) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("starting shutdown hook...");
-            consumerThreadInterruption(consumerLatch);
+            consumerThreadInterruption(consumerLatch, consumerThreadSize);
             queueEmptyChecker();
-            parserThreadInterruption(parserLatch);
+            parserThreadInterruption(parserLatch, parserThreadSize);
         }));
     }
 
-    private static void parserThreadInterruption(CountDownLatch parserThreadSize) {
+    private static void parserThreadInterruption(CountDownLatch parserThreadSize, int producersThreadSize) {
 
         LOGGER.info("start interrupting parser threads...");
-        PageParserThread.repeat = false;
+        for (int i = 0; i < producersThreadSize; i++) {
+            producers[i].close();
+        }
         try {
             Thread.sleep(1000);
             parserThreadSize.await();
@@ -81,12 +94,14 @@ public class App {
         LOGGER.info("queue is empty now");
     }
 
-    private static void consumerThreadInterruption(CountDownLatch consumerThreadSize) {
+    private static void consumerThreadInterruption(CountDownLatch countDownLatch, int consumerThreadSize) {
         LOGGER.info("start interrupting consumer threads");
-        LinkConsumer.repeat = false;
+        for (int i = 0; i < consumerThreadSize; i++) {
+            consumers[i].close();
+        }
         try {
             Thread.sleep(1000);
-            consumerThreadSize.await();
+            countDownLatch.await();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

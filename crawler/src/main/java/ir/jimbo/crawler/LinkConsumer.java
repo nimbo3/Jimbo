@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +21,7 @@ public class LinkConsumer extends Thread {
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
-    static boolean repeat = true;
+    AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     // Regex pattern to extract domain from URL
@@ -30,6 +31,7 @@ public class LinkConsumer extends Thread {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;
+        repeat = new AtomicBoolean(true);
         countDownLatch = consumerLatch;
     }
 
@@ -38,16 +40,19 @@ public class LinkConsumer extends Thread {
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         String uri;
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
-        while (repeat) {
+        logger.info("consumer thread started");
+        while (repeat.get()) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
+//                logger.info("uri readed from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
                         App.linkQueue.put(uri);
                         cacheService.addDomain(getDomain(uri));
                         logger.info("uri \"" + uri + "\" added to queue");
                     } else {
+                        logger.info("it was not polite crawling this uri : " + uri);
                         ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
                                 kafkaConfiguration.getLinkTopicName(), uri);
                         producer.send(producerRecord);
@@ -89,5 +94,9 @@ public class LinkConsumer extends Thread {
         if (matcher.matches())
             return matcher.group(4);
         throw new NoDomainFoundException();
+    }
+
+    void close() {
+        repeat.set(false);
     }
 }

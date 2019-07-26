@@ -17,13 +17,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PageParserThread extends Thread{
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private ArrayBlockingQueue<String> queue;
     private KafkaConfiguration kafkaConfiguration;
-    public static boolean repeat = true;
+    private AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
 
     public PageParserThread(ArrayBlockingQueue<String> queue,
@@ -31,6 +32,7 @@ public class PageParserThread extends Thread{
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
         countDownLatch = parserLatch;
+        repeat = new AtomicBoolean(true);
     }
 
     // For Test
@@ -41,9 +43,10 @@ public class PageParserThread extends Thread{
     @Override
     public void run() {
         Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
-        while (repeat) {
+        while (repeat.get()) {
             String uri = null;
             try {
+                logger.info("waiting to take uri from queue");
                 uri = queue.take();
             } catch (Exception e) {
                 logger.error("interrupt exception in page parser", e);
@@ -149,5 +152,9 @@ public class PageParserThread extends Thread{
         }
         logger.info("parsing page done.");
         return page;
+    }
+
+    public void close() {
+        repeat.set(false);
     }
 }
