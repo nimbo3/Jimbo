@@ -22,7 +22,7 @@ public class LinkConsumer extends Thread {
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
-    AtomicBoolean repeat;
+    private AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     // Regex pattern to extract domain from URL
@@ -49,38 +49,32 @@ public class LinkConsumer extends Thread {
                 logger.info("uri read from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
-                        boolean isAdded = false;
-                        while (!isAdded && repeat.get()) {
-                            isAdded = App.linkQueue.offer(uri, 100, TimeUnit.MILLISECONDS);
+                        boolean isAdded;
+                        isAdded = App.linkQueue.offer(uri, 2000, TimeUnit.MILLISECONDS);
+                        if (isAdded) {
+                            logger.info("uri added to queue : " + uri);
+                            cacheService.addDomain(getDomain(uri));
+                            logger.info("uri \"" + uri + "\" added to queue");
+                        } else {
+                            logger.info("queue has not space for this url : " + uri);
+                            sendUriToKafka(uri, producer);
                         }
-                        if (!repeat.get()) {
-                            break;
-                        }
-                        logger.info("uri added to queue : " + uri);
-                        cacheService.addDomain(getDomain(uri));
-                        logger.info("uri \"" + uri + "\" added to queue");
                     } else {
                         logger.info("it was not polite crawling this uri : " + uri);
-                        ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
-                                kafkaConfiguration.getLinkTopicName(), uri);
-                        producer.send(producerRecord);
+                        sendUriToKafka(uri, producer);
                     }
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
                     logger.error("error in putting uri to queue (interrupted exception) uri : " + uri);
-                    ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
-                            kafkaConfiguration.getLinkTopicName(), uri);
-                    producer.send(producerRecord);
+                    sendUriToKafka(uri, producer);
                 }
             }
-//            try {
-//                if (repeat.get()) {
-//                    consumer.commitSync();
-//                }
-//            } catch (Exception e) {
-//                logger.info("unable to commit.##################################################################");
-//            }
+            try {
+                consumer.commitSync();
+            } catch (Exception e) {
+                logger.info("unable to commit.###################################################", e);
+            }
         }
         logger.info("consumer countdown latch before");
         countDownLatch.countDown();
@@ -95,6 +89,12 @@ public class LinkConsumer extends Thread {
         } catch (Exception e) {
             logger.info("error in closing consumer in link consumer");
         }
+    }
+
+    private void sendUriToKafka(String uri, Producer<Long, String> producer) {
+        ProducerRecord<Long, String> producerRecord = new ProducerRecord<>(
+                kafkaConfiguration.getLinkTopicName(), uri);
+        producer.send(producerRecord);
     }
 
     private boolean politenessChecker(String uri) {
