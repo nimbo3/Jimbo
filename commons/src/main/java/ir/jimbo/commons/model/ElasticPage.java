@@ -12,7 +12,7 @@ public class ElasticPage {
     private List<String> h1List;
     private List<String> h2List;
     private List<String> h3to6List;
-    private StringBuilder text;
+    private String text;
 
     public ElasticPage() {
         this.url = "";
@@ -20,7 +20,7 @@ public class ElasticPage {
         this.h1List = new ArrayList<>();
         this.h2List = new ArrayList<>();
         this.h3to6List = new ArrayList<>();
-        this.text = new StringBuilder();
+        this.text = "";
         this.metaTags = new HashMap<>();
     }
 
@@ -31,7 +31,7 @@ public class ElasticPage {
         this.h1List = new ArrayList<>();
         this.h2List = new ArrayList<>();
         this.h3to6List = new ArrayList<>();
-        this.text = new StringBuilder();
+        this.text = "";
         this.metaTags = new HashMap<>();
         for (HtmlTag meta : page.getMetadata()) {
             metaTags.put(meta.getProps().get("name"), meta.getProps().get("content"));
@@ -45,9 +45,11 @@ public class ElasticPage {
         for (HtmlTag htmlTag : page.getH3to6List()) {
             h3to6List.add(htmlTag.getContent());
         }
+        StringBuilder stringBuilder = new StringBuilder();
         for (HtmlTag htmlTag : page.getPlainTextList()) {
-            text.append(htmlTag.getContent());
+            stringBuilder.append(htmlTag.getContent());
         }
+        text = stringBuilder.toString();
     }
 
     public String getUrl() {
@@ -103,6 +105,6 @@ public class ElasticPage {
     }
 
     public void setText(String text) {
-        this.text = new StringBuilder(text);
+        this.text = text;
     }
 }
