@@ -41,7 +41,7 @@ public class CacheService {
         try {
             lastTime = Long.parseLong(jedis.get(key));
         } catch (Exception e) {
-            return true;
+            return false;
         }
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < expiredTimeDomainMilis) {

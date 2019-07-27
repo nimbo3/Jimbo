@@ -105,7 +105,7 @@ public class PageParserThread extends Thread{
         return false;
     }
 
-    Page parse(String url) { // TODO refactor this function
+    private Page parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Document document;
         Page page = new Page();
