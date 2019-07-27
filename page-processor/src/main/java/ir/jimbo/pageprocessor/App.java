@@ -20,14 +20,14 @@ public class App {
     public static void main(String[] args) throws IOException {
         final JConfig jConfig = JConfig.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                HTableManager.closeConnection();
+//            try {
+//                HTableManager.closeConnection();
                 pageProcessors.forEach(Thread::interrupt);
-            } catch (IOException e) {
-                LOGGER.error("", e);
-            }
+//            } catch (IOException e) {
+//                LOGGER.error("", e);
+//            }
         }));
-        Config hConfig = HConfig.getInstance();
+        HConfig hConfig = HConfig.getInstance();
         ElasticSearchConfiguration elasticSearchConfiguration = ElasticSearchConfiguration.getInstance();
         ElasticSearchService elasticSearchService = new ElasticSearchService(elasticSearchConfiguration);
 

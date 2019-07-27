@@ -18,7 +18,7 @@ import java.util.Properties;
 
 @Getter
 public class ElasticSearchConfiguration extends Config {
-    private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
+    private static final Logger LOGGER = LogManager.getLogger(ElasticSearchConfiguration.class);
     private static final String PREFIX = "elasticsearch";
     private static ElasticSearchConfiguration instance = null;
 
