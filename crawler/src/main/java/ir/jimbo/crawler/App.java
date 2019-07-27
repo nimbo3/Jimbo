@@ -32,9 +32,6 @@ public class App {
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
-        cacheService.addUrl("al");
-        System.out.println(cacheService.isUrlExists("al"));
-
         CountDownLatch parserLatch = new CountDownLatch(parserThreadSize);
         CountDownLatch consumerLatch = new CountDownLatch(consumerThreadSize);
 
