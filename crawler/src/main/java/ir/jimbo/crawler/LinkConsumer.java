@@ -46,7 +46,7 @@ public class LinkConsumer extends Thread {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
-                logger.info("uri readed from kafka : " + uri);
+                logger.info("uri read from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
                         boolean isAdded;
@@ -98,7 +98,7 @@ public class LinkConsumer extends Thread {
     }
 
     private boolean politenessChecker(String uri) {
-        return !cacheService.isDomainExist(uri);
+        return !cacheService.isDomainExist(uri) && !cacheService.isUrlExists(uri);
     }
 
     private String getDomain(String url) {

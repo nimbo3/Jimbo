@@ -11,7 +11,8 @@ public class RedisConfiguration {
     private List<String> nodes;
     private boolean isStandAlone;
     private String password;
-    private int expiredTime;
+    private int domainExpiredTime;
+    private int urlExpiredTime;
 
     public RedisConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -20,7 +21,8 @@ public class RedisConfiguration {
         nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
         isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
-        expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
+        domainExpiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
+        urlExpiredTime = Integer.parseInt(properties.getProperty("cache.url_expired_time"));
     }
 
     public RedisConfiguration(String path) throws IOException {
@@ -29,7 +31,7 @@ public class RedisConfiguration {
         nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
         isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
-        expiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
+        urlExpiredTime = Integer.parseInt(properties.getProperty("cache.url_expired_time"));
     }
 
     public List<String> getNodes() {
@@ -44,7 +46,11 @@ public class RedisConfiguration {
         return password;
     }
 
-    public int getExpiredTime() {
-        return expiredTime;
+    public int getDomainExpiredTime() {
+        return domainExpiredTime;
+    }
+
+    public int geUrlExpiredTime() {
+        return urlExpiredTime;
     }
 }
