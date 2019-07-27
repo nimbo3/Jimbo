@@ -55,16 +55,25 @@ public class PageParserThread extends Thread{
                 continue;
             }
             logger.info("uri " + uri + " catches from queue");
-            Page page = parse(uri);
-            if (page == null) {
-                continue;
-            }
-            ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
-                    page);
-            producer.send(record);
+            Page page = null;
+            try {
+                page = parse(uri);
 
-            logger.info("page added to kafka");
-            addLinksToKafka(page, kafkaConfiguration);
+                if (page == null) {
+                    continue;
+                }
+
+                ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
+                        page);
+                producer.send(record);
+
+                logger.info("page added to kafka");
+                addLinksToKafka(page, kafkaConfiguration);
+
+            } catch (Exception e) {
+                logger.error("1 parser thread was going to interrupt", e);
+            }
+
         }
         countDownLatch.countDown();
         try {
@@ -105,7 +114,7 @@ public class PageParserThread extends Thread{
         return false;
     }
 
-    private Page parse(String url) { // TODO refactor this function
+    Page parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Document document;
         Page page = new Page();
