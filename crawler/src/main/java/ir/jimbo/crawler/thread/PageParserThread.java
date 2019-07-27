@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PageParserThread extends Thread{
@@ -46,13 +47,14 @@ public class PageParserThread extends Thread{
         while (repeat.get()) {
             String uri = null;
             try {
-                logger.info("waiting to take uri from queue");
-                uri = queue.take();
+                uri = queue.poll(100, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
                 logger.error("interrupt exception in page parser", e);
             }
-            if (uri == null)
+            if (uri == null) {
                 continue;
+            }
+            logger.info("uri " + uri + " catches from queue");
             Page page = parse(uri);
             if (page == null) {
                 continue;
@@ -110,8 +112,8 @@ public class PageParserThread extends Thread{
         page.setUrl(url);
         try {
             document = Jsoup.connect(url).get();
-        } catch (IOException e) {
-            logger.error("exception in connection to url. empty page instance returned", e);
+        } catch (Exception e) { //
+            logger.error("exception in connection to url. empty page instance will return");
             return page;
         }
         for (Element element : document.getAllElements()) {

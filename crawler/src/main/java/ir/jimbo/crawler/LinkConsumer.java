@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,10 +46,17 @@ public class LinkConsumer extends Thread {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
-//                logger.info("uri readed from kafka : " + uri);
+                logger.info("uri readed from kafka : " + uri);
                 try {
                     if (politenessChecker(getDomain(uri))) {
-                        App.linkQueue.put(uri);
+                        boolean isAdded = false;
+                        while (!isAdded && repeat.get()) {
+                            isAdded = App.linkQueue.offer(uri, 100, TimeUnit.MILLISECONDS);
+                        }
+                        if (!repeat.get()) {
+                            break;
+                        }
+                        logger.info("uri added to queue : " + uri);
                         cacheService.addDomain(getDomain(uri));
                         logger.info("uri \"" + uri + "\" added to queue");
                     } else {
@@ -66,22 +74,26 @@ public class LinkConsumer extends Thread {
                     producer.send(producerRecord);
                 }
             }
-            try {
-                consumer.commitSync();
-            } catch (Exception e) {
-                logger.info("unable to commit.##################################################################");
-            }
+//            try {
+//                if (repeat.get()) {
+//                    consumer.commitSync();
+//                }
+//            } catch (Exception e) {
+//                logger.info("unable to commit.##################################################################");
+//            }
         }
+        logger.info("consumer countdown latch before");
         countDownLatch.countDown();
+        logger.info("consumer count down latch. size = " + countDownLatch.getCount());
         try {
             producer.close();
         } catch (Exception e) {
-            logger.info("error in closing producer");
+            logger.info("error in closing producer in link consumer");
         }
         try {
             consumer.close();
         } catch (Exception e) {
-            logger.info("error in closing consumer");
+            logger.info("error in closing consumer in link consumer");
         }
     }
 
@@ -97,6 +109,8 @@ public class LinkConsumer extends Thread {
     }
 
     void close() {
+        logger.info("setting repeat to false");
         repeat.set(false);
+        logger.info("repeat : " + repeat.get());
     }
 }

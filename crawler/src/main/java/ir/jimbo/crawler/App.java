@@ -23,7 +23,7 @@ public class App {
     private static LinkConsumer[] consumers;
     private static PageParserThread[] producers;
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         LOGGER.info("crawler app starting...");
         initializeConfigurations(args);
         CacheService cacheService = new CacheService(redisConfiguration);
@@ -46,7 +46,7 @@ public class App {
         }
 
         consumers = new LinkConsumer[consumerThreadSize];
-        LOGGER.info("started consumer threads");
+        LOGGER.info("starting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
             consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch);
             consumers[i].start();
@@ -70,8 +70,9 @@ public class App {
             producers[i].close();
         }
         try {
-            Thread.sleep(1000);
+            LOGGER.info("before parser threads");
             parserThreadSize.await();
+            LOGGER.info("after parser threads");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -100,9 +101,11 @@ public class App {
             consumers[i].close();
         }
         try {
-            Thread.sleep(1000);
+            LOGGER.info("before consumer await. size : " + countDownLatch.getCount());
             countDownLatch.await();
+            LOGGER.info("after consumer await");
         } catch (InterruptedException e) {
+            LOGGER.warn("interrupted exception in closing consumer threads");
             Thread.currentThread().interrupt();
         }
         LOGGER.info("end interrupting consumer threads");

@@ -6,10 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import redis.clients.jedis.Jedis;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 
 /**
  * class for connecting to redis database (LRU cache)
@@ -17,42 +13,42 @@ import java.util.Set;
 public class CacheService {
 
 
-//    private Logger logger = LogManager.getLogger(this.getClass());
+    private Logger logger = LogManager.getLogger(this.getClass());
     private int expiredTimeDomainMilis;
-//    private Jedis jedis;
-    private Map<String, Long> domains;
+    private Jedis jedis;
 
     public CacheService(RedisConfiguration redisConfiguration) {
 
         // On closing app
-//        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//            try {
-//                jedis.disconnect();
-//                jedis.close();
-//            } catch (Exception e) {
-//                logger.error("exception in closing jedis", e);
-//            }
-//        }));
-//        jedis = new Jedis();
-//        jedis.connect();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                jedis.disconnect();
+            } catch (Exception e) {
+                logger.error("exception in closing jedis", e);
+            }
+        }));
+        jedis = new Jedis();
         expiredTimeDomainMilis = redisConfiguration.getExpiredTime();
-//        logger.info("redis connection created.");
-        domains = new HashMap<>();
+        logger.info("redis connection created.");
     }
 
     public void addDomain(String domain) {
-//        jedis.set(domain, String.valueOf(System.currentTimeMillis()));
-        domains.put(domain, System.currentTimeMillis());
+        jedis.set(domain, String.valueOf(System.currentTimeMillis()));
     }
 
     public boolean isDomainExist(String key) {
         long lastTime;
         try {
-            lastTime = domains.get(key);
+            lastTime = Long.parseLong(jedis.get(key));
         } catch (Exception e) {
             return true;
         }
         long currentTime = System.currentTimeMillis();
-        return currentTime - lastTime < expiredTimeDomainMilis;
+        if (currentTime - lastTime < expiredTimeDomainMilis) {
+            return true;
+        } else {
+            jedis.del(key);
+            return false;
+        }
     }
 }
