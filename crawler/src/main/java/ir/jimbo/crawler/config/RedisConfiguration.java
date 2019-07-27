@@ -50,7 +50,7 @@ public class RedisConfiguration {
         return domainExpiredTime;
     }
 
-    public int geUrlExpiredTime() {
+    public int getUrlExpiredTime() {
         return urlExpiredTime;
     }
 }

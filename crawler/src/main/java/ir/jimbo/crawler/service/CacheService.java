@@ -1,10 +1,15 @@
 package ir.jimbo.crawler.service;
 
 
+import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import redis.clients.jedis.Jedis;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 
 /**
@@ -28,7 +33,7 @@ public class CacheService {
         }));
         jedis = new Jedis();
         expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
-//        expiredTimeUrlMilis =
+        expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();
         logger.info("redis connection created.");
     }
 
@@ -37,7 +42,8 @@ public class CacheService {
     }
 
     public void addUrl(String url) {
-        jedis.set(url, String.valueOf(System.currentTimeMillis()));
+        String hashedUri = getMd5(url);
+        jedis.set(hashedUri, String.valueOf(System.currentTimeMillis()));
     }
 
     public boolean isDomainExist(String key) {
@@ -56,19 +62,37 @@ public class CacheService {
         }
     }
 
-    public boolean isUrlExists(String url) {
+    public boolean isUrlExists(String uri) {
+        String hashedUri = getMd5(uri);
         long lastTime;
         try {
-            lastTime = Long.parseLong(jedis.get(url));
+            lastTime = Long.parseLong(jedis.get(hashedUri));
         } catch (Exception e) {
-            return true;
+            return false;
         }
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < expiredTimeUrlMilis) {
             return true;
         } else {
-            jedis.del(url);
+            jedis.del(hashedUri);
             return false;
+        }
+    }
+
+    private String getMd5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            byte[] messageDigest = md.digest(input.getBytes());
+
+            BigInteger no = new BigInteger(1, messageDigest);
+            StringBuilder hashText = new StringBuilder(no.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
+            }
+            return hashText.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new JimboException("fail in creating hash");
         }
     }
 }
