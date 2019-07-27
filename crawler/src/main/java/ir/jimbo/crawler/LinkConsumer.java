@@ -1,9 +1,11 @@
 package ir.jimbo.crawler;
 
 import ir.jimbo.crawler.config.KafkaConfiguration;
-import ir.jimbo.crawler.service.CacheService;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import org.apache.kafka.clients.consumer.*;
+import ir.jimbo.crawler.service.CacheService;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -48,12 +50,13 @@ public class LinkConsumer extends Thread {
                 uri = record.value();
                 logger.info("uri read from kafka : " + uri);
                 try {
-                    if (politenessChecker(getDomain(uri))) {
+                    if (isPolite(uri)) {
                         boolean isAdded;
                         isAdded = App.linkQueue.offer(uri, 2000, TimeUnit.MILLISECONDS);
                         if (isAdded) {
                             logger.info("uri added to queue : " + uri);
                             cacheService.addDomain(getDomain(uri));
+                            cacheService.addUrl(uri);
                             logger.info("uri \"" + uri + "\" added to queue");
                         } else {
                             logger.info("queue has not space for this url : " + uri);
@@ -97,8 +100,8 @@ public class LinkConsumer extends Thread {
         producer.send(producerRecord);
     }
 
-    private boolean politenessChecker(String uri) {
-        return !cacheService.isDomainExist(uri) && !cacheService.isUrlExists(uri);
+    private boolean isPolite(String uri) {
+        return !cacheService.isDomainExist(getDomain(uri)) && !cacheService.isUrlExists(uri);
     }
 
     private String getDomain(String url) {
