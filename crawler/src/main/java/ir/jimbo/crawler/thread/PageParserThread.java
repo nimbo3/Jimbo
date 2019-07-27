@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -26,6 +27,8 @@ public class PageParserThread extends Thread{
     private KafkaConfiguration kafkaConfiguration;
     private AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
+    private Producer<Long, String> linkProducer;
+    private Producer<Long, Page> pageProducer;
 
     public PageParserThread(ArrayBlockingQueue<String> queue,
                             KafkaConfiguration kafkaConfiguration, CountDownLatch parserLatch) {
@@ -33,6 +36,8 @@ public class PageParserThread extends Thread{
         this.kafkaConfiguration = kafkaConfiguration;
         countDownLatch = parserLatch;
         repeat = new AtomicBoolean(true);
+        linkProducer = kafkaConfiguration.getLinkProducer();
+        pageProducer = kafkaConfiguration.getPageProducer();
     }
 
     // For Test
@@ -42,7 +47,6 @@ public class PageParserThread extends Thread{
 
     @Override
     public void run() {
-        Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
         while (repeat.get()) {
             String uri = null;
             try {
@@ -64,7 +68,7 @@ public class PageParserThread extends Thread{
 
                 ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
                         page);
-                producer.send(record);
+                pageProducer.send(record);
 
                 logger.info("page added to kafka");
                 addLinksToKafka(page, kafkaConfiguration);
@@ -76,20 +80,20 @@ public class PageParserThread extends Thread{
         }
         countDownLatch.countDown();
         try {
-            producer.close();
+            pageProducer.close();
+            linkProducer.close();
         } catch (Exception e) {
             logger.info("error in closing producer");
         }
     }
 
     private void addLinksToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
-        Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();
             if (isValidUri(link)) {
 //                logger.info("link extracted from page an now adding to kafka. link : " + link);
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
-                producer.send(record);
+                linkProducer.send(record);
             }
         }
     }
@@ -118,8 +122,10 @@ public class PageParserThread extends Thread{
         Document document;
         Page page = new Page();
         page.setUrl(url);
+
         try {
-            document = Jsoup.connect(url).get();
+            Connection connect = Jsoup.connect(url);
+            document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return");
             return page;
