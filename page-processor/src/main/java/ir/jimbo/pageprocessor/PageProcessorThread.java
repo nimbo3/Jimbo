@@ -50,17 +50,17 @@ public class PageProcessorThread extends Thread {
                 List<Page> pages = new ArrayList<>();
                 for (ConsumerRecord<Long, Page> record : records) {
                     pages.add(record.value());
-//                    Page page = record.value();
-//                    HashSet<String> check = new HashSet<>();
-//                    if (check.contains(page.getUrl())) {
-//                        LOGGER.info("we have duplicated" + page.getUrl());
-//                    }
-//                    check.add(page.getUrl());
-//                    for (HtmlTag link : page.getLinks()) {
-//                        final String href = link.getProps().get("href");
-//                        if (href != null && !href.isEmpty())
-//                            hTableManager.put(href, page.getUrl(), link.getContent());
-//                    }
+                    Page page = record.value();
+                    HashSet<String> check = new HashSet<>();
+                    if (check.contains(page.getUrl())) {
+                        LOGGER.info("we have duplicated" + page.getUrl());
+                    }
+                    check.add(page.getUrl());
+                    for (HtmlTag link : page.getLinks()) {
+                        final String href = link.getProps().get("href");
+                        if (href != null && !href.isEmpty())
+                            hTableManager.put(href, page.getUrl(), link.getContent());
+                    }
                 }
                 count.getAndAdd(pages.size());
                 boolean isAdded = esService.insertPages(pages);
