@@ -6,8 +6,8 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>crawler</artifactId>
-  <description>""</description>
+  <artifactId>page-processor</artifactId>
+  <description>"page processor module"</description>
   <build>
     <pluginManagement>
       <plugins>
@@ -102,7 +102,7 @@
         <configuration>
           <transformers>
             <transformer>
-              <mainClass>ir.jimbo.crawler.App</mainClass>
+              <mainClass>ir.jimbo.pageprocessor.App</mainClass>
             </transformer>
           </transformers>
         </configuration>
@@ -124,10 +124,9 @@
     </dependency>
   </dependencies>
   <properties>
-    <jsoup.version>1.12.1</jsoup.version>
-    <kafka.client.version>2.3.0</kafka.client.version>
-    <redisson.version>3.11.1</redisson.version>
+    <elasticsearch.version>6.3.2</elasticsearch.version>
     <jackson.version>2.9.9.1</jackson.version>
-    <robots.version>1.4.2</robots.version>
+    <kafka.version>2.3.0</kafka.version>
+    <hbase.version>1.4.10</hbase.version>
   </properties>
 </project>

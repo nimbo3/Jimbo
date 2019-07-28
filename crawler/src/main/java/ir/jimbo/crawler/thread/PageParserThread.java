@@ -122,9 +122,9 @@ public class PageParserThread extends Thread{
         Document document;
         Page page = new Page();
         page.setUrl(url);
-
         try {
             Connection connect = Jsoup.connect(url);
+            connect.timeout(2000);
             document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return");
