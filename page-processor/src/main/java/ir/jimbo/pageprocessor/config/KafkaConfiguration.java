@@ -34,7 +34,7 @@ public class KafkaConfiguration extends Config {
         super(PREFIX);
     }
 
-    public Properties getConsumerPageProperties() {
+    public Properties getPageConsumerProperties() {
         Properties consumerProperties = new Properties();
         consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, getPropertyValue("bootstrap." +
                 "servers"));
@@ -52,7 +52,7 @@ public class KafkaConfiguration extends Config {
     }
 
     public Consumer<Long, Page> getPageConsumer() {
-        KafkaConsumer<Long, Page> consumer = new KafkaConsumer<>(getConsumerPageProperties());
+        KafkaConsumer<Long, Page> consumer = new KafkaConsumer<>(getPageConsumerProperties());
         consumer.subscribe(Collections.singletonList(getPropertyValue("consumer.pages.topic.name")));
         return consumer;
     }
