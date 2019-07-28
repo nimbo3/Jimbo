@@ -19,18 +19,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class LinkConsumer extends Thread {
-
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    // Regex pattern to extract domain from URL
-    // Please refer to RFC 3986 - Appendix B for more information
 
-    LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch) {
+    // Regex pattern to extract domain from URL
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+
+
+    public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch) {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;
@@ -50,7 +50,7 @@ public class LinkConsumer extends Thread {
                 uri = record.value();
                 logger.info("uri read from kafka : " + uri);
                 try {
-                    if(!cacheService.isUrlExists(uri)) {
+                    if (!cacheService.isUrlExists(uri)) {
                         if (isPolite(uri)) {
                             boolean isAdded;
                             isAdded = App.linkQueue.offer(uri, 2000, TimeUnit.MILLISECONDS);
@@ -86,16 +86,9 @@ public class LinkConsumer extends Thread {
         logger.info("consumer countdown latch before");
         countDownLatch.countDown();
         logger.info("consumer count down latch. size = " + countDownLatch.getCount());
-        try {
-            producer.close();
-        } catch (Exception e) {
-            logger.info("error in closing producer in link consumer");
-        }
-        try {
-            consumer.close();
-        } catch (Exception e) {
-            logger.info("error in closing consumer in link consumer");
-        }
+        producer.close();
+        consumer.close();
+
     }
 
     private void sendUriToKafka(String uri, Producer<Long, String> producer) {
@@ -115,7 +108,7 @@ public class LinkConsumer extends Thread {
         throw new NoDomainFoundException();
     }
 
-    void close() {
+    public void close() {
         logger.info("setting repeat to false");
         repeat.set(false);
         logger.info("repeat : " + repeat.get());

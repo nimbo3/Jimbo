@@ -5,6 +5,7 @@ import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 
 import java.math.BigInteger;
@@ -31,7 +32,7 @@ public class CacheService {
                 logger.error("exception in closing jedis", e);
             }
         }));
-        jedis = new Jedis();
+        jedis = new Jedis(HostAndPort.parseString(redisConfiguration.getNodes().get(0)));
         expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
         expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();
         logger.info("redis connection created.");

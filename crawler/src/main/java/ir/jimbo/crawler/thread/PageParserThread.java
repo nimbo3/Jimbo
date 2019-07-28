@@ -41,8 +41,7 @@ public class PageParserThread extends Thread{
     }
 
     // For Test
-    PageParserThread() {
-
+    public PageParserThread() {
     }
 
     @Override
@@ -71,8 +70,7 @@ public class PageParserThread extends Thread{
                 pageProducer.send(record);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(page, kafkaConfiguration);
-
+                addLinksToKafka(page);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -87,11 +85,10 @@ public class PageParserThread extends Thread{
         }
     }
 
-    private void addLinksToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
+    private void addLinksToKafka(Page page) {
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();
             if (isValidUri(link)) {
-//                logger.info("link extracted from page an now adding to kafka. link : " + link);
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
                 linkProducer.send(record);
             }
