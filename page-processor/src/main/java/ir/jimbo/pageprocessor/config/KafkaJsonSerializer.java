@@ -1,4 +1,4 @@
-package ir.jimbo.crawler.config;
+package ir.jimbo.pageprocessor.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serializer;
@@ -7,17 +7,16 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
-public class PageSerializer implements Serializer {
+public class KafkaJsonSerializer implements Serializer {
 
     private Logger logger = LogManager.getLogger(this.getClass());
 
     @Override
     public void configure(Map map, boolean b) {
-        //
+
     }
 
-    public PageSerializer() {
-        //
+    public KafkaJsonSerializer() {
     }
 
     @Override
@@ -34,7 +33,6 @@ public class PageSerializer implements Serializer {
 
     @Override
     public void close() {
-        //
+
     }
 }
-

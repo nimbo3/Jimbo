@@ -1,18 +1,18 @@
 package ir.jimbo.commons.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ElasticPage {
     private String url;
     private String title;
-    private Map<String, String> metaTags;
+    private List<String> metaTags;
     private List<String> h1List;
     private List<String> h2List;
     private List<String> h3to6List;
-    private StringBuilder text;
+    private String text;
 
     public ElasticPage() {
         this.url = "";
@@ -20,21 +20,22 @@ public class ElasticPage {
         this.h1List = new ArrayList<>();
         this.h2List = new ArrayList<>();
         this.h3to6List = new ArrayList<>();
-        this.text = new StringBuilder();
-        this.metaTags = new HashMap<>();
+        this.text = "";
+        this.metaTags = new ArrayList<>();
     }
 
     // Map page to ElasticPage
-    private ElasticPage(Page page) {
+    public ElasticPage(Page page) {
         this.url = page.getUrl();
         this.title = page.getTitle();
         this.h1List = new ArrayList<>();
         this.h2List = new ArrayList<>();
         this.h3to6List = new ArrayList<>();
-        this.text = new StringBuilder();
-        this.metaTags = new HashMap<>();
+        this.text = "";
+        this.metaTags = new ArrayList<>();
         for (HtmlTag meta : page.getMetadata()) {
-            metaTags.put(meta.getProps().get("name"), meta.getProps().get("content"));
+            String metaString = meta.getProps().get("name")+ ":: " + meta.getProps().get("content");
+            metaTags.add(metaString);
         }
         for (HtmlTag htmlTag : page.getH1List()) {
             h1List.add(htmlTag.getContent());
@@ -45,37 +46,11 @@ public class ElasticPage {
         for (HtmlTag htmlTag : page.getH3to6List()) {
             h3to6List.add(htmlTag.getContent());
         }
+        StringBuilder stringBuilder = new StringBuilder();
         for (HtmlTag htmlTag : page.getPlainTextList()) {
-            text.append(htmlTag.getContent());
+            stringBuilder.append(htmlTag.getContent());
         }
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public Map<String, String> getMetaTags() {
-        return metaTags;
-    }
-
-    public List<String> getH1List() {
-        return h1List;
-    }
-
-    public List<String> getH2List() {
-        return h2List;
-    }
-
-    public List<String> getH3to6List() {
-        return h3to6List;
-    }
-
-    public StringBuilder getText() {
-        return text;
+        text = stringBuilder.toString();
     }
 
     public void setUrl(String url) {
@@ -86,7 +61,7 @@ public class ElasticPage {
         this.title = title;
     }
 
-    public void setMetaTags(Map<String, String> metaTags) {
+    public void setMetaTags(List<String> metaTags) {
         this.metaTags = metaTags;
     }
 
@@ -102,7 +77,35 @@ public class ElasticPage {
         this.h3to6List = h3to6List;
     }
 
-    public void setText(StringBuilder text) {
+    public void setText(String text) {
         this.text = text;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public List<String> getMetaTags() {
+        return metaTags;
+    }
+
+    public List<String> getH1List() {
+        return h1List;
+    }
+
+    public List<String> getH2List() {
+        return h2List;
+    }
+
+    public List<String> getH3to6List() {
+        return h3to6List;
+    }
+
+    public String getText() {
+        return text;
     }
 }

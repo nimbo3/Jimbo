@@ -1,22 +1,33 @@
 package ir.jimbo.crawler.config;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
 
 public class AppConfiguration {
 
-    private Properties properties = new Properties();
     private int pageParserSize;
     private int linkConsumerSize;
+    private int queueSize;
 
     public AppConfiguration() throws IOException {
+        Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("appConfig.properties")));
 
-        linkConsumerSize = Integer.parseInt(getProperty("consumer.threads.size"));
-        pageParserSize = Integer.parseInt(getProperty("parser.threads.size"));
+        linkConsumerSize = Integer.parseInt(properties.getProperty("consumer.threads.size"));
+        pageParserSize = Integer.parseInt(properties.getProperty("parser.threads.size"));
+        queueSize = Integer.parseInt(properties.getProperty("queue.size"));
 
+    }
+
+    public AppConfiguration(String path) throws IOException {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(path));
+        linkConsumerSize = Integer.parseInt(properties.getProperty("consumer.threads.size"));
+        pageParserSize = Integer.parseInt(properties.getProperty("parser.threads.size"));
+        queueSize = Integer.parseInt(properties.getProperty("queue.size"));
     }
 
     public int getPageParserSize() {
@@ -27,8 +38,7 @@ public class AppConfiguration {
         return linkConsumerSize;
     }
 
-    private String getProperty(String key) {
-        return properties.getProperty(key);
+    public int getQueueSize() {
+        return queueSize;
     }
-
 }
