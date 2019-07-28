@@ -22,6 +22,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
