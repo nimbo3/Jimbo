@@ -50,21 +50,25 @@ public class LinkConsumer extends Thread {
                 uri = record.value();
                 logger.info("uri read from kafka : " + uri);
                 try {
-                    if (isPolite(uri)) {
-                        boolean isAdded;
-                        isAdded = App.linkQueue.offer(uri, 2000, TimeUnit.MILLISECONDS);
-                        if (isAdded) {
-                            logger.info("uri added to queue : " + uri);
-                            cacheService.addDomain(getDomain(uri));
-                            cacheService.addUrl(uri);
-                            logger.info("uri \"" + uri + "\" added to queue");
+                    if(!cacheService.isUrlExists(uri)) {
+                        if (isPolite(uri)) {
+                            boolean isAdded;
+                            isAdded = App.linkQueue.offer(uri, 2000, TimeUnit.MILLISECONDS);
+                            if (isAdded) {
+                                logger.info("uri added to queue : " + uri);
+                                cacheService.addDomain(getDomain(uri));
+                                cacheService.addUrl(uri);
+                                logger.info("uri \"" + uri + "\" added to queue");
+                            } else {
+                                logger.info("queue has not space for this url : " + uri);
+                                sendUriToKafka(uri, producer);
+                            }
                         } else {
-                            logger.info("queue has not space for this url : " + uri);
+                            logger.info("it was not polite crawling this uri : " + uri);
                             sendUriToKafka(uri, producer);
                         }
                     } else {
-                        logger.info("it was not polite crawling this uri : " + uri);
-                        sendUriToKafka(uri, producer);
+                        logger.info("this uri was saved in past 24 hours: " + uri);
                     }
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
@@ -101,7 +105,7 @@ public class LinkConsumer extends Thread {
     }
 
     private boolean isPolite(String uri) {
-        return !cacheService.isDomainExist(getDomain(uri)) && !cacheService.isUrlExists(uri);
+        return !cacheService.isDomainExist(getDomain(uri));
     }
 
     private String getDomain(String url) {

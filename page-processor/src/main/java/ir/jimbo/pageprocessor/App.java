@@ -34,7 +34,8 @@ public class App {
         String hTableName = hConfig.getPropertyValue("tableName");
         String hColumnFamily = hConfig.getPropertyValue("columnFamily");
         String hQualifier = hConfig.getPropertyValue("qualifier");
-        for (int i = 0; i < Integer.parseInt(jConfig.getPropertyValue("processor.threads.num")); i++) {
+        int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
+        for (int i = 0; i < threadCount; i++) {
             final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily, hQualifier, elasticSearchService);
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
