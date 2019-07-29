@@ -1,9 +1,7 @@
 package ir.jimbo.hbasepageprocessor;
 
-import ir.jimbo.hbasepageprocessor.config.ElasticSearchConfiguration;
 import ir.jimbo.hbasepageprocessor.config.HConfig;
 import ir.jimbo.hbasepageprocessor.config.JConfig;
-import ir.jimbo.hbasepageprocessor.manager.ElasticSearchService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
