@@ -40,7 +40,7 @@ public class App {
         LOGGER.info("starting parser threads");
         producers = new PageParserThread[parserThreadSize];
         for (int i = 0; i < parserThreadSize; i++) {
-            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch);
+            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch, cacheService);
             producers[i].start();
         }
 

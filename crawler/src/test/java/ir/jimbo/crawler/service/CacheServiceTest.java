@@ -16,7 +16,6 @@ public class CacheServiceTest {
     private RedisServer redisServer;
     @Before
     public void setUp() throws IOException {
-        //todo initialize
         redisServer = new RedisServer(6379);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
@@ -33,6 +32,10 @@ public class CacheServiceTest {
         cacheService.addDomain("domain");
         boolean result = cacheService.isDomainExist("domain");
         Assert.assertEquals(true, result);
+
+
+        result = cacheService.isDomainExist("domain2");
+        Assert.assertEquals(false, result);
     }
 
     @Test
@@ -40,6 +43,9 @@ public class CacheServiceTest {
         cacheService.addUrl("uri");
         boolean result = cacheService.isUrlExists("uri");
         Assert.assertEquals(true, result);
+
+        result = cacheService.isUrlExists("uri2");
+        Assert.assertEquals(false, result);
     }
 }
 

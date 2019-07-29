@@ -3,6 +3,7 @@ package ir.jimbo.crawler.thread;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -29,11 +30,13 @@ public class PageParserThread extends Thread{
     private CountDownLatch countDownLatch;
     private Producer<Long, String> linkProducer;
     private Producer<Long, Page> pageProducer;
+    private CacheService cacheService;
 
     public PageParserThread(ArrayBlockingQueue<String> queue,
-                            KafkaConfiguration kafkaConfiguration, CountDownLatch parserLatch) {
+                            KafkaConfiguration kafkaConfiguration, CountDownLatch parserLatch, CacheService cacheService) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
+        this.cacheService = cacheService;
         countDownLatch = parserLatch;
         repeat = new AtomicBoolean(true);
         linkProducer = kafkaConfiguration.getLinkProducer();
@@ -70,7 +73,7 @@ public class PageParserThread extends Thread{
                 pageProducer.send(record);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(page);
+//                addLinksToKafka(page);//todo uncomment
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -88,7 +91,7 @@ public class PageParserThread extends Thread{
     private void addLinksToKafka(Page page) {
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();
-            if (isValidUri(link)) {
+            if (isValidUri(link) && !cacheService.isUrlExists(page.getUrl())) {
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
                 linkProducer.send(record);
             }
