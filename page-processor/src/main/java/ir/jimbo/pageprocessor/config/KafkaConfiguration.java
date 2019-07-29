@@ -47,6 +47,7 @@ public class KafkaConfiguration extends Config {
                 ".commit"));
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, getPropertyValue("consumer.auto." +
                 "offset.reset"));
+        consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 10000);
         return consumerProperties;
     }
 
