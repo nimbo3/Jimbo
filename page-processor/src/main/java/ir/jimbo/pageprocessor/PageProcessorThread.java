@@ -8,8 +8,6 @@ import ir.jimbo.pageprocessor.manager.HTableManager;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,19 +23,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PageProcessorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageProcessorThread.class);
     private final HTableManager hTableManager;
-    private final String hQualifier;
     private Consumer<Long, Page> pageConsumer;
-    private KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
     private ElasticSearchService esService;
     private static AtomicInteger count = new AtomicInteger();
     private Long pollDuration;
 
-    public PageProcessorThread(String hTableName, String hColumnFamily, String hQualifier, ElasticSearchService esService) throws IOException {
+    public PageProcessorThread(String hTableName, String hColumnFamily, ElasticSearchService esService) throws IOException {
         hTableManager = new HTableManager(hTableName, hColumnFamily);
+        KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
         this.esService = esService;
         this.setName("page processor thread");
-        this.hQualifier = hQualifier;
         pollDuration = Long.parseLong(kafkaConfiguration.getPropertyValue("consumer.poll.duration"));
     }
 
