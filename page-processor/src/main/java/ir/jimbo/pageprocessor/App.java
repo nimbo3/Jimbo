@@ -1,11 +1,9 @@
 package ir.jimbo.pageprocessor;
 
-import ir.jimbo.pageprocessor.config.Config;
 import ir.jimbo.pageprocessor.config.ElasticSearchConfiguration;
 import ir.jimbo.pageprocessor.config.HConfig;
 import ir.jimbo.pageprocessor.config.JConfig;
 import ir.jimbo.pageprocessor.manager.ElasticSearchService;
-import ir.jimbo.pageprocessor.manager.HTableManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +20,7 @@ public class App {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 //            try {
 //                HTableManager.closeConnection();
-                pageProcessors.forEach(Thread::interrupt);
+            pageProcessors.forEach(Thread::interrupt);
 //            } catch (IOException e) {
 //                LOGGER.error("", e);
 //            }
@@ -33,8 +31,6 @@ public class App {
 
         String hTableName = hConfig.getPropertyValue("tableName");
         String hColumnFamily = hConfig.getPropertyValue("columnFamily");
-        for (int i = 0; i < Integer.parseInt(jConfig.getPropertyValue("processor.threads.num")); i++) {
-            final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily, elasticSearchService);
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
         for (int i = 0; i < threadCount; i++) {
             final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily, elasticSearchService);
