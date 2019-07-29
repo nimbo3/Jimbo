@@ -28,6 +28,7 @@ public class LinkConsumer extends Thread {
 
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    //Please refer to RFC 3986 - Appendix B for more information
 
 
     public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch) {
@@ -101,7 +102,7 @@ public class LinkConsumer extends Thread {
         return !cacheService.isDomainExist(getDomain(uri));
     }
 
-    private String getDomain(String url) {
+    public String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);

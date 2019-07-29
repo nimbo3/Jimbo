@@ -1,5 +1,7 @@
 package ir.jimbo.pageprocessor.manager;
 
+import ir.jimbo.commons.exceptions.JimboException;
+import ir.jimbo.crawler.LinkConsumer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.*;
@@ -7,8 +9,12 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.regex.Pattern;
 
 public class HTableManager {
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
@@ -46,7 +52,7 @@ public class HTableManager {
     }
 
     public void put(String row, String qualifier, String value) throws IOException {
-        table.put(new Put(getBytes(row)).addColumn(getBytes(columnFamilyName), getBytes(qualifier), getBytes(value)));
+        table.put(new Put(getBytes(getMd5(row))).addColumn(getBytes(columnFamilyName), getBytes(getMd5(qualifier)), getBytes(value)));
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
@@ -67,5 +73,22 @@ public class HTableManager {
     public void close() throws IOException {
         if (table != null)
             table.close();
+    }
+
+    private String getMd5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            byte[] messageDigest = md.digest(input.getBytes());
+
+            BigInteger no = new BigInteger(1, messageDigest);
+            StringBuilder hashText = new StringBuilder(no.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
+            }
+            return hashText.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new JimboException("fail in creating hash");
+        }
     }
 }
