@@ -28,6 +28,7 @@ public class LinkConsumer extends Thread {
 
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    //Please refer to RFC 3986 - Appendix B for more information
 
 
     public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch) {
@@ -61,11 +62,13 @@ public class LinkConsumer extends Thread {
                                 logger.info("uri \"" + uri + "\" added to queue");
                             } else {
                                 logger.info("queue has not space for this url : " + uri);
-                                sendUriToKafka(uri, producer);
+                                if(!cacheService.isUrlExists(uri))
+                                    sendUriToKafka(uri, producer);
                             }
                         } else {
                             logger.info("it was not polite crawling this uri : " + uri);
-                            sendUriToKafka(uri, producer);
+                            if(!cacheService.isUrlExists(uri))
+                                sendUriToKafka(uri, producer);
                         }
                     } else {
                         logger.info("this uri was saved in past 24 hours: " + uri);
@@ -74,7 +77,8 @@ public class LinkConsumer extends Thread {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
                     logger.error("error in putting uri to queue (interrupted exception) uri : " + uri);
-                    sendUriToKafka(uri, producer);
+                    if(!cacheService.isUrlExists(uri))
+                        sendUriToKafka(uri, producer);
                 }
             }
             try {
@@ -101,7 +105,7 @@ public class LinkConsumer extends Thread {
         return !cacheService.isDomainExist(getDomain(uri));
     }
 
-    private String getDomain(String url) {
+    public String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
