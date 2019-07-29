@@ -2,6 +2,7 @@ package ir.jimbo.hbasepageprocessor;
 
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.hbasepageprocessor.assets.HRow;
 import ir.jimbo.hbasepageprocessor.config.KafkaConfiguration;
 import ir.jimbo.hbasepageprocessor.manager.HTableManager;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -12,6 +13,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PageProcessorThread extends Thread {
@@ -20,6 +23,7 @@ public class PageProcessorThread extends Thread {
     private final HTableManager hTableManager;
     private Consumer<Long, Page> pageConsumer;
     private Long pollDuration;
+    private List<HRow> links = new ArrayList<>();
 
     public PageProcessorThread(String hTableName, String hColumnFamily) throws IOException {
         hTableManager = new HTableManager(hTableName, hColumnFamily);
@@ -40,11 +44,12 @@ public class PageProcessorThread extends Thread {
                     for (HtmlTag link : page.getLinks()) {
                         final String href = link.getProps().get("href");
                         if (href != null && !href.isEmpty())
-                            hTableManager.put(href, page.getUrl(), link.getContent());
+                            links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
                 }
-                count.getAndAdd(records.count());
-                LOGGER.info("number of pages: " + count.get());
+                hTableManager.put(links);
+                count.getAndAdd(links.size());
+                LOGGER.info("number of links: " + count.get());
                 LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
             } catch (Exception e) {
                 LOGGER.error("error in process messages", e);
