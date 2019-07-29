@@ -1,6 +1,7 @@
 package ir.jimbo.hbasepageprocessor.manager;
 
 import ir.jimbo.commons.exceptions.JimboException;
+import ir.jimbo.hbasepageprocessor.assets.HRow;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.*;
@@ -13,6 +14,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HTableManager {
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
@@ -47,10 +50,6 @@ public class HTableManager {
 
     private static byte[] getBytes(String string) {
         return string.getBytes(CHARSET);
-    }
-
-    public void put(String row, String qualifier, String value) throws IOException {
-        table.put(new Put(getBytes(getMd5(row))).addColumn(getBytes(columnFamilyName), getBytes(getMd5(qualifier)), getBytes(value)));
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
@@ -88,5 +87,14 @@ public class HTableManager {
         } catch (NoSuchAlgorithmException e) {
             throw new JimboException("fail in creating hash");
         }
+    }
+
+    public void put(List<HRow> links) throws IOException {
+        List<Put> puts = new ArrayList<>();
+        for (HRow link : links) {
+            puts.add(new Put(getBytes(getMd5(link.getRowKey()))).addColumn(getBytes(columnFamilyName), getBytes(getMd5(
+                    link.getQualifier())), getBytes(link.getValue())));
+        }
+        table.put(puts);
     }
 }
