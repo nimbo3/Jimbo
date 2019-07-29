@@ -48,6 +48,7 @@ public class PageProcessorThread extends Thread {
                     }
                 }
                 hTableManager.put(links);
+                links.clear();
                 count.getAndAdd(links.size());
                 LOGGER.info("number of links: " + count.get());
                 LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
