@@ -1,60 +1,99 @@
 package ir.jimbo.crawler.service;
 
 
+import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.redisson.Redisson;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
-import org.redisson.config.ClusterServersConfig;
-import org.redisson.config.Config;
+import redis.clients.jedis.HostAndPort;
+import redis.clients.jedis.Jedis;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 
 /**
  * class for connecting to redis database (LRU cache)
  */
 public class CacheService {
-
     private Logger logger = LogManager.getLogger(this.getClass());
-    private RedissonClient redissonClient;
     private int expiredTimeDomainMilis;
+    private int expiredTimeUrlMilis;
+    private Jedis jedis;
 
     public CacheService(RedisConfiguration redisConfiguration) {
 
         // On closing app
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> redissonClient.shutdown()));
-
-        Config config = new Config();
-        if (redisConfiguration.isStandAlone()) {
-            config.useSingleServer().setAddress("redis://" + redisConfiguration.getNodes().get(0))
-                    .setPassword(redisConfiguration.getPassword());
-        } else {
-            ClusterServersConfig clusterServersConfig = config.useClusterServers();
-            clusterServersConfig.setScanInterval(200);
-            for (String node : redisConfiguration.getNodes()) {
-                clusterServersConfig.addNodeAddress("redis://" + node);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                jedis.disconnect();
+            } catch (Exception e) {
+                logger.error("exception in closing jedis", e);
             }
-            clusterServersConfig.setPassword(redisConfiguration.getPassword());
-        }
-        redissonClient = Redisson.create(config);
-        expiredTimeDomainMilis = redisConfiguration.getExpiredTime();
+        }));
+        jedis = new Jedis(HostAndPort.parseString(redisConfiguration.getNodes().get(0)));
+        expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
+        expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();
         logger.info("redis connection created.");
     }
 
     public void addDomain(String domain) {
-        RBucket<Object> bucket = redissonClient.getBucket(domain);
-        long timeMillis = System.currentTimeMillis();
-        bucket.set(timeMillis);
-        logger.info("a domain added");
+        jedis.set(domain, String.valueOf(System.currentTimeMillis()));
+    }
+
+    public void addUrl(String url) {
+        String hashedUri = getMd5(url);
+        jedis.set(hashedUri, String.valueOf(System.currentTimeMillis()));
     }
 
     public boolean isDomainExist(String key) {
-        RBucket<Object> bucket = redissonClient.getBucket(key);
-        Long lastTime = (Long) bucket.get();
-        if (lastTime == null)
+        long lastTime;
+        try {
+            lastTime = Long.parseLong(jedis.get(key));
+        } catch (Exception e) {
             return false;
+        }
         long currentTime = System.currentTimeMillis();
-        logger.info("checking politeness. current time : " + currentTime + " lastTime : " + lastTime);
-        return currentTime - lastTime < expiredTimeDomainMilis;
+        if (currentTime - lastTime < expiredTimeDomainMilis) {
+            return true;
+        } else {
+            jedis.del(key);
+            return false;
+        }
+    }
+
+    public boolean isUrlExists(String uri) {
+        String hashedUri = getMd5(uri);
+        long lastTime;
+        try {
+            lastTime = Long.parseLong(jedis.get(hashedUri));
+        } catch (Exception e) {
+            return false;
+        }
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastTime < expiredTimeUrlMilis) {
+            return true;
+        } else {
+            jedis.del(hashedUri);
+            return false;
+        }
+    }
+
+    private String getMd5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            byte[] messageDigest = md.digest(input.getBytes());
+
+            BigInteger no = new BigInteger(1, messageDigest);
+            StringBuilder hashText = new StringBuilder(no.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
+            }
+            return hashText.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new JimboException("fail in creating hash");
+        }
     }
 }

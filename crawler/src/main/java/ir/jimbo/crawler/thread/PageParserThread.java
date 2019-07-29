@@ -3,92 +3,106 @@ package ir.jimbo.crawler.thread;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
-import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PageParserThread extends Thread{
 
     private Logger logger = LogManager.getLogger(this.getClass());
-    private LinkedBlockingQueue<String> queue;
+    private ArrayBlockingQueue<String> queue;
     private KafkaConfiguration kafkaConfiguration;
-    private CacheService cacheService;
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    // Regex pattern to extract domain from URL
-    // Please refer to RFC 3986 - Appendix B for more information
+    private AtomicBoolean repeat;
+    private CountDownLatch countDownLatch;
+    private Producer<Long, String> linkProducer;
+    private Producer<Long, Page> pageProducer;
 
-    public PageParserThread(LinkedBlockingQueue<String> queue,
-                            KafkaConfiguration kafkaConfiguration, CacheService cacheService) {
+    public PageParserThread(ArrayBlockingQueue<String> queue,
+                            KafkaConfiguration kafkaConfiguration, CountDownLatch parserLatch) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
-        this.cacheService = cacheService;
+        countDownLatch = parserLatch;
+        repeat = new AtomicBoolean(true);
+        linkProducer = kafkaConfiguration.getLinkProducer();
+        pageProducer = kafkaConfiguration.getPageProducer();
     }
 
     // For Test
-    PageParserThread() {
-
+    public PageParserThread() {
     }
 
     @Override
     public void run() {
-        Producer<Long, Page> producer = kafkaConfiguration.getPageProducer();
-        while (! interrupted()) {
+        while (repeat.get()) {
             String uri = null;
             try {
-                uri = queue.take();
+                uri = queue.poll(100, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                logger.error("interrupt exception in page parser",e);
+                logger.error("interrupt exception in page parser", e);
             }
-            if (uri == null)
+            if (uri == null) {
                 continue;
-            Page page = parse(uri);
-            ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
-                    page);
-            producer.send(record);
-            try {
-                cacheService.addDomain(getDomain(uri));
-            } catch (NoDomainFoundException e) {
-                logger.error("cant extract domain in PageParserThread from uri : " + uri, e);
             }
-            logger.info("page added to kafka, domain added to redis");
-            addLinkToKafka(page, kafkaConfiguration);
+            logger.info("uri " + uri + " catches from queue");
+            Page page = null;
+            try {
+                page = parse(uri);
+
+                if (page == null) {
+                    continue;
+                }
+
+                ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
+                        page);
+                pageProducer.send(record);
+
+                logger.info("page added to kafka");
+                addLinksToKafka(page);
+            } catch (Exception e) {
+                logger.error("1 parser thread was going to interrupt", e);
+            }
+
         }
-        producer.close();
+        countDownLatch.countDown();
+        try {
+            pageProducer.close();
+            linkProducer.close();
+        } catch (Exception e) {
+            logger.info("error in closing producer");
+        }
     }
 
-    private void addLinkToKafka(Page page, KafkaConfiguration kafkaConfiguration) {
-        Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
+    private void addLinksToKafka(Page page) {
         for (HtmlTag htmlTag : page.getLinks()) {
-            String link = htmlTag.getProps().get("href");
+            String link = htmlTag.getProps().get("href").trim();
             if (isValidUri(link)) {
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
-                producer.send(record);
+                linkProducer.send(record);
             }
         }
     }
 
     /**
-     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri dont have any extension.
+     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri do not have any extension.
      */
     private boolean isValidUri(String link) {
-        while (link.endsWith("/")) {
-            link = link.substring(0, link.length() - 1);
-        }
         try {
+            while (link.endsWith("/")) {
+                link = link.substring(0, link.length() - 1);
+            }
             if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
                     || ! link.substring(link.lastIndexOf('/') + 1).contains(".")) {
                 return true;
@@ -100,22 +114,17 @@ public class PageParserThread extends Thread{
         return false;
     }
 
-    private String getDomain(String url) {
-        final Matcher matcher = domainPattern.matcher(url);
-        if (matcher.matches())
-            return matcher.group(4);
-        throw new NoDomainFoundException();
-    }
-
     Page parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Document document;
         Page page = new Page();
         page.setUrl(url);
         try {
-            document = Jsoup.connect(url).get();
-        } catch (IOException e) {
-            logger.error("exception in connection to url. empty page instance returned", e);
+            Connection connect = Jsoup.connect(url);
+            connect.timeout(2000);
+            document = connect.get();
+        } catch (Exception e) { //
+            logger.error("exception in connection to url. empty page instance will return");
             return page;
         }
         for (Element element : document.getAllElements()) {
@@ -156,5 +165,9 @@ public class PageParserThread extends Thread{
         }
         logger.info("parsing page done.");
         return page;
+    }
+
+    public void close() {
+        repeat.set(false);
     }
 }
