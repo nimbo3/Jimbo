@@ -52,9 +52,13 @@ public class PageProcessorThread extends Thread {
                 links.clear();
                 LOGGER.info("number of links: " + count.get());
                 LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
-            } catch (Exception e) {
-                LOGGER.error("error in process messages", e);
+            } catch (IOException e) {
+                LOGGER.error("", e);
             }
         }
+    }
+
+    public void close() throws IOException {
+        hTableManager.close();
     }
 }

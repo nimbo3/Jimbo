@@ -105,7 +105,7 @@ public class LinkConsumer extends Thread {
         return !cacheService.isDomainExist(getDomain(uri));
     }
 
-    public String getDomain(String url) {
+    private String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);

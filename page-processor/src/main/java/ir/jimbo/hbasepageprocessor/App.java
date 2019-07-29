@@ -12,13 +12,20 @@ import java.util.List;
 
 public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
-    private static final List<Thread> pageProcessors = new ArrayList<>();
+    private static final List<PageProcessorThread> pageProcessors = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
         final JConfig jConfig = JConfig.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 pageProcessors.forEach(Thread::interrupt);
+                pageProcessors.forEach(o -> {
+                    try {
+                        o.close();
+                    } catch (IOException e) {
+                        LOGGER.error("", e);
+                    }
+                });
                 HTableManager.closeConnection();
             } catch (IOException e) {
                 LOGGER.error("", e);
