@@ -3,7 +3,6 @@ package ir.jimbo.hbasepageprocessor;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.hbasepageprocessor.config.KafkaConfiguration;
-import ir.jimbo.hbasepageprocessor.manager.ElasticSearchService;
 import ir.jimbo.hbasepageprocessor.manager.HTableManager;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -13,9 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PageProcessorThread extends Thread {
@@ -23,7 +19,6 @@ public class PageProcessorThread extends Thread {
     private static AtomicInteger count = new AtomicInteger();
     private final HTableManager hTableManager;
     private Consumer<Long, Page> pageConsumer;
-    private ElasticSearchService esService;
     private Long pollDuration;
 
     public PageProcessorThread(String hTableName, String hColumnFamily) throws IOException {

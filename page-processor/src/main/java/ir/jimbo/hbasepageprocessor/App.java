@@ -1,9 +1,8 @@
 package ir.jimbo.hbasepageprocessor;
 
-import ir.jimbo.hbasepageprocessor.config.ElasticSearchConfiguration;
 import ir.jimbo.hbasepageprocessor.config.HConfig;
 import ir.jimbo.hbasepageprocessor.config.JConfig;
-import ir.jimbo.hbasepageprocessor.manager.ElasticSearchService;
+import ir.jimbo.hbasepageprocessor.manager.HTableManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,18 +17,19 @@ public class App {
     public static void main(String[] args) throws IOException {
         final JConfig jConfig = JConfig.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//            try {
-//                HTableManager.closeConnection();
-            pageProcessors.forEach(Thread::interrupt);
-//            } catch (IOException e) {
-//                LOGGER.error("", e);
-//            }
+            try {
+                pageProcessors.forEach(Thread::interrupt);
+                HTableManager.closeConnection();
+            } catch (IOException e) {
+                LOGGER.error("", e);
+            }
         }));
         HConfig hConfig = HConfig.getInstance();
 
         String hTableName = hConfig.getPropertyValue("tableName");
         String hColumnFamily = hConfig.getPropertyValue("columnFamily");
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
+        LOGGER.info("Number of threads to run: " + threadCount);
         for (int i = 0; i < threadCount; i++) {
             final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily);
             pageProcessors.add(pageProcessorThread);
