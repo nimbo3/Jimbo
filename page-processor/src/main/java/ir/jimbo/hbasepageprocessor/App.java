@@ -1,9 +1,9 @@
-package ir.jimbo.pageprocessor;
+package ir.jimbo.hbasepageprocessor;
 
-import ir.jimbo.pageprocessor.config.ElasticSearchConfiguration;
-import ir.jimbo.pageprocessor.config.HConfig;
-import ir.jimbo.pageprocessor.config.JConfig;
-import ir.jimbo.pageprocessor.manager.ElasticSearchService;
+import ir.jimbo.hbasepageprocessor.config.ElasticSearchConfiguration;
+import ir.jimbo.hbasepageprocessor.config.HConfig;
+import ir.jimbo.hbasepageprocessor.config.JConfig;
+import ir.jimbo.hbasepageprocessor.manager.ElasticSearchService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,14 +26,12 @@ public class App {
 //            }
         }));
         HConfig hConfig = HConfig.getInstance();
-        ElasticSearchConfiguration elasticSearchConfiguration = ElasticSearchConfiguration.getInstance();
-        ElasticSearchService elasticSearchService = new ElasticSearchService(elasticSearchConfiguration);
 
         String hTableName = hConfig.getPropertyValue("tableName");
         String hColumnFamily = hConfig.getPropertyValue("columnFamily");
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
         for (int i = 0; i < threadCount; i++) {
-            final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily, elasticSearchService);
+            final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily);
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
         }

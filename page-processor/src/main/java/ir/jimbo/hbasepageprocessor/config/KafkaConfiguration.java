@@ -1,4 +1,4 @@
-package ir.jimbo.pageprocessor.config;
+package ir.jimbo.hbasepageprocessor.config;
 
 import ir.jimbo.commons.model.Page;
 import org.apache.kafka.clients.consumer.Consumer;

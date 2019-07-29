@@ -1,7 +1,6 @@
-package ir.jimbo.pageprocessor.manager;
+package ir.jimbo.hbasepageprocessor.manager;
 
 import ir.jimbo.commons.exceptions.JimboException;
-import ir.jimbo.crawler.LinkConsumer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.*;
@@ -14,7 +13,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.regex.Pattern;
 
 public class HTableManager {
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;

@@ -1,4 +1,4 @@
-package ir.jimbo.pageprocessor.config;
+package ir.jimbo.espageprocessor.config;
 
 import java.io.IOException;
 import java.util.Objects;

@@ -16,6 +16,8 @@
         <module>crawler</module>
         <module>commons</module>
         <module>page-processor</module>
+        <module>es-page-processor</module>
+        <module>es-page-processor</module>
     </modules>
 
     <properties>

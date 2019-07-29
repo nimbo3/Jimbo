@@ -1,4 +1,4 @@
-package ir.jimbo.pageprocessor.config;
+package ir.jimbo.espageprocessor.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.commons.model.Page;

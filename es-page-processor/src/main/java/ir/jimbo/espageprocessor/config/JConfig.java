@@ -1,4 +1,4 @@
-package ir.jimbo.pageprocessor.config;
+package ir.jimbo.espageprocessor.config;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

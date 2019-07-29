@@ -1,4 +1,4 @@
-package ir.jimbo.pageprocessor.manager;
+package ir.jimbo.hbasepageprocessor.manager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,8 +6,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.pageprocessor.config.ElasticSearchConfiguration;
-import ir.jimbo.pageprocessor.config.HConfig;
+import ir.jimbo.hbasepageprocessor.config.ElasticSearchConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionFuture;
@@ -22,7 +21,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 

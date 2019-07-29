@@ -1,4 +1,4 @@
-package ir.jimbo.pageprocessor.config;
+package ir.jimbo.hbasepageprocessor.config;
 
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
@@ -13,8 +13,6 @@ import java.net.Inet4Address;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
 
 @Getter
 public class ElasticSearchConfiguration extends Config {
