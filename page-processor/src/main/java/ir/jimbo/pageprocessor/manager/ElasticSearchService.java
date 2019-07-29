@@ -11,6 +11,7 @@ import ir.jimbo.pageprocessor.config.HConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -21,11 +22,12 @@ import org.elasticsearch.common.xcontent.XContentType;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class ElasticSearchService {
-    private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
+    private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
     private int requestTimeOutNanos;
@@ -44,7 +46,8 @@ public class ElasticSearchService {
             IndexRequest doc = new IndexRequest(indexName, "_doc", getMd5(page.getUrl()));
             byte[] bytes;
             try {
-                bytes = writer.writeValueAsBytes(new ElasticPage(page));
+                ElasticPage elasticPage = new ElasticPage(page);
+                bytes = writer.writeValueAsBytes(elasticPage);
             } catch (JsonProcessingException e) {
                 LOGGER.error("error in parsing page with url with jackson:" + page.getUrl(), e);
                 continue;
@@ -57,7 +60,16 @@ public class ElasticSearchService {
         bulkRequest.timeout(TimeValue.timeValueNanos(requestTimeOutNanos));
         ActionFuture<BulkResponse> bulk = client.bulk(bulkRequest);
         try {
-            return !bulk.get().hasFailures();
+            BulkResponse bulkItemResponses = bulk.get();
+            if (!bulkItemResponses.hasFailures())
+                return true;
+            else {
+                LOGGER.error(bulkItemResponses.buildFailureMessage());
+                for (BulkItemResponse bulkItemRespons : bulkItemResponses) {
+                    System.out.println(bulkItemRespons.getResponse().getResult());
+                }
+                return false;
+            }
         } catch (InterruptedException | ExecutionException e) {
             LOGGER.error("bulk insert has failures", e);
             return false;

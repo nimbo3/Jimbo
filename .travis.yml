@@ -20,5 +20,11 @@ cache:
 script:
   - cd commons; mvn test -B; cd ../crawler; mvn test -B; cd ../page-processor; mvn test -B;
 
+env:
+  - CODECOV_TOKEN="56ee8f25-34f9-4f26-ad34-688cc9450163"
+
 before_install:
- - mvn clean install;cd commons; mvn clean install;cd ..;
+  - mvn clean install;cd commons; mvn clean install;
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

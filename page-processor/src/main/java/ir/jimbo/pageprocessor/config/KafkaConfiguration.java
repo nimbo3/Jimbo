@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Properties;
 
 public class KafkaConfiguration extends Config {
-    private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
+    private static final Logger LOGGER = LogManager.getLogger(KafkaConfiguration.class);
     private static final String PREFIX = "kafka";
 
     private static KafkaConfiguration instance;
@@ -34,7 +34,7 @@ public class KafkaConfiguration extends Config {
         super(PREFIX);
     }
 
-    public Properties getConsumerPageProperties() {
+    public Properties getPageConsumerProperties() {
         Properties consumerProperties = new Properties();
         consumerProperties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, getPropertyValue("bootstrap." +
                 "servers"));
@@ -47,12 +47,12 @@ public class KafkaConfiguration extends Config {
                 ".commit"));
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, getPropertyValue("consumer.auto." +
                 "offset.reset"));
-        consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 10000);
+        consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Integer.parseInt(getPropertyValue("consumer.max.poll.interval.ms")));
         return consumerProperties;
     }
 
     public Consumer<Long, Page> getPageConsumer() {
-        KafkaConsumer<Long, Page> consumer = new KafkaConsumer<>(getConsumerPageProperties());
+        KafkaConsumer<Long, Page> consumer = new KafkaConsumer<>(getPageConsumerProperties());
         consumer.subscribe(Collections.singletonList(getPropertyValue("consumer.pages.topic.name")));
         return consumer;
     }

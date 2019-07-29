@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 
 public class JConfig extends Config {
-    private static final Logger LOGGER = LogManager.getLogger(HConfig.class);
+    private static final Logger LOGGER = LogManager.getLogger(JConfig.class);
     private static final String PREFIX = "java";
 
     private static JConfig instance = null;

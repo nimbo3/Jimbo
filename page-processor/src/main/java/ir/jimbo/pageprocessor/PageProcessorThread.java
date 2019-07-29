@@ -14,17 +14,18 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PageProcessorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageProcessorThread.class);
     private final HTableManager hTableManager;
     private Consumer<Long, Page> pageConsumer;
     private ElasticSearchService esService;
-    private BlockingQueue<Page> pagesQueue;
-
+    private static AtomicInteger count = new AtomicInteger();
     private Long pollDuration;
 
     public PageProcessorThread(String hTableName, String hColumnFamily, ElasticSearchService esService) throws IOException {
@@ -32,42 +33,40 @@ public class PageProcessorThread extends Thread {
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
         this.esService = esService;
+        this.setName("page processor thread");
         pollDuration = Long.parseLong(kafkaConfiguration.getPropertyValue("consumer.poll.duration"));
-        pagesQueue = new LinkedBlockingQueue<>();
     }
 
     @Override
     public void run() {
-        new Thread(() -> {
-            try {
-                Page page = pagesQueue.take();
-                for (HtmlTag link : page.getLinks()) {
-                    final String href = link.getProps().get("href");
-                    if (href != null && !href.isEmpty())
-                        hTableManager.put(href, page.getUrl(), link.getContent());
-                    LOGGER.info("All the links in page with URL " + page.getUrl() + " were added to HBase");
-                }
-            } catch (InterruptedException | IOException e) {
-                LOGGER.error("", e);
-            }
-        }).start();
         while (!interrupted()) {
-            ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
-            final long currentTimeMillis = System.currentTimeMillis();
-            List<Page> pages = new ArrayList<>();
-            for (ConsumerRecord<Long, Page> record : records) {
-                pages.add(record.value());
-                try {
-                    pagesQueue.put(record.value());
-                } catch (InterruptedException e) {
-                    LOGGER.error("", e);
+            try {
+                final long currentTimeMillis = System.currentTimeMillis();
+                ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
+                List<Page> pages = new ArrayList<>();
+                for (ConsumerRecord<Long, Page> record : records) {
+                    pages.add(record.value());
+//                    Page page = record.value();
+//                    HashSet<String> check = new HashSet<>();
+//                    if (check.contains(page.getUrl())) {
+//                        LOGGER.info("we have duplicated" + page.getUrl());
+//                    }
+//                    check.add(page.getUrl());
+//                    for (HtmlTag link : page.getLinks()) {
+//                        final String href = link.getProps().get("href");
+//                        if (href != null && !href.isEmpty())
+//                            hTableManager.put(href, page.getUrl(), link.getContent());
+//                    }
                 }
+                count.getAndAdd(pages.size());
+                boolean isAdded = esService.insertPages(pages);
+                LOGGER.info("number of pages: " + count.get());
+                if (!isAdded)
+                    LOGGER.info("ES insertion failed.");
+                LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
+            } catch (Exception e) {
+                LOGGER.error("error in process messages", e);
             }
-            boolean isAdded = esService.insertPages(pages);
-            if (!isAdded)
-                LOGGER.info("ES insertion failed.");
-            LOGGER.info(System.currentTimeMillis() - currentTimeMillis);
-            pageConsumer.commitSync();
         }
     }
 }
