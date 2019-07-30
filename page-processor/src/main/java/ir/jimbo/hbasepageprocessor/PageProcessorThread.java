@@ -44,13 +44,14 @@ public class PageProcessorThread extends Thread {
                     for (HtmlTag link : page.getLinks()) {
                         final String href = link.getProps().get("href");
                         if (href != null && !href.isEmpty())
-                            links.add(new HRow(href, page.getUrl(), link.getContent()));
+                            hTableManager.put(new HRow(href, page.getUrl(), link.getContent()));
+//                            links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
                 }
-                hTableManager.put(links);
-                count.getAndAdd(links.size());
-                links.clear();
-                LOGGER.info("number of links: " + count.get());
+//                hTableManager.put(links);
+//                count.getAndAdd(links.size());
+//                links.clear();
+//                LOGGER.info("number of links: " + count.get());
                 LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
             } catch (IOException e) {
                 LOGGER.error("", e);
