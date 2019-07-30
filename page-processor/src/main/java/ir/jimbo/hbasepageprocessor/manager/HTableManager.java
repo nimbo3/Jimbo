@@ -95,8 +95,9 @@ public class HTableManager {
     }
 
     public void put(HRow link) throws IOException {
-        table.put(new Put(getMd5(link.getRowKey())).addColumn(getBytes(columnFamilyName), ArrayUtils.addAll(getMd5(
-                getDomain(link.getQualifier())), getMd5(link.getQualifier())), getBytes(link.getValue())));
+        table.put(new Put(ArrayUtils.addAll(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(
+                getBytes(columnFamilyName), ArrayUtils.addAll(getMd5(getDomain(link.getQualifier())), getMd5(link.
+                        getQualifier())), getBytes(link.getValue())));
     }
 
     private String getDomain(String url) {
