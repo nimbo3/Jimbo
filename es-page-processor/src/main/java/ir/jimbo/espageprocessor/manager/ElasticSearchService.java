@@ -63,8 +63,8 @@ public class ElasticSearchService {
                 return true;
             else {
                 LOGGER.error(bulkItemResponses.buildFailureMessage());
-                for (BulkItemResponse bulkItemRespons : bulkItemResponses) {
-                    System.out.println(bulkItemRespons.getResponse().getResult());
+                for (BulkItemResponse bulkItemResponse : bulkItemResponses) {
+                    LOGGER.info(bulkItemResponse.getResponse().getResult());
                 }
                 return false;
             }
