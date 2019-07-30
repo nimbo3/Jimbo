@@ -1,8 +1,8 @@
 package ir.jimbo.hbasepageprocessor.manager;
 
-import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -13,7 +13,6 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -40,8 +39,9 @@ public class HTableManager {
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     private Table table;
     private String columnFamilyName;
+    private MessageDigest md = MessageDigest.getInstance("MD5");
 
-    public HTableManager(String tableName, String columnFamilyName) throws IOException {
+    public HTableManager(String tableName, String columnFamilyName) throws IOException, NoSuchAlgorithmException {
         this.columnFamilyName = columnFamilyName;
         checkConnection();
         table = getTable(tableName, columnFamilyName);
@@ -81,36 +81,23 @@ public class HTableManager {
             table.close();
     }
 
-    private StringBuilder getMd5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            BigInteger no = new BigInteger(1, messageDigest);
-            StringBuilder hashText = new StringBuilder(no.toString(16));
-            while (hashText.length() < 32) {
-                hashText.insert(0, "0");
-            }
-            return new StringBuilder(hashText.toString());
-        } catch (NoSuchAlgorithmException e) {
-            throw new JimboException("fail in creating hash");
-        }
+    private byte[] getMd5(String input) {
+        return md.digest(input.getBytes());
     }
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
         for (HRow link : links)
-            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey())).append(getMd5(link.getRowKey())).toString())).
-                    addColumn(getBytes(columnFamilyName), getBytes(getMd5(getDomain(link.getQualifier())).append(getMd5(
-                            link.getQualifier())).toString()), getBytes(link.getValue())));
+            puts.add(new Put(ArrayUtils.addAll(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).
+                    addColumn(getBytes(columnFamilyName), ArrayUtils.addAll(getMd5(getDomain(link.getQualifier())), getMd5(
+                            link.getQualifier())), getBytes(link.getValue())));
         table.put(puts);
     }
 
     public void put(HRow link) throws IOException {
-        table.put(new Put(getBytes(getMd5(getDomain(link.getRowKey())).append(getMd5(link.getRowKey())).toString())).
-                addColumn(getBytes(columnFamilyName), getBytes(getMd5(getDomain(link.getQualifier())).append(getMd5(
-                        link.getQualifier())).toString()), getBytes(link.getValue())));
+        table.put(new Put(ArrayUtils.addAll(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).
+                addColumn(getBytes(columnFamilyName), ArrayUtils.addAll(getMd5(getDomain(link.getQualifier())), getMd5(
+                        link.getQualifier())), getBytes(link.getValue())));
     }
 
     private String getDomain(String url) {
