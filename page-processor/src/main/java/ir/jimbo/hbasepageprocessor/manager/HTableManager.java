@@ -5,7 +5,10 @@ import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
 
@@ -21,11 +24,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HTableManager {
-    // Regex pattern to extract domain from URL
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    //Please refer to RFC 3986 - Appendix B for more information
-
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
+    //Please refer to RFC 3986 - Appendix B for more information
     private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
@@ -36,6 +36,8 @@ public class HTableManager {
         config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
     }
 
+    // Regex pattern to extract domain from URL
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     private Table table;
     private String columnFamilyName;
 
@@ -103,6 +105,12 @@ public class HTableManager {
                     addColumn(getBytes(columnFamilyName), getBytes(getMd5(getDomain(link.getQualifier())).append(getMd5(
                             link.getQualifier())).toString()), getBytes(link.getValue())));
         table.put(puts);
+    }
+
+    public void put(HRow link) throws IOException {
+        table.put(new Put(getBytes(getMd5(getDomain(link.getRowKey())).append(getMd5(link.getRowKey())).toString())).
+                addColumn(getBytes(columnFamilyName), getBytes(getMd5(getDomain(link.getQualifier())).append(getMd5(
+                        link.getQualifier())).toString()), getBytes(link.getValue())));
     }
 
     private String getDomain(String url) {
