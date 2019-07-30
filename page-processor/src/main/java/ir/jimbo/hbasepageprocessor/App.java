@@ -1,5 +1,6 @@
 package ir.jimbo.hbasepageprocessor;
 
+import com.codahale.metrics.Counter;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.hbasepageprocessor.config.HConfig;
 import ir.jimbo.hbasepageprocessor.config.JConfig;
@@ -46,5 +47,31 @@ public class App {
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
         }
+        aliveThreadCounter(metrics, Long.parseLong(metrics.getProperty("metric.check.threads.duration.milis")),
+                metrics.getProperty("checker.thread.name"));
+    }
+
+    private static void aliveThreadCounter(MetricConfiguration metrics, long duration, String counterName) {
+        new Thread(() -> {
+            Counter hBaseThreadNum = metrics.getNewCounter(counterName);
+            while (true) {
+                hBaseThreadNum.dec(hBaseThreadNum.getCount());
+                hBaseThreadNum.inc(getAllWakeThreads(hBaseThreadNum));
+                try {
+                    Thread.sleep(duration);
+                } catch (Exception e) {
+                    LOGGER.error("checker thread for counting alive threads died", e);
+                }
+            }
+        }).start();
+    }
+
+    private static long getAllWakeThreads(Counter counter) {
+        for (PageProcessorThread parser: pageProcessors) {
+            if (parser.isAlive()) {
+                counter.inc();
+            }
+        }
+        return counter.getCount();
     }
 }

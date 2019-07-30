@@ -48,7 +48,7 @@ public class HTableManager extends HealthCheck {
         this.columnFamilyName = columnFamilyName;
         checkConnection();
         table = getTable(tableName, columnFamilyName);
-        hBaseInsertTime = metrics.getNewTimer("HBaseInsertTime"); // TODO injectable.
+        hBaseInsertTime = metrics.getNewTimer(metrics.getProperty("hbase.put.duration.timer.name"));
     }
 
     public static void closeConnection() throws IOException {
@@ -111,7 +111,7 @@ public class HTableManager extends HealthCheck {
                     columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
         }
         table.put(puts);
-        long putDuration = putContext.stop();   // TODO send to grafana/grafite/...
+        putContext.stop();
     }
 
     private String getDomain(String url) {
@@ -122,7 +122,7 @@ public class HTableManager extends HealthCheck {
     }
 
     @Override
-    protected Result check() throws Exception {
+    protected Result check() {
         if (connection == null)
             return Result.unhealthy("connection is null");
         if (connection.isClosed())

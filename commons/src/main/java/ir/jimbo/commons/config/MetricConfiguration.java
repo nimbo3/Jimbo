@@ -15,9 +15,10 @@ public class MetricConfiguration {
     private Graphite graphite;
     private int graphitePort = 2003;
     private String graphiteUrl;
+    private Properties properties;
 
     public MetricConfiguration() throws IOException {
-        Properties properties = new Properties();
+        properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("metric.properties")));
         metricRegistry = new MetricRegistry();
@@ -51,5 +52,9 @@ public class MetricConfiguration {
                 .filter(MetricFilter.ALL)
                 .build(graphite);
         reporter.start(1, TimeUnit.MINUTES);
+    }
+
+    public String getProperty(String key) {
+        return properties.getProperty(key);
     }
 }

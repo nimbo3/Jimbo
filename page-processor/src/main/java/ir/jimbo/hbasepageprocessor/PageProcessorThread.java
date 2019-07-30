@@ -39,8 +39,8 @@ public class PageProcessorThread extends Thread {
 
     @Override
     public void run() {
-        Timer insertHBaseTimer = metrics.getNewTimer("insertHBaseTimer");
-        Counter linksCounter = metrics.getNewCounter("linksCounter");
+        Timer insertHBaseTimer = metrics.getNewTimer(metrics.getProperty("hbase.record.process.timer.name"));
+        Counter linksCounter = metrics.getNewCounter(metrics.getProperty("hbase.links.readed.from.kafka.counter.name"));
         while (!interrupted()) {
             try {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
