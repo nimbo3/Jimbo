@@ -1,5 +1,8 @@
 package ir.jimbo.hbasepageprocessor.manager;
 
+import com.codahale.metrics.Timer;
+import com.yammer.metrics.core.HealthCheck;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
@@ -20,7 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HTableManager {
+public class HTableManager extends HealthCheck {
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
@@ -30,6 +33,7 @@ public class HTableManager {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
     private static Connection connection = null;
+    private Timer hBaseInsertTime;
 
     static {
         config.addResource(new Path(System.getenv("HBASE_CONF_DIR"), "hbase-site.xml"));
@@ -39,10 +43,12 @@ public class HTableManager {
     private Table table;
     private String columnFamilyName;
 
-    public HTableManager(String tableName, String columnFamilyName) throws IOException {
+    public HTableManager(String tableName, String columnFamilyName, String healthCheckerName, MetricConfiguration metrics) throws IOException {
+        super(healthCheckerName);    // HealthChecker need this, parameter is the name of health checker
         this.columnFamilyName = columnFamilyName;
         checkConnection();
         table = getTable(tableName, columnFamilyName);
+        hBaseInsertTime = metrics.getNewTimer("HBaseInsertTime"); // TODO injectable.
     }
 
     public static void closeConnection() throws IOException {
@@ -60,6 +66,7 @@ public class HTableManager {
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
+
         final Admin admin = connection.getAdmin();
         final TableName tableNameValue = TableName.valueOf(tableName);
         if (admin.tableExists(tableNameValue)) {
@@ -98,11 +105,13 @@ public class HTableManager {
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
+        Timer.Context putContext = hBaseInsertTime.time();
         for (HRow link : links) {
             puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
                     columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
         }
         table.put(puts);
+        long putDuration = putContext.stop();   // TODO send to grafana/grafite/...
     }
 
     private String getDomain(String url) {
@@ -110,5 +119,14 @@ public class HTableManager {
         if (matcher.matches())
             return matcher.group(4);
         throw new NoDomainFoundException();
+    }
+
+    @Override
+    protected Result check() throws Exception {
+        if (connection == null)
+            return Result.unhealthy("connection is null");
+        if (connection.isClosed())
+            return Result.unhealthy("connection is closed");
+        return Result.healthy();
     }
 }

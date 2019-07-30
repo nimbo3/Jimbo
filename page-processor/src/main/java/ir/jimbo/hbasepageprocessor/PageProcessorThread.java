@@ -28,7 +28,8 @@ public class PageProcessorThread extends Thread {
     private MetricConfiguration metrics;
 
     public PageProcessorThread(String hTableName, String hColumnFamily, MetricConfiguration metrics) throws IOException {
-        hTableManager = new HTableManager(hTableName, hColumnFamily);
+        hTableManager = new HTableManager(hTableName, hColumnFamily,"HBaseHealthChecker", metrics);
+        // TODO inject healthChecker name above
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
         this.setName("hbase-page processor thread");
@@ -52,7 +53,9 @@ public class PageProcessorThread extends Thread {
                         if (href != null && !href.isEmpty())
                             links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
-                    long hbaseInsertDuration = oneInsertContext.stop(); ///////
+                    long hbaseInsertDuration = oneInsertContext.stop();
+                    ///////
+                    LOGGER.info("time passed for processing one page : {}", hbaseInsertDuration);
                 }
                 hTableManager.put(links);
                 LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), pagesProcessDurationContext.stop());
