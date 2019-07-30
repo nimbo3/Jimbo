@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -88,16 +89,16 @@ public class HTableManager {
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
         for (HRow link : links)
-            puts.add(new Put(ArrayUtils.addAll(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).
-                    addColumn(getBytes(columnFamilyName), ArrayUtils.addAll(getMd5(getDomain(link.getQualifier())), getMd5(
-                            link.getQualifier())), getBytes(link.getValue())));
+            puts.add(new Put(Bytes.add(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(
+                    getBytes(columnFamilyName), Bytes.add(getMd5(getDomain(link.getQualifier())), getMd5(link.
+                            getQualifier())), getBytes(link.getValue())));
         table.put(puts);
     }
 
     public void put(HRow link) throws IOException {
-        table.put(new Put(ArrayUtils.addAll(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(
-                getBytes(columnFamilyName), ArrayUtils.addAll(getMd5(getDomain(link.getQualifier())), getMd5(link.
-                        getQualifier())), getBytes(link.getValue())));
+        table.put(new Put(Bytes.add(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(getBytes(
+                columnFamilyName), Bytes.add(getMd5(getDomain(link.getQualifier())), getMd5(link.getQualifier())),
+                getBytes(link.getValue())));
     }
 
     private String getDomain(String url) {
