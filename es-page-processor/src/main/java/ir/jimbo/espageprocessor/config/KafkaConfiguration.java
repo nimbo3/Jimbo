@@ -45,6 +45,7 @@ public class KafkaConfiguration extends Config {
                 "consumer.max.poll.record")));
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, getPropertyValue("consumer.auto" +
                 ".commit"));
+        consumerProperties.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, getPropertyValue("consumer.fetch.min.bytes"));
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, getPropertyValue("consumer.auto." +
                 "offset.reset"));
         consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Integer.parseInt(getPropertyValue("consumer.max.poll.interval.ms")));
