@@ -83,6 +83,8 @@ public class HTableManager {
     }
 
     private byte[] getMd5(String input) {
+        if (input == null)
+            return "".getBytes();
         return md.digest(input.getBytes());
     }
 
