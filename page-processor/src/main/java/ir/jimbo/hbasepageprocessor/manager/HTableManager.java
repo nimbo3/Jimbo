@@ -79,7 +79,7 @@ public class HTableManager {
             table.close();
     }
 
-    private String getMd5(String input) {
+    private StringBuilder getMd5(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -90,7 +90,7 @@ public class HTableManager {
             while (hashText.length() < 32) {
                 hashText.insert(0, "0");
             }
-            return hashText.toString();
+            return new StringBuilder(hashText.toString());
         } catch (NoSuchAlgorithmException e) {
             throw new JimboException("fail in creating hash");
         }
@@ -99,8 +99,9 @@ public class HTableManager {
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
         for (HRow link : links)
-            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey())) + getMd5(link.getRowKey()))).addColumn(
-                    getBytes(columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
+            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey())).append(getMd5(link.getRowKey())).toString())).
+                    addColumn(getBytes(columnFamilyName), getBytes(getMd5(getDomain(link.getQualifier())).append(getMd5(
+                            link.getQualifier())).toString()), getBytes(link.getValue())));
         table.put(puts);
     }
 
