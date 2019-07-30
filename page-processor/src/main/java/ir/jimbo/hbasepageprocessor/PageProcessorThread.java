@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class PageProcessorThread extends Thread {
     private Long pollDuration;
     private List<HRow> links = new ArrayList<>();
 
-    public PageProcessorThread(String hTableName, String hColumnFamily) throws IOException {
+    public PageProcessorThread(String hTableName, String hColumnFamily) throws IOException, NoSuchAlgorithmException {
         hTableManager = new HTableManager(hTableName, hColumnFamily);
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
