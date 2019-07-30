@@ -45,7 +45,6 @@ public class PageProcessorThread extends Thread {
                     for (HtmlTag link : page.getLinks()) {
                         final String href = link.getProps().get("href");
                         if (href != null && !href.isEmpty())
-//                            hTableManager.put(new HRow(href, page.getUrl(), link.getContent()));
                             links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
                 }
