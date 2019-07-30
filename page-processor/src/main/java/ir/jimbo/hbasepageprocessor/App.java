@@ -1,5 +1,6 @@
 package ir.jimbo.hbasepageprocessor;
 
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.hbasepageprocessor.config.HConfig;
 import ir.jimbo.hbasepageprocessor.config.JConfig;
 import ir.jimbo.hbasepageprocessor.manager.HTableManager;
@@ -15,6 +16,9 @@ public class App {
     private static final List<PageProcessorThread> pageProcessors = new ArrayList<>();
 
     public static void main(String[] args) throws IOException {
+
+        MetricConfiguration metrics = new MetricConfiguration();
+
         final JConfig jConfig = JConfig.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -38,7 +42,7 @@ public class App {
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
         LOGGER.info("Number of threads to run: " + threadCount);
         for (int i = 0; i < threadCount; i++) {
-            final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily);
+            final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily, metrics);
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
         }
