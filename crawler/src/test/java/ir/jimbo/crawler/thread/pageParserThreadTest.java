@@ -14,7 +14,7 @@ import java.net.InetSocketAddress;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
-public class PageParserThreadTest {
+public class pageParserThreadTest {
     private HttpServer server;
 
     @Before
