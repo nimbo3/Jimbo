@@ -98,10 +98,9 @@ public class HTableManager {
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
-        for (HRow link : links) {
-            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
-                    columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
-        }
+        for (HRow link : links)
+            puts.add(new Put(getBytes(getRowKey(link.getRowKey()))).addColumn(getBytes(columnFamilyName), getBytes(
+                    getRowKey(link.getQualifier())), getBytes(link.getValue())));
         table.put(puts);
     }
 
@@ -110,5 +109,9 @@ public class HTableManager {
         if (matcher.matches())
             return matcher.group(4);
         throw new NoDomainFoundException();
+    }
+
+    private String getRowKey(String url) {
+        return getMd5(getDomain(url)) + getMd5(url);
     }
 }
