@@ -1,16 +1,19 @@
 package ir.jimbo.hbasepageprocessor.manager;
 
-import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -21,11 +24,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HTableManager {
-    // Regex pattern to extract domain from URL
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    //Please refer to RFC 3986 - Appendix B for more information
-
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
+    //Please refer to RFC 3986 - Appendix B for more information
     private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
@@ -36,10 +36,13 @@ public class HTableManager {
         config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
     }
 
+    // Regex pattern to extract domain from URL
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     private Table table;
     private String columnFamilyName;
+    private MessageDigest md = MessageDigest.getInstance("MD5");
 
-    public HTableManager(String tableName, String columnFamilyName) throws IOException {
+    public HTableManager(String tableName, String columnFamilyName) throws IOException, NoSuchAlgorithmException {
         this.columnFamilyName = columnFamilyName;
         checkConnection();
         table = getTable(tableName, columnFamilyName);
@@ -79,30 +82,25 @@ public class HTableManager {
             table.close();
     }
 
-    private String getMd5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            BigInteger no = new BigInteger(1, messageDigest);
-            StringBuilder hashText = new StringBuilder(no.toString(16));
-            while (hashText.length() < 32) {
-                hashText.insert(0, "0");
-            }
-            return hashText.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new JimboException("fail in creating hash");
-        }
+    private byte[] getMd5(String input) {
+        if (input == null)
+            return "".getBytes();
+        return md.digest(input.getBytes());
     }
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
-        for (HRow link : links) {
-            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
-                    columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
-        }
+        for (HRow link : links)
+            puts.add(new Put(Bytes.add(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(
+                    getBytes(columnFamilyName), Bytes.add(getMd5(getDomain(link.getQualifier())), getMd5(link.
+                            getQualifier())), getBytes(link.getValue())));
         table.put(puts);
+    }
+
+    public void put(HRow link) throws IOException {
+        table.put(new Put(Bytes.add(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(getBytes(
+                columnFamilyName), Bytes.add(getMd5(getDomain(link.getQualifier())), getMd5(link.getQualifier())),
+                getBytes(link.getValue())));
     }
 
     private String getDomain(String url) {
