@@ -1,7 +1,6 @@
 package ir.jimbo.hbasepageprocessor.manager;
 
 import ir.jimbo.commons.exceptions.JimboException;
-import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -17,14 +16,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class HTableManager {
-    // Regex pattern to extract domain from URL
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    //Please refer to RFC 3986 - Appendix B for more information
-
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
     private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
@@ -99,16 +92,9 @@ public class HTableManager {
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
         for (HRow link : links) {
-            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
-                    columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
+            puts.add(new Put(getBytes(getMd5(link.getRowKey()))).addColumn(getBytes(columnFamilyName), getBytes(getMd5(
+                    link.getQualifier())), getBytes(link.getValue())));
         }
         table.put(puts);
-    }
-
-    private String getDomain(String url) {
-        final Matcher matcher = domainPattern.matcher(url);
-        if (matcher.matches())
-            return matcher.group(4);
-        throw new NoDomainFoundException();
     }
 }
