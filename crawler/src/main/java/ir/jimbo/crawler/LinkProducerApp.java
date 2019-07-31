@@ -9,6 +9,7 @@ import java.util.Scanner;
 
 public class LinkProducerApp {
     public static KafkaConfiguration kafkaConfiguration;
+
     public static void main(String[] args) throws IOException {
         kafkaConfiguration = new KafkaConfiguration();
         Scanner scanner = new Scanner(System.in);

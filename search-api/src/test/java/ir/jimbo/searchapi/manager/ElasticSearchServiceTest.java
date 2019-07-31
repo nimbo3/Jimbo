@@ -67,7 +67,7 @@ public class ElasticSearchServiceTest {
         Page page = new Page("url", "test", Collections.EMPTY_LIST
                 , Arrays.asList(new HtmlTag("test", "http://test.com")), Arrays.asList(new HtmlTag("", "h1"))
                 , Arrays.asList(new HtmlTag("", "h2"))
-                , Arrays.asList(new HtmlTag("", "h3")), Arrays.asList(new HtmlTag("test_text")));
+                , Arrays.asList(new HtmlTag("", "h3")), Arrays.asList(new HtmlTag("test_text", "test_text")));
 
         IndexRequest doc = new IndexRequest("page", "_doc", hashUtil.getMd5("url"));
         byte[] bytes;
@@ -75,8 +75,8 @@ public class ElasticSearchServiceTest {
         bytes = objectMapper.writeValueAsBytes(elasticPage);
         doc.source(bytes, XContentType.JSON);
         elasticSearchService.getClient().index(doc);
-
-        List<SearchResult> result = elasticSearchService.getSearch(new SearchQuery("url", "url", "url"));
-        Assert.assertArrayEquals(Collections.<SearchResult>singletonList(new SearchResult("url", "text", "test_text")).toArray(), result.toArray());
+        Thread.sleep(10000);
+        List<SearchResult> result = elasticSearchService.getSearch(new SearchQuery("test", "test", "test"));
+        Assert.assertArrayEquals(Collections.<SearchResult>singletonList(new SearchResult("test", "test_text", "url")).toArray(), result.toArray());
     }
 }
