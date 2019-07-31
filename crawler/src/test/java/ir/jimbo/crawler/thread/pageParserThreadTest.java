@@ -4,7 +4,6 @@ import com.sun.net.httpserver.HttpServer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
-import ir.jimbo.crawler.config.RedisConfigurationTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class pageParserThreadTest {
     @Test
     public void testTitle() throws IOException {
         PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
-        Page page = pageParser.parse("http://localhost:9898/test");
+        Pair<Page, Page> parsed = pageParser.parse("http://localhost:9898/test");
         assertEquals("Test page Title", page.getTitle());
     }
 
