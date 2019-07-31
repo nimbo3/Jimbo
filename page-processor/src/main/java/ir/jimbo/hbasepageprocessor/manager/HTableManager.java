@@ -92,7 +92,7 @@ public class HTableManager extends HealthCheck {
 
     private byte[] getMd5(String input) {
         if (input == null)
-            return getBytes(input);
+            return getBytes("");
         return md.digest(getBytes(input));
     }
 
