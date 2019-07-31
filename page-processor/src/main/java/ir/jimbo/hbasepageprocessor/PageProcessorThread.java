@@ -29,7 +29,7 @@ public class PageProcessorThread extends Thread {
     private MetricConfiguration metrics;
 
 
-    public PageProcessorThread(String hTableName, String hColumnFamily, MetricConfiguration metrics) throws IOException {
+    public PageProcessorThread(String hTableName, String hColumnFamily, MetricConfiguration metrics) throws IOException, NoSuchAlgorithmException {
         hTableManager = new HTableManager(hTableName, hColumnFamily,"HBaseHealthChecker", metrics);
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
@@ -66,8 +66,6 @@ public class PageProcessorThread extends Thread {
             } catch (IOException e) {
                 LOGGER.error("IO error in pageProcessor thread", e);
 
-                LOGGER.info("number of links: " + count.get());
-                LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
             } catch (Exception e) {
                 LOGGER.error("", e);
 

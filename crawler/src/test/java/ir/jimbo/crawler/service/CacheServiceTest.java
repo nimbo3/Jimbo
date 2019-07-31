@@ -19,7 +19,7 @@ public class CacheServiceTest {
         redisServer = new RedisServer(6379);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
-        cacheService = new CacheService(redisConfiguration);
+        cacheService = new CacheService(redisConfiguration, "test");
     }
 
     @After

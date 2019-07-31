@@ -47,12 +47,11 @@ public class HTableManager extends HealthCheck {
     }
 
     // Regex pattern to extract domain from URL
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     private Table table;
     private String columnFamilyName;
     private MessageDigest md = MessageDigest.getInstance("MD5");
 
-    public HTableManager(String tableName, String columnFamilyName, String healthCheckerName, MetricConfiguration metrics) throws IOException {
+    public HTableManager(String tableName, String columnFamilyName, String healthCheckerName, MetricConfiguration metrics) throws IOException, NoSuchAlgorithmException {
         super(healthCheckerName);    // HealthChecker need this, parameter is the name of health checker
 
         this.columnFamilyName = columnFamilyName;
@@ -107,8 +106,8 @@ public class HTableManager extends HealthCheck {
       
         Timer.Context putContext = hBaseInsertTime.time();
         for (HRow link : links) {
-            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
-                    columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
+//            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
+//                    columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
         }
         table.put(puts);
         putContext.stop();

@@ -77,7 +77,7 @@ public class PageParserThread extends Thread{
                 pageProducer.send(record);
 
                 logger.info("page added to kafka");
-//                addLinksToKafka(page);//todo uncomment
+                addLinksToKafka(page);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -97,7 +97,7 @@ public class PageParserThread extends Thread{
     private void addLinksToKafka(Page page) {
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();
-            if (isValidUri(link) && !cacheService.isUrlExists(page.getUrl())) {
+            if (isValidUri(link)) {
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
                 linkProducer.send(record);
             }
