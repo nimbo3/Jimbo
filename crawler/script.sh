@@ -1,4 +1,4 @@
-mvn clean package
+mvn clean package -DskipTests
 echo "sending to server4 (46.4.40.237)"
 ssh -p 3031 jimbo@46.4.40.237 'rm crawler-0.0.1-SNAPSHOT.jar'
 scp -P 3031 target/crawler-0.0.1-SNAPSHOT.jar jimbo@46.4.40.237:~/

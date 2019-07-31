@@ -34,9 +34,7 @@ public class CacheService extends HealthCheck {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 redis.shutdown();
-            } catch (Exception e) {
-                logger.error("exception in closing jedis", e);
-            }
+            } catch (Exception e) { logger.error("exception in closing redisson", e); }
         }));
 
         Config config = new Config();
@@ -48,17 +46,26 @@ public class CacheService extends HealthCheck {
     }
 
     public void addDomain(String domain) {
+        if (domain.trim().isEmpty()) {
+            return;
+        }
         RBucket<Long> bucket = redis.getBucket(domain);
         bucket.set(System.currentTimeMillis());
     }
 
     public void addUrl(String url) {
-        String hashedUri = hashUtil.getMd5(url);
+        if (url.trim().isEmpty()) {
+            return;
+        }
+        String hashedUri = getMd5(url);
         RBucket<Long> bucket = redis.getBucket(hashedUri);
         bucket.set(System.currentTimeMillis());
     }
 
     public boolean isDomainExist(String key) {
+        if (key.trim().isEmpty()) {
+            return false;
+        }
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(key).get();
@@ -74,7 +81,10 @@ public class CacheService extends HealthCheck {
     }
 
     public boolean isUrlExists(String uri) {
-        String hashedUri = hashUtil.getMd5(uri);
+        if (uri.trim().isEmpty()) {
+            return false;
+        }
+        String hashedUri = getMd5(uri);
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(hashedUri).get();
@@ -86,6 +96,23 @@ public class CacheService extends HealthCheck {
             return true;
         } else {
             return false;
+        }
+    }
+
+    private String getMd5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
+            byte[] messageDigest = md.digest(input.getBytes());
+
+            BigInteger no = new BigInteger(1, messageDigest);
+            StringBuilder hashText = new StringBuilder(no.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
+            }
+            return hashText.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new JimboException("fail in creating hash");
         }
     }
 

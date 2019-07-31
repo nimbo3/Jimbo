@@ -17,8 +17,21 @@ public class Page {
     private List<HtmlTag> h2List;
     private List<HtmlTag> h3to6List;
     private List<HtmlTag> plainTextList; //<p>, <pre> and <span> tags
+    private boolean isValid;
 
     public Page() {
+        this.url = "";
+        this.title = "";
+        this.metadata = new ArrayList<>();
+        this.links = new ArrayList<>();
+        this.h1List = new ArrayList<>();
+        this.h2List = new ArrayList<>();
+        this.h3to6List = new ArrayList<>();
+        this.plainTextList = new ArrayList<>();
+        this.isValid = false;
+    }
+
+    public Page(Page page) {
         this.url = "";
         this.title = "";
         this.metadata = new ArrayList<>();
