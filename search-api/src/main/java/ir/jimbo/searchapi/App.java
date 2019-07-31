@@ -46,13 +46,15 @@ public class App {
             String normalQuery = query;
             if (fuzzyMatcher.find()) {
                 for (int i = 0; i < fuzzyMatcher.groupCount(); i++) {
-                    fuzzyQuery.append(fuzzyMatcher.group(i));
+                    fuzzyQuery.append(fuzzyMatcher.group(i).replaceAll("\\?\"", "")
+                            .replaceAll("\"\\?", ""));
                     normalQuery = normalQuery.replace("\\?\""+ fuzzyMatcher.group(i) + "\\?\"", "");
                 }
             }
             if (mustMatcher.find()) {
                 for (int i = 0; i < mustMatcher.groupCount(); i++) {
-                    mustQuery.append(mustMatcher.group(i));
+                    mustQuery.append(mustMatcher.group(i).replaceAll("!\"" , "")
+                            .replaceAll("\"!", ""));
                     normalQuery = normalQuery.replace("\""+ mustMatcher.group(i) + "\"", "");
                 }
             }
