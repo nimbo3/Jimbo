@@ -103,15 +103,18 @@ public class HTableManager extends HealthCheck {
         List<Put> puts = new ArrayList<>();
         Timer.Context putContext = hBaseInsertTime.time();
         for (HRow link : links)
-            puts.add(new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier(
-            )), getBytes(link.getValue())));
+            puts.add(getPut(link));
         table.put(puts);
         putContext.stop();
     }
 
     public void put(HRow link) throws IOException {
-        table.put(new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier()),
-                getBytes(link.getValue())));
+        table.put(getPut(link));
+    }
+
+    private Put getPut(HRow link) {
+        return new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier()),
+                getBytes(link.getValue()));
     }
 
     public byte[] getHash(String rowKey) {
