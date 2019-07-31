@@ -4,8 +4,15 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <File name="MyFile" fileName="logs/hbase.log">
+        <File name="Errors" fileName="logs/hbase_errors.log">
             <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+        </File>
+        <File name="Warns" fileName="logs/hbase_warns.log">
+            <ThresholdFilter level="ERROR" onMatch="FALSE" onMismatch="NEUTRAL"/>
+            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout>
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
             </PatternLayout>
@@ -13,8 +20,9 @@
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="MyFile"/>
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="Warns"/>
+            <AppenderRef ref="Errors"/>
         </Root>
     </Loggers>
 </Configuration>

@@ -13,6 +13,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,9 +27,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HTableManager extends HealthCheck {
+    private static final Logger LOGGER = LogManager.getLogger(HTableManager.class);
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
-    //Please refer to RFC 3986 - Appendix B for more information
-    //Please refer to RFC 3986 - Appendix B for more information
     private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
@@ -40,8 +41,8 @@ public class HTableManager extends HealthCheck {
 
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    //Please refer to RFC 3986 - Appendix B for more information
     private Timer hBaseInsertTime;
-    // Regex pattern to extract domain from URL
     private Table table;
     private String columnFamilyName;
     private MessageDigest md = MessageDigest.getInstance("MD5");
@@ -116,6 +117,7 @@ public class HTableManager extends HealthCheck {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
+        LOGGER.warn("No domain found in URL: " + url);
         return "";
     }
 
