@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class linkConsumer extends Thread {
+public class LinkConsumer extends Thread {
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
@@ -33,7 +33,7 @@ public class linkConsumer extends Thread {
     //Please refer to RFC 3986 - Appendix B for more information
 
 
-    public linkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch,
+    public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch,
                         MetricConfiguration metrics) {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;

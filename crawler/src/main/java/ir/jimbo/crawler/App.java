@@ -24,7 +24,7 @@ public class App {
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
-    private static linkConsumer[] consumers;
+    private static LinkConsumer[] consumers;
     private static PageParserThread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
 
@@ -49,10 +49,10 @@ public class App {
             producers[i].start();
         }
 
-        consumers = new linkConsumer[consumerThreadSize];
+        consumers = new LinkConsumer[consumerThreadSize];
         LOGGER.info("starting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
-            consumers[i] = new linkConsumer(kafkaConfiguration, cacheService, consumerLatch, metrics);
+            consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch, metrics);
             consumers[i].start();
         }
         LOGGER.info("end starting threads");
@@ -96,7 +96,7 @@ public class App {
     }
 
     private static long getAllWakeConsumers(Counter counter) {
-        for (linkConsumer consumer: consumers) {
+        for (LinkConsumer consumer: consumers) {
             if (consumer.isAlive()) {
                 counter.inc();
             }
