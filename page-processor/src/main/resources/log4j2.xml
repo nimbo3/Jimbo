@@ -13,7 +13,9 @@
     <Loggers>
         <Root level="info">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="MyFile"/>
         </Root>
+        <Logger name="PageProcessorThread.class" level="error">
+            <AppenderRef ref="MyFile"/>
+        </Logger>
     </Loggers>
 </Configuration>
