@@ -2,7 +2,6 @@ package ir.jimbo.hbasepageprocessor.manager;
 
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -107,6 +106,6 @@ public class HTableManager {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
-        throw new NoDomainFoundException(url);
+        return "";
     }
 }
