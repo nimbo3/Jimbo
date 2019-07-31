@@ -3,7 +3,6 @@ package ir.jimbo.crawler;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Snapshot;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.AppConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
@@ -46,14 +45,14 @@ public class App {
         LOGGER.info("starting parser threads");
         producers = new PageParserThread[parserThreadSize];
         for (int i = 0; i < parserThreadSize; i++) {
-            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch, cacheService);
+            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch, cacheService, metrics);
             producers[i].start();
         }
 
         consumers = new linkConsumer[consumerThreadSize];
         LOGGER.info("starting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
-            consumers[i] = new linkConsumer(kafkaConfiguration, cacheService, consumerLatch);
+            consumers[i] = new linkConsumer(kafkaConfiguration, cacheService, consumerLatch, metrics);
             consumers[i].start();
         }
         LOGGER.info("end starting threads");
