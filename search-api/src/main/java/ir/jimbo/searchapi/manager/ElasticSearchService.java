@@ -86,4 +86,8 @@ public class ElasticSearchService {
             }
         }
     }
+
+    public TransportClient getClient() {
+        return client;
+    }
 }
