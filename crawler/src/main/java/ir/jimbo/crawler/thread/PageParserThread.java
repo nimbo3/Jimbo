@@ -69,8 +69,8 @@ public class PageParserThread extends Thread {
             Page hbasePage = null;
             try {
                 PagePair parse = parse(uri);
-                elasticPage = parse.getKey();
-                hbasePage = parse.getValue();
+                elasticPage = parse.gethBasePage();
+                hbasePage = parse.getElasticPage();
 
                 if (elasticPage == null || hbasePage == null) {
                     continue;
@@ -124,7 +124,7 @@ public class PageParserThread extends Thread {
                 link = link.substring(0, link.length() - 1);
             }
             if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
-                    || ! link.substring(link.lastIndexOf('/') + 1).contains(".")) {
+                    || !link.substring(link.lastIndexOf('/') + 1).contains(".")) {
                 return true;
             }
         } catch (IndexOutOfBoundsException e) {
@@ -181,7 +181,7 @@ public class PageParserThread extends Thread {
                 if (content == null)
                     content = "";
                 HtmlTag metaTag = new HtmlTag("meta");
-                metaTag.getProps().put("name",name);
+                metaTag.getProps().put("name", name);
                 metaTag.getProps().put("content", content);
                 elasticPage.getMetadata().add(metaTag);
             }
@@ -198,19 +198,20 @@ public class PageParserThread extends Thread {
     }
 
     static class PagePair {
-        private Page key, value;
+        private Page hBasePage;
+        private Page elasticPage;
 
-        public PagePair(Page key, Page value) {
-            this.key = key;
-            this.value = value;
+        PagePair(Page hBasePage, Page elasticPage) {
+            this.hBasePage = hBasePage;
+            this.elasticPage = elasticPage;
         }
 
-        public Page getKey() {
-            return key;
+        Page gethBasePage() {
+            return hBasePage;
         }
 
-        public Page getValue() {
-            return value;
+        Page getElasticPage() {
+            return elasticPage;
         }
     }
 }
