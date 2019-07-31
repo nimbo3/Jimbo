@@ -17,7 +17,7 @@ public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     private static final List<PageProcessorThread> pageProcessors = new ArrayList<>();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
 
         MetricConfiguration metrics = new MetricConfiguration();
 

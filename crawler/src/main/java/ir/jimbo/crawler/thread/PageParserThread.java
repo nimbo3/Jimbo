@@ -73,12 +73,15 @@ public class PageParserThread extends Thread {
                     continue;
                 }
 
-                ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
+                ProducerRecord<Long, Page> hBaseRecord = new ProducerRecord<>(kafkaConfiguration.getHBasePageTopicName(),
                         page);
-                pageProducer.send(record);
+                ProducerRecord<Long, Page> elasticRecord = new ProducerRecord<>(kafkaConfiguration.getElasticPageTopicName(),
+                        page);
+                pageProducer.send(hBaseRecord);
+                pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
-//                addLinksToKafka(page);//todo uncomment
+                addLinksToKafka(page);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -98,7 +101,7 @@ public class PageParserThread extends Thread {
     private void addLinksToKafka(Page page) {
         for (HtmlTag htmlTag : page.getLinks()) {
             String link = htmlTag.getProps().get("href").trim();
-            if (isValidUri(link) && !cacheService.isUrlExists(page.getUrl())) {
+            if (isValidUri(link)) {
                 ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
                 linkProducer.send(record);
             }

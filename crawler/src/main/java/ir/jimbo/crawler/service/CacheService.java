@@ -3,6 +3,7 @@ package ir.jimbo.crawler.service;
 
 import com.yammer.metrics.core.HealthCheck;
 import ir.jimbo.commons.exceptions.JimboException;
+import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,11 +24,13 @@ public class CacheService extends HealthCheck {
     private Logger logger = LogManager.getLogger(this.getClass());
     private int expiredTimeDomainMilis;
     private int expiredTimeUrlMilis;
+    private HashUtil hashUtil;
     private RedissonClient redis;
 
     public CacheService(RedisConfiguration redisConfiguration, String redisHealthChecker) {
         super(redisHealthChecker);
         // On closing app
+        hashUtil = new HashUtil();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 redis.shutdown();
@@ -55,7 +58,6 @@ public class CacheService extends HealthCheck {
             return;
         }
         String hashedUri = getMd5(url);
-        System.out.println(hashedUri);
         RBucket<Long> bucket = redis.getBucket(hashedUri);
         bucket.set(System.currentTimeMillis());
     }

@@ -70,13 +70,15 @@ public class linkConsumer extends Thread {
                                 logger.info("uri \"" + uri + "\" added to queue");
                             } else {
                                 logger.info("queue has not space for this url : " + uri);
-                                if(!cacheService.isUrlExists(uri))
+                                if(!cacheService.isUrlExists(uri)) {
                                     sendUriToKafka(uri, producer);
+                                }
                             }
                         } else {
                             logger.info("it was not polite crawling this uri : " + uri);
-                            if(!cacheService.isUrlExists(uri))
+                            if(!cacheService.isUrlExists(uri)) {
                                 sendUriToKafka(uri, producer);
+                            }
                         }
                     } else {
                         logger.info("this uri was saved in past 24 hours: " + uri);
@@ -85,8 +87,9 @@ public class linkConsumer extends Thread {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
                     logger.error("error in putting uri to queue (interrupted exception) uri : " + uri);
-                    if(!cacheService.isUrlExists(uri))
+                    if(!cacheService.isUrlExists(uri)) {
                         sendUriToKafka(uri, producer);
+                    }
                 }
                 timerContext.stop();
             }

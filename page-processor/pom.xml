@@ -37,12 +37,19 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-testing-util</artifactId>
+            <version>${hbase.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <properties>
         <hbase.version>1.4.10</hbase.version>
         <jackson.version>2.9.9.1</jackson.version>
         <kafka.version>2.3.0</kafka.version>
         <elasticsearch.version>6.3.2</elasticsearch.version>
+        <hadoop.version>2.7.7</hadoop.version>
     </properties>
 
 
