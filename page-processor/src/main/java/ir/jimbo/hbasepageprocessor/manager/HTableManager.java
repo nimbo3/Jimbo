@@ -3,11 +3,7 @@ package ir.jimbo.hbasepageprocessor.manager;
 import com.codahale.metrics.Timer;
 import com.yammer.metrics.core.HealthCheck;
 import ir.jimbo.commons.config.MetricConfiguration;
-import ir.jimbo.commons.exceptions.JimboException;
-
-import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -17,6 +13,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,17 +27,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HTableManager extends HealthCheck {
-    // Regex pattern to extract domain from URL
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
-    //Please refer to RFC 3986 - Appendix B for more information
-
+    private static final Logger LOGGER = LogManager.getLogger(HTableManager.class);
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
-    //Please refer to RFC 3986 - Appendix B for more information
     private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final Configuration config = HBaseConfiguration.create();
     private static Connection connection = null;
-    private Timer hBaseInsertTime;
 
     static {
         config.addResource(new Path(System.getenv("HBASE_CONF_DIR"), "hbase-site.xml"));
@@ -47,6 +40,9 @@ public class HTableManager extends HealthCheck {
     }
 
     // Regex pattern to extract domain from URL
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+    //Please refer to RFC 3986 - Appendix B for more information
+    private Timer hBaseInsertTime;
     private Table table;
     private String columnFamilyName;
     private MessageDigest md = MessageDigest.getInstance("MD5");
@@ -103,12 +99,10 @@ public class HTableManager extends HealthCheck {
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
-      
         Timer.Context putContext = hBaseInsertTime.time();
-        for (HRow link : links) {
-//            puts.add(new Put(getBytes(getMd5(getDomain(link.getRowKey()) + link.getRowKey()))).addColumn(getBytes(
-//                    columnFamilyName), getBytes(getMd5(link.getQualifier())), getBytes(link.getValue())));
-        }
+        for (HRow link : links)
+            puts.add(new Put(getMd5(getDomain(link.getRowKey()) + link.getRowKey())).addColumn(getBytes(
+                    columnFamilyName), getMd5(link.getQualifier()), getBytes(link.getValue())));
         table.put(puts);
         putContext.stop();
     }
@@ -123,7 +117,8 @@ public class HTableManager extends HealthCheck {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
-        throw new NoDomainFoundException(url);
+        LOGGER.warn("No domain found in URL: " + url);
+        return "";
     }
 
     @Override
