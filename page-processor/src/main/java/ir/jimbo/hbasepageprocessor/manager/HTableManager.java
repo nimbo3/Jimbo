@@ -107,6 +107,6 @@ public class HTableManager {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
-        throw new NoDomainFoundException();
+        throw new NoDomainFoundException(url);
     }
 }
