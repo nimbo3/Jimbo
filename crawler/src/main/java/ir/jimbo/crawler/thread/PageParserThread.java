@@ -6,7 +6,6 @@ import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.service.CacheService;
-import javafx.util.Pair;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -68,7 +67,7 @@ public class PageParserThread extends Thread{
             Page elasticPage = null;
             Page hbasePage = null;
             try {
-                Pair<Page, Page> parse = parse(uri);
+                PagePair parse = parse(uri);
                 elasticPage = parse.getKey();
                 hbasePage = parse.getValue();
 
@@ -134,7 +133,7 @@ public class PageParserThread extends Thread{
         return false;
     }
 
-    Pair<Page, Page> parse(String url) { // TODO refactor this function
+    PagePair parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Timer.Context context = parseTimer.time();
         Document document;
@@ -148,7 +147,7 @@ public class PageParserThread extends Thread{
             document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return");
-            return new Pair<>(elasticPage, hbasePage);
+            return new PagePair(elasticPage, hbasePage);
         }
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
@@ -190,10 +189,27 @@ public class PageParserThread extends Thread{
         logger.info("parsing page done.");
         elasticPage.setValid(true);
         hbasePage.setValid(true);
-        return new Pair<>(elasticPage, hbasePage);
+        return new PagePair(elasticPage, hbasePage);
     }
 
     public void close() {
         repeat.set(false);
+    }
+
+    static class PagePair {
+        private Page key, value;
+
+        public PagePair(Page key, Page value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public Page getKey() {
+            return key;
+        }
+
+        public Page getValue() {
+            return value;
+        }
     }
 }
