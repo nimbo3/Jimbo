@@ -53,7 +53,7 @@ public class PageProcessorThread extends Thread {
                 links.clear();
                 LOGGER.info("number of links: " + count.get());
                 LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.error("", e);
             }
         }
