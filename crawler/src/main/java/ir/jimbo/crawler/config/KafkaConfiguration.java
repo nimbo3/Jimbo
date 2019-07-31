@@ -52,8 +52,8 @@ public class KafkaConfiguration {
     public KafkaConfiguration(String path) throws IOException {
         Properties properties = new Properties();
         properties.load(new FileInputStream(path));
-        hBasePageTopicName = properties.getProperty("pages.topic.name");
-        elasticPageTopicName = properties.getProperty("pages.topic.name");
+        hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
+        elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
         linkTopicName = properties.getProperty("links.topic.name");
         autoOffsetReset = properties.getProperty("auto.offset.reset");
