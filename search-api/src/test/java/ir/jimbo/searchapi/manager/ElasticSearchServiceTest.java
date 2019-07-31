@@ -6,6 +6,7 @@ import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
+import ir.jimbo.searchapi.model.SearchItem;
 import ir.jimbo.searchapi.model.SearchQuery;
 import ir.jimbo.searchapi.model.SearchResult;
 import org.elasticsearch.action.index.IndexRequest;
@@ -22,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ElasticSearchServiceTest {
@@ -68,7 +68,7 @@ public class ElasticSearchServiceTest {
         doc.source(bytes, XContentType.JSON);
         elasticSearchService.getClient().index(doc);
         Thread.sleep(10000);
-        List<SearchResult> result = elasticSearchService.getSearch(new SearchQuery("test", "test", "test"));
-        Assert.assertArrayEquals(Collections.singletonList(new SearchResult("test", "test_text", "url")).toArray(), result.toArray());
+        SearchResult result = elasticSearchService.getSearch(new SearchQuery("test", "test", "test"));
+        Assert.assertArrayEquals(Collections.singletonList(new SearchItem("test", "test_text", "url")).toArray(), result.getSearchItemList().toArray());
     }
 }
