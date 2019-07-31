@@ -1,6 +1,7 @@
 package ir.jimbo.crawler.service;
 
 
+import com.yammer.metrics.core.HealthCheck;
 import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
@@ -18,14 +19,14 @@ import java.security.NoSuchAlgorithmException;
 /**
  * class for connecting to redis database (LRU cache)
  */
-public class CacheService {
+public class CacheService extends HealthCheck {
     private Logger logger = LogManager.getLogger(this.getClass());
     private int expiredTimeDomainMilis;
     private int expiredTimeUrlMilis;
     private RedissonClient redis;
 
-    public CacheService(RedisConfiguration redisConfiguration) {
-
+    public CacheService(RedisConfiguration redisConfiguration, String redisHealthChecker) {
+        super(redisHealthChecker);
         // On closing app
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -100,5 +101,16 @@ public class CacheService {
         } catch (NoSuchAlgorithmException e) {
             throw new JimboException("fail in creating hash");
         }
+    }
+
+    @Override
+    protected Result check() {
+        if (redis == null)
+            return Result.unhealthy("connection is null");
+        if (redis.isShutdown())
+            return Result.unhealthy("connection is closed");
+        if (redis.isShuttingDown())
+            return Result.unhealthy("connection is closing");
+        return Result.healthy();
     }
 }

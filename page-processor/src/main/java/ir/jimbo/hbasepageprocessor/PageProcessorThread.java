@@ -1,5 +1,8 @@
 package ir.jimbo.hbasepageprocessor;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
@@ -16,45 +19,58 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PageProcessorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageProcessorThread.class);
-    private static AtomicInteger count = new AtomicInteger();
     private final HTableManager hTableManager;
     private Consumer<Long, Page> pageConsumer;
     private Long pollDuration;
     private List<HRow> links = new ArrayList<>();
+    private MetricConfiguration metrics;
 
-    public PageProcessorThread(String hTableName, String hColumnFamily) throws IOException, NoSuchAlgorithmException {
-        hTableManager = new HTableManager(hTableName, hColumnFamily);
+
+    public PageProcessorThread(String hTableName, String hColumnFamily, MetricConfiguration metrics) throws IOException {
+        hTableManager = new HTableManager(hTableName, hColumnFamily,"HBaseHealthChecker", metrics);
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
         this.setName("hbase-page processor thread");
         pollDuration = Long.parseLong(kafkaConfiguration.getPropertyValue("consumer.poll.duration"));
+        this.metrics = metrics;
     }
 
     @Override
     public void run() {
+        Timer insertHBaseTimer = metrics.getNewTimer(metrics.getProperty("hbase.record.process.timer.name"));
+        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("hbase.links.readed.from.kafka.histogram.name"));
+        histogram.update(0);
         while (!interrupted()) {
             try {
-                final long currentTimeMillis = System.currentTimeMillis();
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
+                Timer.Context pagesProcessDurationContext = insertHBaseTimer.time();
                 for (ConsumerRecord<Long, Page> record : records) {
+                    Timer.Context oneInsertContext = insertHBaseTimer.time();
                     Page page = record.value();
                     for (HtmlTag link : page.getLinks()) {
                         final String href = link.getProps().get("href");
                         if (href != null && !href.isEmpty())
                             links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
+                    long hbaseInsertDuration = oneInsertContext.stop();
+                    ///////
+                    LOGGER.info("time passed for processing one page : {}", hbaseInsertDuration);
                 }
                 hTableManager.put(links);
-                count.getAndAdd(links.size());
+                LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), pagesProcessDurationContext.stop());
+                histogram.update(links.size());
                 links.clear();
+            } catch (IOException e) {
+                LOGGER.error("IO error in pageProcessor thread", e);
+
                 LOGGER.info("number of links: " + count.get());
                 LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
             } catch (Exception e) {
                 LOGGER.error("", e);
+
             }
         }
     }

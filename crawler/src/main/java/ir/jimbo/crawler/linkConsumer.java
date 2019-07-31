@@ -1,5 +1,7 @@
 package ir.jimbo.crawler;
 
+import com.codahale.metrics.Timer;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.service.CacheService;
@@ -18,38 +20,44 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LinkConsumer extends Thread {
+public class linkConsumer extends Thread {
     private Logger logger = LogManager.getLogger(this.getClass());
     private long pollDuration;
     private KafkaConfiguration kafkaConfiguration;
     private CacheService cacheService;
     private AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
-
+    private MetricConfiguration metrics;
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
 
 
-    public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch) {
+    public linkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch,
+                        MetricConfiguration metrics) {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;
         repeat = new AtomicBoolean(true);
         countDownLatch = consumerLatch;
+        this.metrics = metrics;
     }
 
     @Override
     public void run() {
         Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         String uri;
+        Timer linkProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.link.process.timer.name"));
+        Timer crawlKafkaLinksProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.kafka.links.process.timer.name"));
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         logger.info("consumer thread started");
         while (repeat.get()) {
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
+            Timer.Context bigTimerContext = crawlKafkaLinksProcessTimer.time();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
                 logger.info("uri read from kafka : " + uri);
+                Timer.Context timerContext = linkProcessTimer.time();
                 try {
                     if (!cacheService.isUrlExists(uri)) {
                         if (isPolite(uri)) {
@@ -80,12 +88,14 @@ public class LinkConsumer extends Thread {
                     if(!cacheService.isUrlExists(uri))
                         sendUriToKafka(uri, producer);
                 }
+                timerContext.stop();
             }
             try {
                 consumer.commitSync();
             } catch (Exception e) {
                 logger.info("unable to commit.###################################################", e);
             }
+            bigTimerContext.stop();
         }
         logger.info("consumer countdown latch before");
         countDownLatch.countDown();
