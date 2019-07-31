@@ -4,14 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
 import ir.jimbo.searchapi.manager.ElasticSearchService;
 import ir.jimbo.searchapi.model.SearchQuery;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 import static spark.Spark.get;
 import static spark.Spark.port;
@@ -47,21 +45,25 @@ public class App {
             if (fuzzyMatcher.find()) {
                 for (int i = 0; i < fuzzyMatcher.groupCount(); i++) {
                     fuzzyQuery.append(fuzzyMatcher.group(i));
-                    normalQuery = normalQuery.replace("\\?\""+ fuzzyMatcher.group(i) + "\\?\"", "");
+                    normalQuery = normalQuery.replace("\\?\"" + fuzzyMatcher.group(i) + "\\?\"", "");
                 }
             }
             if (mustMatcher.find()) {
                 for (int i = 0; i < mustMatcher.groupCount(); i++) {
                     mustQuery.append(mustMatcher.group(i));
-                    normalQuery = normalQuery.replace("\""+ mustMatcher.group(i) + "\"", "");
+                    normalQuery = normalQuery.replace("\"" + mustMatcher.group(i) + "\"", "");
                 }
             }
             if (req == null) {
                 res.status(300);
                 return "";
             }
+
             SearchQuery searchQuery = new SearchQuery(mustQuery.toString(), normalQuery, fuzzyQuery.toString());
-            return objectMapper.writeValueAsString(elasticSearchService.getSearch(searchQuery));
+            String responseText = objectMapper.writeValueAsString(elasticSearchService.getSearch(searchQuery));
+            res.body(responseText);
+            res.header("Access-Control-Allow-Origin", "*");
+            return responseText;
         });
     }
 }
