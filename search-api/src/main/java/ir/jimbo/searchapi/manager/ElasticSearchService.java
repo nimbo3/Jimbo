@@ -1,7 +1,6 @@
 package ir.jimbo.searchapi.manager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
 import ir.jimbo.searchapi.model.SearchQuery;
@@ -19,7 +18,6 @@ import org.elasticsearch.search.SearchHit;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class ElasticSearchService {
@@ -36,7 +34,6 @@ public class ElasticSearchService {
         requestTimeOutNanos = configuration.getRequestTimeOutNanos();
         client = configuration.getClient();
         mapper = new ObjectMapper();
-//        objectReader = objectMapper.readerFor(ElasticPage.class);
         pageIndexName = configuration.getIndexName();
     }
 
@@ -45,15 +42,23 @@ public class ElasticSearchService {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         List<SearchResult> searchResults = new ArrayList<>();
         LOGGER.info("start to create Query for :" + query.toString());
-        if (query.getFuzzyQuery() != null) {
-            boolQueryBuilder.should(new FuzzyQueryBuilder("title", query.getFuzzyQuery()));
+        if (query.getFuzzyQuery() != null && !query.getFuzzyQuery().trim().equals("")) {
+            for (String fieldName : fieldNames) {
+                boolQueryBuilder.should(new FuzzyQueryBuilder(fieldName, query.getFuzzyQuery()));
+            }
         }
 
-        if (query.getExactQuery() != null) {
-            boolQueryBuilder.must(new TermQueryBuilder("title", query.getExactQuery()));
+        if (query.getExactQuery() != null && !query.getExactQuery().trim().equals("")) {
+            BoolQueryBuilder mustBoolQuery = new BoolQueryBuilder();
+            for (String fieldName : fieldNames) {
+                mustBoolQuery.should(new TermQueryBuilder(fieldName , query.getExactQuery()));
+            }
+            boolQueryBuilder.must(mustBoolQuery);
         }
-        if (query.getNormalQuery() != null) {
-            boolQueryBuilder.should(new MatchQueryBuilder("title", query.getNormalQuery()));
+        if (query.getNormalQuery() != null && !query.getNormalQuery().trim().equals("")) {
+            for (String fieldName : fieldNames) {
+                boolQueryBuilder.should(new MatchQueryBuilder(fieldName, query.getNormalQuery()));
+            }
         }
         SearchResponse searchResponse = searchRequestBuilder.setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .setQuery(boolQueryBuilder)
@@ -61,6 +66,11 @@ public class ElasticSearchService {
                 .setSize(50).setExplain(false).get();
         LOGGER.info("execute of query finished, query :" + query.toString());
 
+        parseSearchResults(searchResults, searchResponse);
+        return searchResults;
+    }
+
+    private void parseSearchResults(List<SearchResult> searchResults, SearchResponse searchResponse) {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             try {
                 ElasticPage page = mapper.readValue(hit.getSourceAsString(), ElasticPage.class);
@@ -75,6 +85,5 @@ public class ElasticSearchService {
                 LOGGER.error("error in parsing document :" + hit.getSourceAsString());
             }
         }
-        return searchResults;
     }
 }

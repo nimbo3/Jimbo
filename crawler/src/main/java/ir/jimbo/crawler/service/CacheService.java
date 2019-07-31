@@ -1,7 +1,9 @@
 package ir.jimbo.crawler.service;
 
 
+import com.yammer.metrics.core.HealthCheck;
 import ir.jimbo.commons.exceptions.JimboException;
+import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,15 +20,17 @@ import java.security.NoSuchAlgorithmException;
 /**
  * class for connecting to redis database (LRU cache)
  */
-public class CacheService {
+public class CacheService extends HealthCheck {
     private Logger logger = LogManager.getLogger(this.getClass());
     private int expiredTimeDomainMilis;
     private int expiredTimeUrlMilis;
+    private HashUtil hashUtil;
     private RedissonClient redis;
 
-    public CacheService(RedisConfiguration redisConfiguration) {
-
+    public CacheService(RedisConfiguration redisConfiguration, String redisHealthChecker) {
+        super(redisHealthChecker);
         // On closing app
+        hashUtil = new HashUtil();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 redis.shutdown();
@@ -49,7 +53,7 @@ public class CacheService {
     }
 
     public void addUrl(String url) {
-        String hashedUri = getMd5(url);
+        String hashedUri = hashUtil.getMd5(url);
         RBucket<Long> bucket = redis.getBucket(hashedUri);
         bucket.set(System.currentTimeMillis());
     }
@@ -70,7 +74,7 @@ public class CacheService {
     }
 
     public boolean isUrlExists(String uri) {
-        String hashedUri = getMd5(uri);
+        String hashedUri = hashUtil.getMd5(uri);
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(hashedUri).get();
@@ -85,20 +89,14 @@ public class CacheService {
         }
     }
 
-    private String getMd5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            BigInteger no = new BigInteger(1, messageDigest);
-            StringBuilder hashText = new StringBuilder(no.toString(16));
-            while (hashText.length() < 32) {
-                hashText.insert(0, "0");
-            }
-            return hashText.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new JimboException("fail in creating hash");
-        }
+    @Override
+    protected Result check() {
+        if (redis == null)
+            return Result.unhealthy("connection is null");
+        if (redis.isShutdown())
+            return Result.unhealthy("connection is closed");
+        if (redis.isShuttingDown())
+            return Result.unhealthy("connection is closing");
+        return Result.healthy();
     }
 }

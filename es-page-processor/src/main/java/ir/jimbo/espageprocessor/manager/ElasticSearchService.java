@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.espageprocessor.config.ElasticSearchConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,9 +30,10 @@ public class ElasticSearchService {
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
     private int requestTimeOutNanos;
-
+    private HashUtil hashUtil;
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
+        hashUtil = new HashUtil();
         requestTimeOutNanos = configuration.getRequestTimeOutNanos();
         client = configuration.getClient();
     }
@@ -41,7 +43,7 @@ public class ElasticSearchService {
         String indexName = configuration.getIndexName();
         ObjectWriter writer = new ObjectMapper().writer();
         for (Page page : pages) {
-            IndexRequest doc = new IndexRequest(indexName, "_doc", getMd5(page.getUrl()));
+            IndexRequest doc = new IndexRequest(indexName, "_doc", hashUtil.getMd5(page.getUrl()));
             byte[] bytes;
             try {
                 ElasticPage elasticPage = new ElasticPage(page);
@@ -63,8 +65,8 @@ public class ElasticSearchService {
                 return true;
             else {
                 LOGGER.error(bulkItemResponses.buildFailureMessage());
-                for (BulkItemResponse bulkItemRespons : bulkItemResponses) {
-                    System.out.println(bulkItemRespons.getResponse().getResult());
+                for (BulkItemResponse bulkItemResponse : bulkItemResponses) {
+                    LOGGER.info(bulkItemResponse.getResponse().getResult());
                 }
                 return false;
             }
@@ -74,20 +76,7 @@ public class ElasticSearchService {
         }
     }
 
-    private String getMd5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            BigInteger no = new BigInteger(1, messageDigest);
-            StringBuilder hashText = new StringBuilder(no.toString(16));
-            while (hashText.length() < 32) {
-                hashText.insert(0, "0");
-            }
-            return hashText.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new JimboException("fail in creating hash");
-        }
+    public TransportClient getClient() {
+        return client;
     }
 }
