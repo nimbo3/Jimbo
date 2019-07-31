@@ -4,6 +4,7 @@ import com.codahale.metrics.Timer;
 import com.yammer.metrics.core.HealthCheck;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.hbasepageprocessor.assets.HRow;
+import lombok.Setter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -31,13 +32,9 @@ public class HTableManager extends HealthCheck {
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
     private static final int NUMBER_OF_VERSIONS = 1;
     private static final Charset CHARSET = StandardCharsets.UTF_8;
-    private static final Configuration config = HBaseConfiguration.create();
+    @Setter
+    private static Configuration config = null;
     private static Connection connection = null;
-
-    static {
-        config.addResource(new Path(System.getenv("HBASE_CONF_DIR"), "hbase-site.xml"));
-        config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
-    }
 
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
@@ -62,6 +59,11 @@ public class HTableManager extends HealthCheck {
     }
 
     private static void checkConnection() throws IOException {
+        if (config == null) {
+            config = HBaseConfiguration.create();
+            config.addResource(new Path(System.getenv("HBASE_CONF_DIR"), "hbase-site.xml"));
+            config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
+        }
         if (connection == null || connection.isClosed())
             connection = ConnectionFactory.createConnection(config);
     }
@@ -101,16 +103,19 @@ public class HTableManager extends HealthCheck {
         List<Put> puts = new ArrayList<>();
         Timer.Context putContext = hBaseInsertTime.time();
         for (HRow link : links)
-            puts.add(new Put(getMd5(getDomain(link.getRowKey()) + link.getRowKey())).addColumn(getBytes(
-                    columnFamilyName), getMd5(link.getQualifier()), getBytes(link.getValue())));
+            puts.add(new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier(
+            )), getBytes(link.getValue())));
         table.put(puts);
         putContext.stop();
     }
 
     public void put(HRow link) throws IOException {
-        table.put(new Put(Bytes.add(getMd5(getDomain(link.getRowKey())), getMd5(link.getRowKey()))).addColumn(getBytes(
-                columnFamilyName), Bytes.add(getMd5(getDomain(link.getQualifier())), getMd5(link.getQualifier())),
+        table.put(new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier()),
                 getBytes(link.getValue())));
+    }
+
+    public byte[] getHash(String rowKey) {
+        return Bytes.add(getMd5(getDomain(rowKey)), getMd5(rowKey));
     }
 
     private String getDomain(String url) {
