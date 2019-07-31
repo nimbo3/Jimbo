@@ -5,6 +5,7 @@
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
         <File name="MyFile" fileName="logs/hbase.log">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
             <PatternLayout>
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
             </PatternLayout>
@@ -12,10 +13,8 @@
     </Appenders>
     <Loggers>
         <Root level="info">
+            <AppenderRef ref="MyFile"/>
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="ir.jimbo.hbasepageprocessor.PageProcessorThread" level="error">
-            <AppenderRef ref="MyFile"/>
-        </Logger>
     </Loggers>
 </Configuration>
