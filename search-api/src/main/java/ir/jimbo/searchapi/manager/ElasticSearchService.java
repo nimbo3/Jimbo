@@ -3,6 +3,7 @@ package ir.jimbo.searchapi.manager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
+import ir.jimbo.searchapi.model.SearchItem;
 import ir.jimbo.searchapi.model.SearchQuery;
 import ir.jimbo.searchapi.model.SearchResult;
 import org.apache.logging.log4j.LogManager;
@@ -40,10 +41,10 @@ public class ElasticSearchService {
         pageIndexName = configuration.getIndexName();
     }
 
-    public List<SearchResult> getSearch(SearchQuery query) {
+    public SearchResult getSearch(SearchQuery query) {
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        List<SearchResult> searchResults = new ArrayList<>();
+        SearchResult searchResult = new SearchResult();
         LOGGER.info("start to create Query for :" + query.toString());
         if (query.getFuzzyQuery() != null && !query.getFuzzyQuery().trim().equals("")) {
             for (String fieldName : fieldNames) {
@@ -69,11 +70,11 @@ public class ElasticSearchService {
                 .setSize(50).setExplain(false).get();
         LOGGER.info("execute of query finished, query :" + query.toString());
 
-        parseSearchResults(searchResults, searchResponse);
-        return searchResults;
+        parseSearchResults(searchResult, searchResponse);
+        return searchResult;
     }
 
-    private void parseSearchResults(List<SearchResult> searchResults, SearchResponse searchResponse) {
+    private void parseSearchResults(SearchResult searchResult, SearchResponse searchResponse) {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             try {
                 ElasticPage page = mapper.readValue(hit.getSourceAsString(), ElasticPage.class);
@@ -83,7 +84,7 @@ public class ElasticSearchService {
                 } else {
                     text = page.getText();
                 }
-                searchResults.add(new SearchResult(page.getTitle(), text, page.getUrl()));
+                searchResult.getSearchItemList().add(new SearchItem(page.getTitle(), text, page.getUrl()));
             } catch (IOException e) {
                 LOGGER.error("error in parsing document :" + hit.getSourceAsString());
             }
