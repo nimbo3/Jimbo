@@ -51,6 +51,19 @@ public class Page {
         this.plainTextList = plainTextList;
     }
 
+    public void changePageForHBase() {
+        this.metadata = null;
+        this.h1List = null;
+        this.h2List = null;
+        this.h3to6List = null;
+        this.plainTextList = null;
+        this.title = null;
+    }
+
+    public void changePageForElasticSearch() {
+        this.links = null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
