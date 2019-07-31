@@ -19,7 +19,7 @@ public class RedisConfiguration {
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "redisConfig.properties")));
         nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
-        isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
+        isStandAlone = Boolean.parseBoolean(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
         domainExpiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
         urlExpiredTime = Integer.parseInt(properties.getProperty("cache.url_expired_time"));
@@ -29,9 +29,10 @@ public class RedisConfiguration {
         Properties properties = new Properties();
         properties.load(new FileInputStream(path));
         nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
-        isStandAlone = Boolean.valueOf(properties.getProperty("redis.standalone"));
+        isStandAlone = Boolean.parseBoolean(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
         urlExpiredTime = Integer.parseInt(properties.getProperty("cache.url_expired_time"));
+        domainExpiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
     }
 
     public List<String> getNodes() {

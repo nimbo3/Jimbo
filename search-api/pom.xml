@@ -12,11 +12,20 @@
     <artifactId>search-api</artifactId>
 
     <properties>
+        <embeddedElastic.version>2.10.0</embeddedElastic.version>
         <elasticsearch.version>6.3.2</elasticsearch.version>
         <sparkjava.version>2.5.4</sparkjava.version>
     </properties>
 
     <dependencies>
+
+
+        <dependency>
+            <groupId>pl.allegro.tech</groupId>
+            <artifactId>embedded-elasticsearch</artifactId>
+            <version>${embeddedElastic.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>ir.jimbo</groupId>

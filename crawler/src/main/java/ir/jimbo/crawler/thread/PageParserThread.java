@@ -23,7 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PageParserThread extends Thread{
+public class PageParserThread extends Thread {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private ArrayBlockingQueue<String> queue;
@@ -48,7 +48,8 @@ public class PageParserThread extends Thread{
     }
 
     // For Test
-    public PageParserThread() {
+    public PageParserThread(Timer timer) {
+        this.parseTimer = timer;
     }
 
     @Override
@@ -64,20 +65,30 @@ public class PageParserThread extends Thread{
                 continue;
             }
             logger.info("uri " + uri + " catches from queue");
-            Page page = null;
+            Page elasticPage = null;
+            Page hbasePage = null;
             try {
-                page = parse(uri);
+                PagePair parse = parse(uri);
+                elasticPage = parse.getHBasePage();
+                hbasePage = parse.getElasticPage();
 
-                if (page == null) {
+                if (elasticPage == null || hbasePage == null) {
                     continue;
                 }
 
-                ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
-                        page);
-                pageProducer.send(record);
+                if (!elasticPage.isValid() || !hbasePage.isValid()) {
+                    continue;
+                }
+
+                ProducerRecord<Long, Page> hBaseRecord = new ProducerRecord<>(kafkaConfiguration.getHBasePageTopicName(),
+                        hbasePage);
+                ProducerRecord<Long, Page> elasticRecord = new ProducerRecord<>(kafkaConfiguration.getElasticPageTopicName(),
+                        elasticPage);
+                pageProducer.send(hBaseRecord);
+                pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(page);
+                addLinksToKafka(hbasePage);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -113,7 +124,7 @@ public class PageParserThread extends Thread{
                 link = link.substring(0, link.length() - 1);
             }
             if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
-                    || ! link.substring(link.lastIndexOf('/') + 1).contains(".")) {
+                    || !link.substring(link.lastIndexOf('/') + 1).contains(".")) {
                 return true;
             }
         } catch (IndexOutOfBoundsException e) {
@@ -123,19 +134,21 @@ public class PageParserThread extends Thread{
         return false;
     }
 
-    Page parse(String url) { // TODO refactor this function
+    PagePair parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Timer.Context context = parseTimer.time();
         Document document;
-        Page page = new Page();
-        page.setUrl(url);
+        Page elasticPage = new Page();
+        Page hbasePage = new Page();
+        elasticPage.setUrl(url);
+        hbasePage.setUrl(url);
         try {
             Connection connect = Jsoup.connect(url);
             connect.timeout(2000);
             document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return");
-            return page;
+            return new PagePair(elasticPage, hbasePage);
         }
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
@@ -144,22 +157,22 @@ public class PageParserThread extends Thread{
             if (text == null)
                 text = "";
             if (h3to6Tags.contains(element.tagName().toLowerCase()))
-                page.getH3to6List().add(new HtmlTag(element.tagName(), text));
+                elasticPage.getH3to6List().add(new HtmlTag(element.tagName(), text));
             else if (plainTextTags.contains(element.tagName().toLowerCase()))
-                page.getPlainTextList().add(new HtmlTag(element.tagName(), text));
+                elasticPage.getPlainTextList().add(new HtmlTag(element.tagName(), text));
             else if (element.tagName().equalsIgnoreCase("h1"))
-                page.getH1List().add(new HtmlTag("h1", text));
+                elasticPage.getH1List().add(new HtmlTag("h1", text));
             else if (element.tagName().equalsIgnoreCase("h2"))
-                page.getH2List().add(new HtmlTag("h2", text));
+                elasticPage.getH2List().add(new HtmlTag("h2", text));
             else if (element.tagName().equalsIgnoreCase("title"))
-                page.setTitle(text);
+                elasticPage.setTitle(text);
             else if (element.tagName().equalsIgnoreCase("a")) {
                 String href = element.attr("abs:href");
                 if (href == null)
                     href = "";
                 HtmlTag linkTag = new HtmlTag("a", text);
                 linkTag.getProps().put("href", href);
-                page.getLinks().add(linkTag);
+                hbasePage.getLinks().add(linkTag);
             } else if (element.tagName().equalsIgnoreCase("meta")) {
                 String name = element.attr("name");
                 if (name == null)
@@ -168,17 +181,37 @@ public class PageParserThread extends Thread{
                 if (content == null)
                     content = "";
                 HtmlTag metaTag = new HtmlTag("meta");
-                metaTag.getProps().put("name",name);
+                metaTag.getProps().put("name", name);
                 metaTag.getProps().put("content", content);
-                page.getMetadata().add(metaTag);
+                elasticPage.getMetadata().add(metaTag);
             }
         }
         context.stop();
         logger.info("parsing page done.");
-        return page;
+        elasticPage.setValid(true);
+        hbasePage.setValid(true);
+        return new PagePair(elasticPage, hbasePage);
     }
 
     public void close() {
         repeat.set(false);
+    }
+
+    static class PagePair {
+        private Page hBasePage;
+        private Page elasticPage;
+
+        PagePair(Page hBasePage, Page elasticPage) {
+            this.hBasePage = hBasePage;
+            this.elasticPage = elasticPage;
+        }
+
+        Page getHBasePage() {
+            return hBasePage;
+        }
+
+        Page getElasticPage() {
+            return elasticPage;
+        }
     }
 }

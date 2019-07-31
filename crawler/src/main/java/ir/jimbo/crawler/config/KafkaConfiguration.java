@@ -20,7 +20,8 @@ import java.util.Properties;
 
 public class KafkaConfiguration {
 
-    private String pageTopicName;
+    private String hBasePageTopicName;
+    private String elasticPageTopicName;
     private String linkTopicName;
     private int pollDuration;
     private String autoOffsetReset;
@@ -35,7 +36,8 @@ public class KafkaConfiguration {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("kafkaConfig.properties")));
-        pageTopicName = properties.getProperty("pages.topic.name");
+        hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
+        elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
         linkTopicName = properties.getProperty("links.topic.name");
         autoOffsetReset = properties.getProperty("auto.offset.reset");
@@ -45,13 +47,13 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
-//        heartBeat = Integer.parseInt(properties.getProperty("heart_beat.milis"));
     }
 
     public KafkaConfiguration(String path) throws IOException {
         Properties properties = new Properties();
         properties.load(new FileInputStream(path));
-        pageTopicName = properties.getProperty("pages.topic.name");
+        hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
+        elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
         linkTopicName = properties.getProperty("links.topic.name");
         autoOffsetReset = properties.getProperty("auto.offset.reset");
@@ -103,7 +105,11 @@ public class KafkaConfiguration {
         return consumer;
     }
 
-    public String getPageTopicName() {
-        return pageTopicName;
+    public String getHBasePageTopicName() {
+        return hBasePageTopicName;
+    }
+
+    public String getElasticPageTopicName() {
+        return elasticPageTopicName;
     }
 }
