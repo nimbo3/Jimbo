@@ -18,8 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -31,7 +29,6 @@ public class HTableManager extends HealthCheck {
     private static final Logger LOGGER = LogManager.getLogger(HTableManager.class);
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
     private static final int NUMBER_OF_VERSIONS = 1;
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
     @Setter
     private static Configuration config = null;
     private static Connection connection = null;
@@ -69,7 +66,7 @@ public class HTableManager extends HealthCheck {
     }
 
     private static byte[] getBytes(String string) {
-        return string.getBytes(CHARSET);
+        return Bytes.toBytes(string);
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
@@ -95,8 +92,8 @@ public class HTableManager extends HealthCheck {
 
     private byte[] getMd5(String input) {
         if (input == null)
-            return "".getBytes();
-        return md.digest(input.getBytes());
+            return getBytes(input);
+        return md.digest(getBytes(input));
     }
 
     public void put(List<HRow> links) throws IOException {
