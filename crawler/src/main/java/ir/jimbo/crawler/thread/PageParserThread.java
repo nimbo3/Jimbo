@@ -72,9 +72,12 @@ public class PageParserThread extends Thread{
                     continue;
                 }
 
-                ProducerRecord<Long, Page> record = new ProducerRecord<>(kafkaConfiguration.getPageTopicName(),
+                ProducerRecord<Long, Page> hBaseRecord = new ProducerRecord<>(kafkaConfiguration.getHBasePageTopicName(),
                         page);
-                pageProducer.send(record);
+                ProducerRecord<Long, Page> elasticRecord = new ProducerRecord<>(kafkaConfiguration.getElasticPageTopicName(),
+                        page);
+                pageProducer.send(hBaseRecord);
+                pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
                 addLinksToKafka(page);

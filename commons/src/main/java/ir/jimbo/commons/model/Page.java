@@ -51,17 +51,19 @@ public class Page {
         this.plainTextList = plainTextList;
     }
 
-    public void changePageForHBase() {
+    public Page changePageForHBase() {
         this.metadata = null;
         this.h1List = null;
         this.h2List = null;
         this.h3to6List = null;
         this.plainTextList = null;
         this.title = null;
+        return this;
     }
 
-    public void changePageForElasticSearch() {
+    public Page changePageForElasticSearch() {
         this.links = null;
+        return this;
     }
 
     @Override
