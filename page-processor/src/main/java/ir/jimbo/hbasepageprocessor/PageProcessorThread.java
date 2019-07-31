@@ -1,6 +1,6 @@
 package ir.jimbo.hbasepageprocessor;
 
-import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
@@ -40,7 +40,8 @@ public class PageProcessorThread extends Thread {
     @Override
     public void run() {
         Timer insertHBaseTimer = metrics.getNewTimer(metrics.getProperty("hbase.record.process.timer.name"));
-        Counter linksCounter = metrics.getNewCounter(metrics.getProperty("hbase.links.readed.from.kafka.counter.name"));
+        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("hbase.links.readed.from.kafka.histogram.name"));
+        histogram.update(0);
         while (!interrupted()) {
             try {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
@@ -59,9 +60,8 @@ public class PageProcessorThread extends Thread {
                 }
                 hTableManager.put(links);
                 LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), pagesProcessDurationContext.stop());
-                linksCounter.inc(links.size());
+                histogram.update(links.size());
                 links.clear();
-                LOGGER.info("number of links: " + linksCounter.getCount());
             } catch (IOException e) {
                 LOGGER.error("IO error in pageProcessor thread", e);
             }

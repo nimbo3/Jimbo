@@ -31,8 +31,8 @@ public class App {
     public static void main(String[] args) throws IOException {
         LOGGER.info("crawler app starting...");
         initializeConfigurations(args);
-        CacheService cacheService = new CacheService(redisConfiguration);
         MetricConfiguration metrics = new MetricConfiguration();    // Throws IOException
+        CacheService cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
         linkQueue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();

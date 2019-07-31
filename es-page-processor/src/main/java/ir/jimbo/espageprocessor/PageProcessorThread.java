@@ -1,6 +1,6 @@
 package ir.jimbo.espageprocessor;
 
-import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.Page;
@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PageProcessorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageProcessorThread.class);
@@ -35,8 +34,9 @@ public class PageProcessorThread extends Thread {
 
     @Override
     public void run() {
-        Counter pageCounter = metrics.getNewCounter(metrics.getProperty("elastic.pages.counter.name"));
+        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("elastic.pages.histogram.name"));
         Timer processTime = metrics.getNewTimer(metrics.getProperty("elastic.process.timer.name"));
+        histogram.update(0);
         while (!interrupted()) {
             try {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
@@ -45,9 +45,8 @@ public class PageProcessorThread extends Thread {
                 for (ConsumerRecord<Long, Page> record : records) {
                     pages.add(record.value());
                 }
-                pageCounter.inc(pages.size());
+                histogram.update(pages.size());
                 boolean isAdded = esService.insertPages(pages);
-                LOGGER.info("number of pages: " + pageCounter.getCount());
                 if (!isAdded)
                     LOGGER.info("ES insertion failed.");
                 timerContext.stop();
