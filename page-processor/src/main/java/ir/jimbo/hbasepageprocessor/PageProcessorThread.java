@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,9 @@ public class PageProcessorThread extends Thread {
     private List<HRow> links = new ArrayList<>();
     private MetricConfiguration metrics;
 
+
     public PageProcessorThread(String hTableName, String hColumnFamily, MetricConfiguration metrics) throws IOException {
         hTableManager = new HTableManager(hTableName, hColumnFamily,"HBaseHealthChecker", metrics);
-        // TODO inject healthChecker name above
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
         this.setName("hbase-page processor thread");
@@ -64,6 +65,12 @@ public class PageProcessorThread extends Thread {
                 links.clear();
             } catch (IOException e) {
                 LOGGER.error("IO error in pageProcessor thread", e);
+
+                LOGGER.info("number of links: " + count.get());
+                LOGGER.info(System.currentTimeMillis() - currentTimeMillis + " record_size: " + records.count());
+            } catch (Exception e) {
+                LOGGER.error("", e);
+
             }
         }
     }

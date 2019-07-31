@@ -53,7 +53,7 @@ public class KafkaConfiguration extends Config {
 
     public Consumer<Long, Page> getPageConsumer() {
         KafkaConsumer<Long, Page> consumer = new KafkaConsumer<>(getPageConsumerProperties());
-        consumer.subscribe(Collections.singletonList(getPropertyValue("consumer.pages.topic.name")));
+        consumer.subscribe(Collections.singletonList(getPropertyValue("consumer.topic.name")));
         return consumer;
     }
 
