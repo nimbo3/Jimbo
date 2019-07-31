@@ -6,6 +6,7 @@ import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.service.CacheService;
+import javafx.util.Pair;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -64,23 +65,30 @@ public class PageParserThread extends Thread{
                 continue;
             }
             logger.info("uri " + uri + " catches from queue");
-            Page page = null;
+            Page elasticPage = null;
+            Page hbasePage = null;
             try {
-                page = parse(uri);
+                Pair<Page, Page> parse = parse(uri);
+                elasticPage = parse.getKey();
+                hbasePage = parse.getValue();
 
-                if (page == null) {
+                if (elasticPage == null || hbasePage == null) {
+                    continue;
+                }
+
+                if (!elasticPage.isValid() || !hbasePage.isValid()) {
                     continue;
                 }
 
                 ProducerRecord<Long, Page> hBaseRecord = new ProducerRecord<>(kafkaConfiguration.getHBasePageTopicName(),
-                        page);
+                        hbasePage);
                 ProducerRecord<Long, Page> elasticRecord = new ProducerRecord<>(kafkaConfiguration.getElasticPageTopicName(),
-                        page);
+                        elasticPage);
                 pageProducer.send(hBaseRecord);
                 pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(page);
+                addLinksToKafka(elasticPage);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -126,19 +134,21 @@ public class PageParserThread extends Thread{
         return false;
     }
 
-    Page parse(String url) { // TODO refactor this function
+    Pair<Page, Page> parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
         Timer.Context context = parseTimer.time();
         Document document;
-        Page page = new Page();
-        page.setUrl(url);
+        Page elasticPage = new Page();
+        Page hbasePage = new Page();
+        elasticPage.setUrl(url);
+        hbasePage.setUrl(url);
         try {
             Connection connect = Jsoup.connect(url);
             connect.timeout(2000);
             document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return");
-            return page;
+            return new Pair<>(elasticPage, hbasePage);
         }
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
@@ -147,22 +157,22 @@ public class PageParserThread extends Thread{
             if (text == null)
                 text = "";
             if (h3to6Tags.contains(element.tagName().toLowerCase()))
-                page.getH3to6List().add(new HtmlTag(element.tagName(), text));
+                elasticPage.getH3to6List().add(new HtmlTag(element.tagName(), text));
             else if (plainTextTags.contains(element.tagName().toLowerCase()))
-                page.getPlainTextList().add(new HtmlTag(element.tagName(), text));
+                elasticPage.getPlainTextList().add(new HtmlTag(element.tagName(), text));
             else if (element.tagName().equalsIgnoreCase("h1"))
-                page.getH1List().add(new HtmlTag("h1", text));
+                elasticPage.getH1List().add(new HtmlTag("h1", text));
             else if (element.tagName().equalsIgnoreCase("h2"))
-                page.getH2List().add(new HtmlTag("h2", text));
+                elasticPage.getH2List().add(new HtmlTag("h2", text));
             else if (element.tagName().equalsIgnoreCase("title"))
-                page.setTitle(text);
+                elasticPage.setTitle(text);
             else if (element.tagName().equalsIgnoreCase("a")) {
                 String href = element.attr("abs:href");
                 if (href == null)
                     href = "";
                 HtmlTag linkTag = new HtmlTag("a", text);
                 linkTag.getProps().put("href", href);
-                page.getLinks().add(linkTag);
+                hbasePage.getLinks().add(linkTag);
             } else if (element.tagName().equalsIgnoreCase("meta")) {
                 String name = element.attr("name");
                 if (name == null)
@@ -173,12 +183,14 @@ public class PageParserThread extends Thread{
                 HtmlTag metaTag = new HtmlTag("meta");
                 metaTag.getProps().put("name",name);
                 metaTag.getProps().put("content", content);
-                page.getMetadata().add(metaTag);
+                elasticPage.getMetadata().add(metaTag);
             }
         }
         context.stop();
         logger.info("parsing page done.");
-        return page;
+        elasticPage.setValid(true);
+        hbasePage.setValid(true);
+        return new Pair<>(elasticPage, hbasePage);
     }
 
     public void close() {
