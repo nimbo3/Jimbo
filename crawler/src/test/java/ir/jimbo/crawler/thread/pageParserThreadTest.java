@@ -1,8 +1,10 @@
 package ir.jimbo.crawler.thread;
 
 import com.sun.net.httpserver.HttpServer;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.crawler.config.RedisConfigurationTest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,31 +35,31 @@ public class pageParserThreadTest {
     }
 
     @Test
-    public void testTitle() {
-        PageParserThread pageParser = new PageParserThread();
+    public void testTitle() throws IOException {
+        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
         Page page = pageParser.parse("http://localhost:9898/test");
         assertEquals("Test page Title", page.getTitle());
     }
 
     @Test
-    public void testH1() {
-        PageParserThread pageParser = new PageParserThread();
+    public void testH1() throws IOException {
+        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
         Page page = pageParser.parse("http://localhost:9898/test");
         assertEquals(1, page.getH1List().size());
         assertEquals("Header1", page.getH1List().get(0).getContent());
     }
 
     @Test
-    public void testH2() {
-        PageParserThread pageParser = new PageParserThread();
+    public void testH2() throws IOException {
+        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
         Page page = pageParser.parse("http://localhost:9898/test");
         assertEquals(1, page.getH2List().size());
         assertEquals("Header2", page.getH2List().get(0).getContent());
     }
 
     @Test
-    public void testH3to6() {
-        PageParserThread pageParser = new PageParserThread();
+    public void testH3to6() throws IOException {
+        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
         Page page = pageParser.parse("http://localhost:9898/test");
         assertEquals(4, page.getH3to6List().size());
         assertTrue(page.getH3to6List().contains(new HtmlTag("h3", "Header3")));
@@ -67,8 +69,8 @@ public class pageParserThreadTest {
     }
 
     @Test
-    public void testPlainText() {
-        PageParserThread pageParser = new PageParserThread();
+    public void testPlainText() throws IOException {
+        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
         Page page = pageParser.parse("http://localhost:9898/test");
         assertEquals(5, page.getPlainTextList().size());
         assertTrue(page.getPlainTextList().contains(new HtmlTag("p", "paragraph")));
@@ -79,8 +81,8 @@ public class pageParserThreadTest {
     }
 
     @Test
-    public void testLinks() {
-        PageParserThread pageParser = new PageParserThread();
+    public void testLinks() throws IOException {
+        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
         Page page = pageParser.parse("http://localhost:9898/test");
         assertEquals(2, page.getLinks().size());
         HtmlTag aboutTag = new HtmlTag("a", "About");

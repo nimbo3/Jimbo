@@ -23,7 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PageParserThread extends Thread{
+public class PageParserThread extends Thread {
 
     private Logger logger = LogManager.getLogger(this.getClass());
     private ArrayBlockingQueue<String> queue;
@@ -48,7 +48,8 @@ public class PageParserThread extends Thread{
     }
 
     // For Test
-    public PageParserThread() {
+    public PageParserThread(Timer timer) {
+        this.parseTimer = timer;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package ir.jimbo.crawler.service;
 
 
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.junit.After;
 import org.junit.Assert;
@@ -16,10 +17,11 @@ public class CacheServiceTest {
     private RedisServer redisServer;
     @Before
     public void setUp() throws IOException {
-        redisServer = new RedisServer(6379);
+        MetricConfiguration metrics = new MetricConfiguration();
+        redisServer = new RedisServer(6380);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
-        cacheService = new CacheService(redisConfiguration);
+        cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
     }
 
     @After
@@ -28,24 +30,45 @@ public class CacheServiceTest {
     }
 
     @Test
-    public void testIsDomainExist() throws Exception {
+    public void testIsDomainExist() {
         cacheService.addDomain("domain");
         boolean result = cacheService.isDomainExist("domain");
-        Assert.assertEquals(true, result);
-
+        Assert.assertTrue(result);
 
         result = cacheService.isDomainExist("domain2");
-        Assert.assertEquals(false, result);
+        Assert.assertFalse(result);
     }
 
     @Test
-    public void testIsUrlExists() throws Exception {
+    public void testIsUrlExists() {
         cacheService.addUrl("uri");
         boolean result = cacheService.isUrlExists("uri");
-        Assert.assertEquals(true, result);
+        Assert.assertTrue(result);
 
         result = cacheService.isUrlExists("uri2");
-        Assert.assertEquals(false, result);
+        Assert.assertFalse(result);
+    }
+
+    @Test
+    public void testThirtySecondCache() throws InterruptedException {
+        cacheService.addDomain("domain");
+        Thread.sleep(1500);
+        boolean result = cacheService.isDomainExist("domain");
+        Assert.assertFalse(result);
+    }
+
+    @Test
+    public void testEmptyDomain() {
+        cacheService.addDomain("");
+        boolean result = cacheService.isDomainExist("");
+        Assert.assertFalse(result);
+    }
+
+    @Test
+    public void testEmptyUrl() {
+        cacheService.addUrl("   ");
+        boolean result = cacheService.isUrlExists("   ");
+        Assert.assertFalse(result);
     }
 }
 

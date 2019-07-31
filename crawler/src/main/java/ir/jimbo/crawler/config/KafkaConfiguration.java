@@ -45,7 +45,6 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
-//        heartBeat = Integer.parseInt(properties.getProperty("heart_beat.milis"));
     }
 
     public KafkaConfiguration(String path) throws IOException {

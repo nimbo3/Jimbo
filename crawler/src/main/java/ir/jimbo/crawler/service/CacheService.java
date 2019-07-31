@@ -31,9 +31,7 @@ public class CacheService extends HealthCheck {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 redis.shutdown();
-            } catch (Exception e) {
-                logger.error("exception in closing jedis", e);
-            }
+            } catch (Exception e) { logger.error("exception in closing redisson", e); }
         }));
 
         Config config = new Config();
@@ -45,17 +43,27 @@ public class CacheService extends HealthCheck {
     }
 
     public void addDomain(String domain) {
+        if (domain.trim().isEmpty()) {
+            return;
+        }
         RBucket<Long> bucket = redis.getBucket(domain);
         bucket.set(System.currentTimeMillis());
     }
 
     public void addUrl(String url) {
+        if (url.trim().isEmpty()) {
+            return;
+        }
         String hashedUri = getMd5(url);
+        System.out.println(hashedUri);
         RBucket<Long> bucket = redis.getBucket(hashedUri);
         bucket.set(System.currentTimeMillis());
     }
 
     public boolean isDomainExist(String key) {
+        if (key.trim().isEmpty()) {
+            return false;
+        }
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(key).get();
@@ -71,6 +79,9 @@ public class CacheService extends HealthCheck {
     }
 
     public boolean isUrlExists(String uri) {
+        if (uri.trim().isEmpty()) {
+            return false;
+        }
         String hashedUri = getMd5(uri);
         long lastTime;
         try {
