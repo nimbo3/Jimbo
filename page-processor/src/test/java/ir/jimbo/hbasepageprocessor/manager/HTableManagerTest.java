@@ -16,7 +16,6 @@ public class HTableManagerTest {
     public void setUp() throws Exception {
         utility = new HBaseTestingUtility();
         utility.startMiniCluster();
-        EditLogFileOutputStream.setShouldSkipFsyncForTesting(true);
     }
 
     @After
@@ -28,6 +27,6 @@ public class HTableManagerTest {
     }
 
     @Test
-    public void put1() {
+    public void putList() {
     }
 }
