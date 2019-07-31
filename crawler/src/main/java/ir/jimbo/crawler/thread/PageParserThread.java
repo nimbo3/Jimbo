@@ -69,7 +69,7 @@ public class PageParserThread extends Thread {
             Page hbasePage = null;
             try {
                 PagePair parse = parse(uri);
-                elasticPage = parse.gethBasePage();
+                elasticPage = parse.getHBasePage();
                 hbasePage = parse.getElasticPage();
 
                 if (elasticPage == null || hbasePage == null) {
@@ -88,7 +88,7 @@ public class PageParserThread extends Thread {
                 pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(elasticPage);
+                addLinksToKafka(hbasePage);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -206,7 +206,7 @@ public class PageParserThread extends Thread {
             this.elasticPage = elasticPage;
         }
 
-        Page gethBasePage() {
+        Page getHBasePage() {
             return hBasePage;
         }
 

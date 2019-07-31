@@ -6,16 +6,11 @@ import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.espageprocessor.config.ElasticSearchConfiguration;
-import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.transport.TransportClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
 import pl.allegro.tech.embeddedelasticsearch.IndexSettings;
 import pl.allegro.tech.embeddedelasticsearch.PopularProperties;
@@ -26,8 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.*;
 
 public class ElasticSearchServiceTest {
 
@@ -59,7 +52,7 @@ public class ElasticSearchServiceTest {
 
     @Test
     public void testInsertPages() throws Exception {
-        List<Page> pages = Arrays.<Page>asList(new Page("url", "test", Collections.EMPTY_LIST
+        List<Page> pages = Arrays.asList(new Page("url", "test", Collections.EMPTY_LIST
                 , Arrays.asList(new HtmlTag("test", "http://test.com")), Arrays.asList(new HtmlTag("", "h1"))
                 , Arrays.asList(new HtmlTag("", "h2"))
                 , Arrays.asList(new HtmlTag("", "h3")), Arrays.asList(new HtmlTag("test_text"))));
