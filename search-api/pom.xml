@@ -14,7 +14,7 @@
     <properties>
         <embeddedElastic.version>2.10.0</embeddedElastic.version>
         <elasticsearch.version>6.3.2</elasticsearch.version>
-        <sparkjava.version>2.5.4</sparkjava.version>
+        <sparkjava.version>2.7.2</sparkjava.version>
     </properties>
 
     <dependencies>
