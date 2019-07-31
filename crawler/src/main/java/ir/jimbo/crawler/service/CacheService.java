@@ -5,8 +5,10 @@ import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.Jedis;
+import org.redisson.Redisson;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -20,37 +22,42 @@ public class CacheService {
     private Logger logger = LogManager.getLogger(this.getClass());
     private int expiredTimeDomainMilis;
     private int expiredTimeUrlMilis;
-    private Jedis jedis;
+    private RedissonClient redis;
 
     public CacheService(RedisConfiguration redisConfiguration) {
 
         // On closing app
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                jedis.disconnect();
+                redis.shutdown();
             } catch (Exception e) {
                 logger.error("exception in closing jedis", e);
             }
         }));
-        jedis = new Jedis(HostAndPort.parseString(redisConfiguration.getNodes().get(0)));
+
+        Config config = new Config();
+        config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0));
+        redis = Redisson.create(config);
         expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
         expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();
         logger.info("redis connection created.");
     }
 
     public void addDomain(String domain) {
-        jedis.set(domain, String.valueOf(System.currentTimeMillis()));
+        RBucket<Long> bucket = redis.getBucket(domain);
+        bucket.set(System.currentTimeMillis());
     }
 
     public void addUrl(String url) {
         String hashedUri = getMd5(url);
-        jedis.set(hashedUri, String.valueOf(System.currentTimeMillis()));
+        RBucket<Long> bucket = redis.getBucket(hashedUri);
+        bucket.set(System.currentTimeMillis());
     }
 
     public boolean isDomainExist(String key) {
         long lastTime;
         try {
-            lastTime = Long.parseLong(jedis.get(key));
+            lastTime = (long) redis.getBucket(key).get();
         } catch (Exception e) {
             return false;
         }
@@ -58,7 +65,6 @@ public class CacheService {
         if (currentTime - lastTime < expiredTimeDomainMilis) {
             return true;
         } else {
-            jedis.del(key);
             return false;
         }
     }
@@ -67,7 +73,7 @@ public class CacheService {
         String hashedUri = getMd5(uri);
         long lastTime;
         try {
-            lastTime = Long.parseLong(jedis.get(hashedUri));
+            lastTime = (long) redis.getBucket(hashedUri).get();
         } catch (Exception e) {
             return false;
         }
@@ -75,7 +81,6 @@ public class CacheService {
         if (currentTime - lastTime < expiredTimeUrlMilis) {
             return true;
         } else {
-            jedis.del(hashedUri);
             return false;
         }
     }
