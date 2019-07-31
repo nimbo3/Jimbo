@@ -4,14 +4,17 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <File name="all" fileName="/home/jimbo/crawl_logs/all.log">
-            <PatternLayout pattern="%d{yyyy-mm-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        <File name="MyFile" fileName="logs/hbase.log">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
         </File>
     </Appenders>
     <Loggers>
         <Root level="info">
+            <AppenderRef ref="MyFile"/>
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="all"/>
         </Root>
     </Loggers>
 </Configuration>

@@ -1,8 +1,13 @@
 package ir.jimbo.commons.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Objects;
+@Getter
+@Setter
 public class Page {
     private String url;
     private String title;
@@ -46,67 +51,23 @@ public class Page {
         this.plainTextList = plainTextList;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Page page = (Page) o;
+        return Objects.equals(url, page.url) &&
+                Objects.equals(title, page.title) &&
+                Objects.equals(metadata, page.metadata) &&
+                Objects.equals(links, page.links) &&
+                Objects.equals(h1List, page.h1List) &&
+                Objects.equals(h2List, page.h2List) &&
+                Objects.equals(h3to6List, page.h3to6List) &&
+                Objects.equals(plainTextList, page.plainTextList);
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setMetadata(List<HtmlTag> metadata) {
-        this.metadata = metadata;
-    }
-
-    public void setLinks(List<HtmlTag> links) {
-        this.links = links;
-    }
-
-    public void setH1List(List<HtmlTag> h1List) {
-        this.h1List = h1List;
-    }
-
-    public void setH2List(List<HtmlTag> h2List) {
-        this.h2List = h2List;
-    }
-
-    public void setH3to6List(List<HtmlTag> h3to6List) {
-        this.h3to6List = h3to6List;
-    }
-
-    public void setPlainTextList(List<HtmlTag> plainTextList) {
-        this.plainTextList = plainTextList;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public List<HtmlTag> getMetadata() {
-        return metadata;
-    }
-
-    public List<HtmlTag> getLinks() {
-        return links;
-    }
-
-    public List<HtmlTag> getH1List() {
-        return h1List;
-    }
-
-    public List<HtmlTag> getH2List() {
-        return h2List;
-    }
-
-    public List<HtmlTag> getH3to6List() {
-        return h3to6List;
-    }
-
-    public List<HtmlTag> getPlainTextList() {
-        return plainTextList;
+    @Override
+    public int hashCode() {
+        return Objects.hash(url, title, metadata, links, h1List, h2List, h3to6List, plainTextList);
     }
 }

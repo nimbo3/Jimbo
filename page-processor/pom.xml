@@ -37,6 +37,7 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
     <properties>
         <hbase.version>1.4.10</hbase.version>
@@ -107,25 +108,6 @@
                         </execution>
                     </executions>
                 </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.2</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>report</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -137,7 +119,7 @@
                     <transformers>
                         <transformer implementation=
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.pageprocessor.App</mainClass>
+                            <mainClass>ir.jimbo.hbasepageprocessor.App</mainClass>
                         </transformer>
                     </transformers>
                 </configuration>

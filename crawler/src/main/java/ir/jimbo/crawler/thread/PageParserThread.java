@@ -1,8 +1,11 @@
 package ir.jimbo.crawler.thread;
 
+import com.codahale.metrics.Timer;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.crawler.config.KafkaConfiguration;
+import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -29,15 +32,19 @@ public class PageParserThread extends Thread{
     private CountDownLatch countDownLatch;
     private Producer<Long, String> linkProducer;
     private Producer<Long, Page> pageProducer;
+    private CacheService cacheService;
+    private Timer parseTimer;
 
-    public PageParserThread(ArrayBlockingQueue<String> queue,
-                            KafkaConfiguration kafkaConfiguration, CountDownLatch parserLatch) {
+    public PageParserThread(ArrayBlockingQueue<String> queue, KafkaConfiguration kafkaConfiguration,
+                            CountDownLatch parserLatch, CacheService cacheService, MetricConfiguration metrics) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
+        this.cacheService = cacheService;
         countDownLatch = parserLatch;
         repeat = new AtomicBoolean(true);
         linkProducer = kafkaConfiguration.getLinkProducer();
         pageProducer = kafkaConfiguration.getPageProducer();
+        parseTimer = metrics.getNewTimer(metrics.getProperty("crawler.page.parse.timer.name"));
     }
 
     // For Test
@@ -76,7 +83,9 @@ public class PageParserThread extends Thread{
             }
 
         }
+        logger.info("before producers countDown latch");
         countDownLatch.countDown();
+        logger.info("after producers countDown latch. countDown latch : " + countDownLatch.getCount());
         try {
             pageProducer.close();
             linkProducer.close();
@@ -116,6 +125,7 @@ public class PageParserThread extends Thread{
 
     Page parse(String url) { // TODO refactor this function
         logger.info("start parsing...");
+        Timer.Context context = parseTimer.time();
         Document document;
         Page page = new Page();
         page.setUrl(url);
@@ -163,6 +173,7 @@ public class PageParserThread extends Thread{
                 page.getMetadata().add(metaTag);
             }
         }
+        context.stop();
         logger.info("parsing page done.");
         return page;
     }
