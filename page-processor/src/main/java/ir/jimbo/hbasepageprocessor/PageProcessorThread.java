@@ -27,7 +27,6 @@ public class PageProcessorThread extends Thread {
     private List<HRow> links = new ArrayList<>();
 
     public PageProcessorThread(String hTableName, String hColumnFamily) throws IOException, NoSuchAlgorithmException {
-        System.out.println(LOGGER.getName());
         hTableManager = new HTableManager(hTableName, hColumnFamily);
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
