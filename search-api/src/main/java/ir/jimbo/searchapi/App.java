@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
 import ir.jimbo.searchapi.manager.ElasticSearchService;
 import ir.jimbo.searchapi.model.SearchQuery;
+import ir.jimbo.searchapi.model.SearchResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -62,7 +63,8 @@ public class App {
             }
 
             SearchQuery searchQuery = new SearchQuery(mustQuery.toString(), normalQuery, fuzzyQuery.toString());
-            String responseText = objectMapper.writeValueAsString(elasticSearchService.getSearch(searchQuery));
+            SearchResult search = elasticSearchService.getSearch(searchQuery);
+            String responseText = objectMapper.writeValueAsString(search);
             res.body(responseText);
             res.header("Access-Control-Allow-Origin", "*");
             return responseText;

@@ -42,6 +42,7 @@ public class ElasticSearchService {
     }
 
     public SearchResult getSearch(SearchQuery query) {
+        long startTime = System.currentTimeMillis();
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         SearchResult searchResult = new SearchResult();
@@ -71,6 +72,7 @@ public class ElasticSearchService {
         LOGGER.info("execute of query finished, query :" + query.toString());
 
         parseSearchResults(searchResult, searchResponse);
+        searchResult.setSearchTime(System.currentTimeMillis() - startTime);
         return searchResult;
     }
 
