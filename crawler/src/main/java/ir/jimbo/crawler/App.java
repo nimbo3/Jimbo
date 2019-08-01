@@ -21,9 +21,9 @@ public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     private static ArrayBlockingQueue<String> queue;
-    private static RedisConfiguration redisConfiguration;
-    private static KafkaConfiguration kafkaConfiguration;
-    private static AppConfiguration appConfiguration;
+    static RedisConfiguration redisConfiguration;
+    static KafkaConfiguration kafkaConfiguration;
+    static AppConfiguration appConfiguration;
     private static LinkConsumer[] consumers;
     private static PageParserThread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
@@ -95,7 +95,7 @@ public class App {
         }).start();
     }
 
-    private static long getAllWakeConsumers(Counter counter) {
+    static long getAllWakeConsumers(Counter counter) {
         for (LinkConsumer consumer: consumers) {
             if (consumer.isAlive()) {
                 counter.inc();
@@ -104,7 +104,7 @@ public class App {
         return counter.getCount();
     }
 
-    private static long getAllWakeProducers(Counter counter) {
+    static long getAllWakeProducers(Counter counter) {
         for (PageParserThread producer: producers) {
             if (producer.isAlive()) {
                 counter.inc();
@@ -171,7 +171,7 @@ public class App {
         LOGGER.info("end interrupting consumer threads");
     }
 
-    private static void initializeConfigurations(String[] args) {
+    static void initializeConfigurations(String[] args) {
 
         String redisPath = null;
         String kafkaPath = null;

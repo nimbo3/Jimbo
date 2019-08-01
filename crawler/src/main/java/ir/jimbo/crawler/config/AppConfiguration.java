@@ -10,16 +10,17 @@ public class AppConfiguration {
     private int pageParserSize;
     private int linkConsumerSize;
     private int queueSize;
+    private Properties properties;
 
     public AppConfiguration() throws IOException {
-        Properties properties = new Properties();
+        properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("appConfig.properties")));
         initValues(properties);
     }
 
     public AppConfiguration(String path) throws IOException {
-        Properties properties = new Properties();
+        properties = new Properties();
         properties.load(new FileInputStream(path));
         initValues(properties);
     }
@@ -40,5 +41,9 @@ public class AppConfiguration {
 
     public int getQueueSize() {
         return queueSize;
+    }
+
+    public String getProperty(String key) {
+        return properties.getProperty(key);
     }
 }
