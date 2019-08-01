@@ -38,7 +38,7 @@ public class CacheService extends HealthCheck {
         }));
 
         Config config = new Config();
-        config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0));
+        config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0)).setPassword(redisConfiguration.getPassword());
         redis = Redisson.create(config);
         expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
         expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();

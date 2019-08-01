@@ -83,16 +83,16 @@ public class pageParserThreadTest {
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         HtmlTag aboutTag = new HtmlTag("a", "About");
         HtmlTag contactUsTag = new HtmlTag("a", "Contact us");
-        assertTrue(parsed.gethBasePage().getLinks().contains(aboutTag));
-        assertTrue(parsed.gethBasePage().getLinks().contains(contactUsTag));
-        if (parsed.gethBasePage().getLinks().get(0).getContent().equals("About"))
-            assertEquals(parsed.gethBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
+        assertTrue(parsed.getHBasePage().getLinks().contains(aboutTag));
+        assertTrue(parsed.getHBasePage().getLinks().contains(contactUsTag));
+        if (parsed.getHBasePage().getLinks().get(0).getContent().equals("About"))
+            assertEquals(parsed.getHBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
         else
-            assertEquals(parsed.gethBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
-        if (parsed.gethBasePage().getLinks().get(0).getContent().equals("Contact us"))
-            assertEquals(parsed.gethBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
+            assertEquals(parsed.getHBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
+        if (parsed.getHBasePage().getLinks().get(0).getContent().equals("Contact us"))
+            assertEquals(parsed.getHBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/contact");
         else
-            assertEquals(parsed.gethBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
+            assertEquals(parsed.getHBasePage().getLinks().get(0).getProps().get("href"), "http://localhost:9898/about");
     }
 
     @After
