@@ -8,12 +8,14 @@ import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,21 +33,27 @@ public class LinkConsumer extends Thread {
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
-
+    private Consumer<Long, String> consumer;
+    private ArrayBlockingQueue<String> queue;
 
     public LinkConsumer(KafkaConfiguration kafkaConfiguration, CacheService cacheService, CountDownLatch consumerLatch,
-                        MetricConfiguration metrics) {
+                        ArrayBlockingQueue<String> queue, MetricConfiguration metrics) {
         pollDuration = kafkaConfiguration.getPollDuration();
         this.kafkaConfiguration = kafkaConfiguration;
         this.cacheService = cacheService;
         repeat = new AtomicBoolean(true);
         countDownLatch = consumerLatch;
         this.metrics = metrics;
+        consumer = kafkaConfiguration.getConsumer();
+        this.queue = queue;
+    }
+
+    public void setConsumer(Consumer<Long, String> consumer) {
+        this.consumer = consumer;
     }
 
     @Override
     public void run() {
-        Consumer<Long, String> consumer = kafkaConfiguration.getConsumer();
         String uri;
         Timer linkProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.link.process.timer.name"));
         Timer crawlKafkaLinksProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.kafka.links.process.timer.name"));
@@ -62,7 +70,7 @@ public class LinkConsumer extends Thread {
                     if (!cacheService.isUrlExists(uri)) {
                         if (isPolite(uri)) {
                             boolean isAdded;
-                            isAdded = App.linkQueue.offer(uri, 2000, TimeUnit.MILLISECONDS);
+                            isAdded = queue.offer(uri, 2000, TimeUnit.MILLISECONDS);
                             if (isAdded) {
                                 logger.info("uri added to queue : " + uri);
                                 cacheService.addDomain(getDomain(uri));

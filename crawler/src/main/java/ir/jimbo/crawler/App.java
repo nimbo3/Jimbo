@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
-    static ArrayBlockingQueue<String> linkQueue;
+    private static ArrayBlockingQueue<String> queue;
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
@@ -33,7 +33,7 @@ public class App {
         initializeConfigurations(args);
         MetricConfiguration metrics = new MetricConfiguration();    // Throws IOException
         CacheService cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
-        linkQueue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
+        queue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
@@ -45,14 +45,14 @@ public class App {
         LOGGER.info("starting parser threads");
         producers = new PageParserThread[parserThreadSize];
         for (int i = 0; i < parserThreadSize; i++) {
-            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch, cacheService, metrics);
+            producers[i] = new PageParserThread(queue, kafkaConfiguration, parserLatch, cacheService, metrics);
             producers[i].start();
         }
 
         consumers = new LinkConsumer[consumerThreadSize];
         LOGGER.info("starting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
-            consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch, metrics);
+            consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch, queue, metrics);
             consumers[i].start();
         }
         LOGGER.info("end starting threads");
@@ -63,10 +63,10 @@ public class App {
     private static void queueSizeChecker(MetricConfiguration metrics) {
         final long duration = Long.parseLong(metrics.getProperty("crawler.check.duration"));
         Histogram histogram = metrics.getNewHistogram(metrics.getProperty("crawler.queue.size.histogram.name"));
-        histogram.update(linkQueue.size());
+        histogram.update(queue.size());
         new Thread(() -> {
             while (repeat.get()) {
-                histogram.update(linkQueue.size());
+                histogram.update(queue.size());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -142,7 +142,7 @@ public class App {
     private static void queueEmptyChecker() {
         while (true) {
             LOGGER.info("waiting for queue to become empty...");
-            if (linkQueue.isEmpty()) {
+            if (queue.isEmpty()) {
                 break;
             } else {
                 try {

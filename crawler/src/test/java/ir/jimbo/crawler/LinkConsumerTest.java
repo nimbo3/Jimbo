@@ -2,84 +2,68 @@ package ir.jimbo.crawler;
 
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
+import ir.jimbo.crawler.config.RedisConfiguration;
 import ir.jimbo.crawler.service.CacheService;
-import org.apache.logging.log4j.Logger;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.MockConsumer;
+import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.common.TopicPartition;
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import sun.nio.ch.Interruptible;
+import redis.embedded.RedisServer;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.mockito.Mockito.*;
 
 public class LinkConsumerTest {
-    @Mock
-    Logger logger;
-    @Mock
-    KafkaConfiguration kafkaConfiguration;
-    @Mock
-    CacheService cacheService;
-    @Mock
-    AtomicBoolean repeat;
-    @Mock
-    CountDownLatch countDownLatch;
-    @Mock
-    MetricConfiguration metrics;
-    //Field domainPattern of type Pattern - was not mocked since Mockito doesn't mock a Final class when 'mock-maker-inline' option is not set
-    @Mock
-    Thread threadQ;
-    @Mock
-    Runnable target;
-    @Mock
-    ThreadGroup group;
-    @Mock
-    ClassLoader contextClassLoader;
-    //Field inheritedAccessControlContext of type AccessControlContext - was not mocked since Mockito doesn't mock a Final class when 'mock-maker-inline' option is not set
-    @Mock
-    ThreadLocal.ThreadLocalMap threadLocals;
-    @Mock
-    ThreadLocal.ThreadLocalMap inheritableThreadLocals;
-    @Mock
-    Object parkBlocker;
-    @Mock
-    Interruptible blocker;
-    @Mock
-    Object blockerLock;
-    @Mock
-    Thread.UncaughtExceptionHandler uncaughtExceptionHandler;
-    @Mock
-    Thread.UncaughtExceptionHandler defaultUncaughtExceptionHandler;
-    @InjectMocks
-    LinkConsumer linkConsumer;
+
+    private RedisServer redisServer;
+    private CacheService cacheService;
 
     @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    public void setUp() throws IOException {
+        MetricConfiguration metrics = new MetricConfiguration();
+        redisServer = new RedisServer(6380);
+        redisServer.start();
+        RedisConfiguration redisConfiguration = new RedisConfiguration();
+        cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
+    }
+
+    @After
+    public void close() {
+        redisServer.stop();
     }
 
     @Test
-    public void testRun() throws Exception {
-
-
-        when(kafkaConfiguration.getLinkTopicName()).thenReturn("getLinkTopicNameResponse");
-        when(kafkaConfiguration.getLinkProducer()).thenReturn(null);
-        when(kafkaConfiguration.getConsumer()).thenReturn(null);
-        when(cacheService.isDomainExist(anyString())).thenReturn(true);
-        when(cacheService.isUrlExists(anyString())).thenReturn(true);
-        when(metrics.getNewTimer(anyString())).thenReturn(null);
-        when(metrics.getProperty(anyString())).thenReturn("getPropertyResponse");
-
-        linkConsumer.start();
-    }
-
-    @Test
-    public void testClose() throws Exception {
-        linkConsumer.close();
+    public void run() throws IOException, InterruptedException {
+        ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<>(2);
+        LinkConsumer consumer = new LinkConsumer(new KafkaConfiguration(),
+                cacheService,
+                new CountDownLatch(1),
+                queue,
+                new MetricConfiguration());
+        MockConsumer<Long, String> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        kafkaConsumer.subscribe(Collections.singletonList("testTopic"));
+        consumer.setConsumer(kafkaConsumer);
+        kafkaConsumer.rebalance(
+                Collections.singleton(new TopicPartition("testTopic", 0)));
+        kafkaConsumer.seek(new TopicPartition("testTopic", 0), 0);
+        kafkaConsumer.addRecord(new ConsumerRecord<>(
+                "testTopic", 0, 0, 1L, "https://stackoverflow.com"));
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            consumer.close();
+        }).start();
+        consumer.run();
+        String link = queue.take();
+        Assert.assertEquals(link, "https://stackoverflow.com");
     }
 }
-
-//Generated with love by TestMe :) Please report issues and submit feature requests at: http://weirddev.com/forum#!/testme

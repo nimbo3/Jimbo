@@ -23,7 +23,7 @@ public class RedisConfigurationTest {
         List<String> withPath = configWithPath.getNodes();
         List<String> withoutPath = configWithoutPath.getNodes();
         List<String> result = new ArrayList<>();
-        result.add("redis://localhost:6379");
+        result.add("redis://localhost:6380");
         Assert.assertArrayEquals(withPath.toArray(), result.toArray());
         Assert.assertArrayEquals(withoutPath.toArray(), result.toArray());
     }
@@ -48,8 +48,8 @@ public class RedisConfigurationTest {
     public void getDomainExpiredTime() {
         int withPath = configWithPath.getDomainExpiredTime();
         int withoutPath = configWithoutPath.getDomainExpiredTime();
-        Assert.assertEquals(withoutPath, 30000);
-        Assert.assertEquals(withPath, 30000);
+        Assert.assertEquals(withoutPath, 1000);
+        Assert.assertEquals(withPath, 1000);
     }
 
     @Test
