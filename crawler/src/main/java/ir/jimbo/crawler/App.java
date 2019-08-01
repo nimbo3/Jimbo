@@ -17,6 +17,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
@@ -24,8 +25,8 @@ public class App {
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
-    private static LinkConsumer[] consumers;
-    private static PageParserThread[] producers;
+    private static Thread[] consumers;
+    private static Thread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
 
     public static void main(String[] args) throws IOException {
@@ -95,8 +96,8 @@ public class App {
         }).start();
     }
 
-    private static long getAllWakeConsumers(Counter counter) {
-        for (LinkConsumer consumer: consumers) {
+    static long getAllWakeConsumers(Counter counter) {
+        for (Thread consumer : consumers) {
             if (consumer.isAlive()) {
                 counter.inc();
             }
@@ -104,8 +105,8 @@ public class App {
         return counter.getCount();
     }
 
-    private static long getAllWakeProducers(Counter counter) {
-        for (PageParserThread producer: producers) {
+    static long getAllWakeProducers(Counter counter) {
+        for (Thread producer : producers) {
             if (producer.isAlive()) {
                 counter.inc();
             }
@@ -127,7 +128,7 @@ public class App {
 
         LOGGER.info("start interrupting parser threads...");
         for (int i = 0; i < producersThreadSize; i++) {
-            producers[i].close();
+            producers[i].interrupt();
         }
         try {
             LOGGER.info("before parser threads");
@@ -158,7 +159,7 @@ public class App {
     private static void consumerThreadInterruption(CountDownLatch countDownLatch, int consumerThreadSize) {
         LOGGER.info("start interrupting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
-            consumers[i].close();
+            consumers[i].interrupt();
         }
         try {
             LOGGER.info("before consumer await. size : " + countDownLatch.getCount());
@@ -171,7 +172,7 @@ public class App {
         LOGGER.info("end interrupting consumer threads");
     }
 
-    private static void initializeConfigurations(String[] args) {
+    static void initializeConfigurations(String[] args) throws IOException {
 
         String redisPath = null;
         String kafkaPath = null;
@@ -196,39 +197,52 @@ public class App {
         }
 
         redisConfiguration = null;
-        try {
-            if (redisPath == null) {
-                redisConfiguration = new RedisConfiguration();
-            } else {
-                redisConfiguration = new RedisConfiguration(redisPath);
-            }
-        } catch (IOException e) {
-            LOGGER.error("error loading redis configs", e);
-            System.exit(-1);
+        if (redisPath == null) {
+            redisConfiguration = new RedisConfiguration();
+        } else {
+            redisConfiguration = new RedisConfiguration(redisPath);
         }
 
         kafkaConfiguration = null;
-        try {
-            if (kafkaPath == null) {
-                kafkaConfiguration = new KafkaConfiguration();
-            } else {
-                kafkaConfiguration = new KafkaConfiguration(kafkaPath);
-            }
-        } catch (IOException e) {
-            LOGGER.error("error loading kafka configs", e);
-            System.exit(-1);
+        if (kafkaPath == null) {
+            kafkaConfiguration = new KafkaConfiguration();
+        } else {
+            kafkaConfiguration = new KafkaConfiguration(kafkaPath);
         }
 
         appConfiguration = null;
-        try {
-            if (appPath == null) {
-                appConfiguration = new AppConfiguration();
-            } else {
-                appConfiguration = new AppConfiguration(appPath);
-            }
-        } catch (IOException e) {
-            LOGGER.error("error loading app configs", e);
-            System.exit(-1);
+        if (appPath == null) {
+            appConfiguration = new AppConfiguration();
+        } else {
+            appConfiguration = new AppConfiguration(appPath);
         }
+    }
+
+    public static RedisConfiguration getRedisConfiguration() {
+        return redisConfiguration;
+    }
+
+    public static AppConfiguration getAppConfiguration() {
+        return appConfiguration;
+    }
+
+    public static KafkaConfiguration getKafkaConfiguration() {
+        return kafkaConfiguration;
+    }
+
+    public static Thread[] getConsumers() {
+        return consumers;
+    }
+
+    public static void setConsumers(Thread[] array) {
+        consumers = array;
+    }
+
+    public static Thread[] getProducers() {
+        return producers;
+    }
+
+    public static void setProducers(Thread[] array) {
+        producers = array;
     }
 }

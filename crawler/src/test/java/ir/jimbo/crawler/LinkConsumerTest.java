@@ -3,6 +3,7 @@ package ir.jimbo.crawler;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.config.RedisConfiguration;
+import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
@@ -60,10 +61,73 @@ public class LinkConsumerTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            consumer.close();
+            consumer.interrupt();
         }).start();
         consumer.run();
         String link = queue.take();
         Assert.assertEquals(link, "https://stackoverflow.com");
+    }
+
+    @Test
+    public void getDomain() throws IOException {
+        LinkConsumer consumer = new LinkConsumer(new KafkaConfiguration(),
+                cacheService,
+                new CountDownLatch(3),
+                new ArrayBlockingQueue<>(3),
+                new MetricConfiguration());
+        Assert.assertEquals(consumer.getDomain("http://stackoverflow.com/"), "stackoverflow.com");
+        Assert.assertEquals(consumer.getDomain("https://stackoverflow.com/"), "stackoverflow.com");
+        Assert.assertEquals(consumer.getDomain("http://stackoverflow.com"), "stackoverflow.com");
+        Assert.assertEquals(consumer.getDomain("https://stackoverflow.com/"), "stackoverflow.com");
+        Assert.assertEquals(consumer.getDomain("https://stackoverflow.co.io/"), "stackoverflow.co.io");
+        Assert.assertEquals(consumer.getDomain("https://disscus.stackoverflow.co.io"), "disscus.stackoverflow.co.io");
+        Assert.assertEquals(consumer.getDomain("https://www.disscus.stackoverflow.co.io"), "disscus.stackoverflow.co.io");
+        String str1 = consumer.getDomain("http://www.discuss.stackoverflow.co.io");
+        String str2 = consumer.getDomain("http://discuss.stackoverflow.co.io");
+        Assert.assertEquals(str1, str2);
+    }
+
+    /**
+     * Uris that do not start with "http://" or "https://" must be ignored. according to pattern these
+     *  uris pattern are null
+     * @throws IOException
+     */
+    @Test (expected = NoDomainFoundException.class)
+    public void getDomainBadUri1() throws IOException {
+        LinkConsumer consumer = new LinkConsumer(new KafkaConfiguration(),
+                cacheService,
+                new CountDownLatch(3),
+                new ArrayBlockingQueue<>(3),
+                new MetricConfiguration());
+        consumer.getDomain("hello.com");
+    }
+
+    /**
+     * Uris that do not start with "http://" or "https://" must be ignored. according to pattern these
+     *  uris pattern are null. because jSoup can not fetch these uris.
+     * @throws IOException
+     */
+    @Test (expected = NoDomainFoundException.class)
+    public void getDomainBadUri2() throws IOException {
+        LinkConsumer consumer = new LinkConsumer(new KafkaConfiguration(),
+                cacheService,
+                new CountDownLatch(3),
+                new ArrayBlockingQueue<>(3),
+                new MetricConfiguration());
+        consumer.getDomain("www.hello.com");
+    }
+
+    /**
+     * Empty domains must be ignored.
+     * @throws IOException
+     */
+    @Test (expected = NoDomainFoundException.class)
+    public void getDomainBadUri3() throws IOException {
+        LinkConsumer consumer = new LinkConsumer(new KafkaConfiguration(),
+                cacheService,
+                new CountDownLatch(3),
+                new ArrayBlockingQueue<>(3),
+                new MetricConfiguration());
+        consumer.getDomain("http://www.");
     }
 }

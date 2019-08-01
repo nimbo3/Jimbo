@@ -193,8 +193,11 @@ public class PageParserThread extends Thread {
         return new PagePair(hbasePage, elasticPage);
     }
 
-    public void close() {
+    @Override
+    public void interrupt() {
+        logger.info("before setting producer thread to false");
         repeat.set(false);
+        logger.info("after setting producer thread to false, repeat {}", repeat.get());
     }
 
     static class PagePair {

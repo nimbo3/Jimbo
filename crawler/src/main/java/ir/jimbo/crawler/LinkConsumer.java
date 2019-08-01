@@ -29,10 +29,15 @@ public class LinkConsumer extends Thread {
     private CacheService cacheService;
     private AtomicBoolean repeat;
     private CountDownLatch countDownLatch;
+
+    // If invalid uri go for check its politeness it will return false and with this we make sure that it will not go back to kafka.
+    private boolean backToKafka;
     private MetricConfiguration metrics;
+
     // Regex pattern to extract domain from URL
-    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
+    private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+
     private Consumer<Long, String> consumer;
     private ArrayBlockingQueue<String> queue;
 
@@ -71,6 +76,7 @@ public class LinkConsumer extends Thread {
                 Timer.Context timerContext = linkProcessTimer.time();
                 try {
                     if (!cacheService.isUrlExists(uri)) {
+                        backToKafka = true;
                         if (isPolite(uri)) {
                             boolean isAdded;
                             isAdded = queue.offer(uri, 2000, TimeUnit.MILLISECONDS);
@@ -82,13 +88,13 @@ public class LinkConsumer extends Thread {
                                 logger.info("uri \"" + uri + "\" added to queue");
                             } else {
                                 logger.info("queue has not space for this url : " + uri);
-                                if(!cacheService.isUrlExists(uri)) {
+                                if (!cacheService.isUrlExists(uri)) {
                                     sendUriToKafka(uri, producer);
                                 }
                             }
                         } else {
                             logger.info("it was not polite crawling this uri : " + uri);
-                            if(!cacheService.isUrlExists(uri)) {
+                            if (backToKafka && !cacheService.isUrlExists(uri)) {
                                 sendUriToKafka(uri, producer);
                             }
                         }
@@ -99,7 +105,7 @@ public class LinkConsumer extends Thread {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
                     logger.error("error in putting uri to queue (interrupted exception) uri : " + uri);
-                    if(!cacheService.isUrlExists(uri)) {
+                    if (!cacheService.isUrlExists(uri)) {
                         sendUriToKafka(uri, producer);
                     }
                 }
@@ -127,17 +133,34 @@ public class LinkConsumer extends Thread {
     }
 
     private boolean isPolite(String uri) {
-        return !cacheService.isDomainExist(getDomain(uri));
+        try {
+            return !cacheService.isDomainExist(getDomain(uri));
+        } catch (NoDomainFoundException e) {
+            backToKafka = false;
+            return false;
+        }
     }
 
-    private String getDomain(String url) {
+    String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
+        String result = null;
         if (matcher.matches())
-            return matcher.group(4);
-        throw new NoDomainFoundException();
+            result = matcher.group(4);
+        if (result == null) {
+            throw new NoDomainFoundException();
+        }
+
+        if (result.startsWith("www.")) {
+            result = result.substring(4);
+        }
+        if (result.isEmpty()) {
+            throw new NoDomainFoundException();
+        }
+        return result;
     }
 
-    public void close() {
+    @Override
+    public void interrupt() {
         logger.info("setting repeat to false");
         repeat.set(false);
         logger.info("repeat : " + repeat.get());
