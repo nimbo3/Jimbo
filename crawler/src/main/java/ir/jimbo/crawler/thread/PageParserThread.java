@@ -69,7 +69,7 @@ public class PageParserThread extends Thread {
             Page hbasePage = null;
             try {
                 PagePair parse = parse(uri);
-                elasticPage = parse.gethBasePage();
+                elasticPage = parse.getHBasePage();
                 hbasePage = parse.getElasticPage();
 
                 if (elasticPage == null || hbasePage == null) {
@@ -206,7 +206,7 @@ public class PageParserThread extends Thread {
             this.elasticPage = elasticPage;
         }
 
-        Page gethBasePage() {
+        Page getHBasePage() {
             return hBasePage;
         }
 

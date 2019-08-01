@@ -19,7 +19,6 @@ public class ElasticSearchConfiguration extends Config {
     private static final Logger LOGGER = LogManager.getLogger(ElasticSearchConfiguration.class);
     private static final String PREFIX = "elasticsearch";
     private static ElasticSearchConfiguration instance = null;
-
     private List<String> urls;
     private String indexName;
     private String clusterName;
@@ -57,11 +56,4 @@ public class ElasticSearchConfiguration extends Config {
         return client;
     }
 
-    public int getRequestTimeOutNanos() {
-        return requestTimeOutNanos;
-    }
-
-    public void setRequestTimeOutNanos(int requestTimeOutNanos) {
-        this.requestTimeOutNanos = requestTimeOutNanos;
-    }
 }
