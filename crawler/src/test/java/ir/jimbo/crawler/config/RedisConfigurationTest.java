@@ -60,5 +60,4 @@ public class RedisConfigurationTest {
         Assert.assertEquals(withPath, 86400000);
     }
 
-    // TODO add function for get big integer and also bad integer (parse error)
 }

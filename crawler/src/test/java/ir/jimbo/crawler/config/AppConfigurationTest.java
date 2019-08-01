@@ -40,4 +40,8 @@ public class AppConfigurationTest {
         Assert.assertEquals(withPath, 1000);
     }
 
+    @Test (expected = NumberFormatException.class)
+    public void bigNumberInConfigs() throws IOException {
+        AppConfiguration configWithBadValues = new AppConfiguration("src/test/resources/appConfigCloneWithBigInt.properties");
+    }
 }
