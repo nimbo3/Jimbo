@@ -14,7 +14,7 @@ public class AppTest {
     @Test
     public void initConfigsWithoutPath() throws IOException {
         App.initializeConfigurations(new String[0]);
-        Assert.assertEquals(App.appConfiguration.getProperty("initialize.test"), "jimbo");
+        Assert.assertEquals(App.getAppConfiguration().getProperty("initialize.test"), "jimbo");
     }
 
     @Test
@@ -24,9 +24,9 @@ public class AppTest {
         args[1] = "redis:src/test/resources/redisConfigClone.properties";
         args[2] = "kafka:src/test/resources/kafkaConfigClone.properties";
         App.initializeConfigurations(args);
-        Assert.assertEquals(App.appConfiguration.getProperty("initialize.test"), "jimbo");
-        Assert.assertEquals(App.redisConfiguration.getPassword(), "jimbo");
-        Assert.assertEquals(App.kafkaConfiguration.getPollDuration(), 0);
+        Assert.assertEquals(App.getAppConfiguration().getProperty("initialize.test"), "jimbo");
+        Assert.assertEquals(App.getRedisConfiguration().getPassword(), "jimbo");
+        Assert.assertEquals(App.getKafkaConfiguration().getPollDuration(), 0);
     }
 
     @Test (expected = IOException.class)
@@ -40,54 +40,54 @@ public class AppTest {
 
     @Test
     public void awakeConsumer() throws InterruptedException {
-        App.consumers = new Thread[3];
+        App.setConsumers(new Thread[3]);
         for (int i = 0; i < 3; i++) {
-            App.consumers[i] = new InfinitThread();
+            App.getConsumers()[i] = new InfiniteThread();
         }
         Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 0);
         for (int i = 0; i < 3; i++) {
-            App.consumers[i].start();
+            App.getConsumers()[i].start();
         }
         Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 3);
-        App.consumers[2].interrupt();
+        App.getConsumers()[2].interrupt();
         Thread.sleep(1100);
         Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 2);
-        App.consumers[1].interrupt();
+        App.getConsumers()[1].interrupt();
         Thread.sleep(1100);
         Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 1);
-        App.consumers[0].interrupt();
+        App.getConsumers()[0].interrupt();
         Thread.sleep(1100);
         Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 0);
     }
 
     @Test
     public void awakeProducers() throws InterruptedException {
-        App.producers = new Thread[3];
+        App.setProducers(new Thread[3]);
         for (int i = 0; i < 3; i++) {
-            App.producers[i] = new InfinitThread();
+            App.getProducers()[i] = new InfiniteThread();
         }
-        Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 0);
+        Assert.assertEquals(App.getAllWakeProducers(new Counter()), 0);
         for (int i = 0; i < 3; i++) {
-            App.producers[i].start();
+            App.getProducers()[i].start();
         }
         Thread.sleep(1000);
         Assert.assertEquals(App.getAllWakeProducers(new Counter()), 3);
-        App.producers[2].interrupt();
+        App.getProducers()[2].interrupt();
         Thread.sleep(1100);
         Assert.assertEquals(App.getAllWakeProducers(new Counter()), 2);
-        App.producers[1].interrupt();
+        App.getProducers()[1].interrupt();
         Thread.sleep(1100);
         Assert.assertEquals(App.getAllWakeProducers(new Counter()), 1);
-        App.producers[0].interrupt();
+        App.getProducers()[0].interrupt();
         Thread.sleep(1100);
         Assert.assertEquals(App.getAllWakeProducers(new Counter()), 0);
     }
 
-    private class InfinitThread extends Thread {
+    private class InfiniteThread extends Thread {
 
         AtomicBoolean repeat;
 
-        InfinitThread() {
+        InfiniteThread() {
             repeat = new AtomicBoolean(true);
         }
 

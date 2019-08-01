@@ -17,15 +17,16 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     private static ArrayBlockingQueue<String> queue;
-    static RedisConfiguration redisConfiguration;
-    static KafkaConfiguration kafkaConfiguration;
-    static AppConfiguration appConfiguration;
-    static Thread[] consumers;
-    static Thread[] producers;
+    private static RedisConfiguration redisConfiguration;
+    private static KafkaConfiguration kafkaConfiguration;
+    private static AppConfiguration appConfiguration;
+    private static Thread[] consumers;
+    private static Thread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
 
     public static void main(String[] args) throws IOException {
@@ -215,5 +216,33 @@ public class App {
         } else {
             appConfiguration = new AppConfiguration(appPath);
         }
+    }
+
+    public static RedisConfiguration getRedisConfiguration() {
+        return redisConfiguration;
+    }
+
+    public static AppConfiguration getAppConfiguration() {
+        return appConfiguration;
+    }
+
+    public static KafkaConfiguration getKafkaConfiguration() {
+        return kafkaConfiguration;
+    }
+
+    public static Thread[] getConsumers() {
+        return consumers;
+    }
+
+    public static void setConsumers(Thread[] array) {
+        consumers = array;
+    }
+
+    public static Thread[] getProducers() {
+        return producers;
+    }
+
+    public static void setProducers(Thread[] array) {
+        producers = array;
     }
 }
