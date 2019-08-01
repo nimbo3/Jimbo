@@ -40,8 +40,8 @@ public class RedisConfigurationTest {
     public void getPassword() {
         String withPath = configWithPath.getPassword();
         String withoutPath = configWithoutPath.getPassword();
-        Assert.assertEquals(withoutPath, "jimbo");
-        Assert.assertEquals(withPath, "jimbo");
+        Assert.assertEquals(withoutPath, "");
+        Assert.assertEquals(withPath, "");
     }
 
     @Test

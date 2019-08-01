@@ -1,5 +1,6 @@
 package ir.jimbo.crawler;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.KafkaConfiguration;
@@ -8,7 +9,6 @@ import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
@@ -57,6 +57,8 @@ public class LinkConsumer extends Thread {
         String uri;
         Timer linkProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.link.process.timer.name"));
         Timer crawlKafkaLinksProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.kafka.links.process.timer.name"));
+        Counter linksCounter = metrics.getNewCounter(metrics.getProperty("crawler.links.readed.from.kafka.counter.name"));
+        Counter linksAddToQueueCounter = metrics.getNewCounter(metrics.getProperty("crawler.links.added.to.queue.counter.name"));
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         logger.info("consumer thread started");
         while (repeat.get()) {
@@ -65,6 +67,7 @@ public class LinkConsumer extends Thread {
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
                 logger.info("uri read from kafka : " + uri);
+                linksCounter.inc();
                 Timer.Context timerContext = linkProcessTimer.time();
                 try {
                     if (!cacheService.isUrlExists(uri)) {
@@ -73,6 +76,7 @@ public class LinkConsumer extends Thread {
                             isAdded = queue.offer(uri, 2000, TimeUnit.MILLISECONDS);
                             if (isAdded) {
                                 logger.info("uri added to queue : " + uri);
+                                linksAddToQueueCounter.inc();
                                 cacheService.addDomain(getDomain(uri));
                                 cacheService.addUrl(uri);
                                 logger.info("uri \"" + uri + "\" added to queue");
