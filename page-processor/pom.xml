@@ -7,9 +7,20 @@
         <groupId>ir.jimbo</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
+
+    <properties>
+        <hbase.version>1.4.10</hbase.version>
+        <jackson.version>2.9.9.1</jackson.version>
+        <kafka.version>2.3.0</kafka.version>
+        <elasticsearch.version>6.3.2</elasticsearch.version>
+        <hadoop.version>2.7.7</hadoop.version>
+        <jackson.verision>2.9.9.1</jackson.verision>
+    </properties>
+
     <modelVersion>4.0.0</modelVersion>
     <artifactId>page-processor</artifactId>
     <description>"page processor module"</description>
+
     <dependencies>
         <dependency>
             <groupId>ir.jimbo</groupId>
@@ -35,7 +46,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.9.1</version>
+            <version>${jackson.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -52,14 +63,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <properties>
-        <hbase.version>1.4.10</hbase.version>
-        <jackson.version>2.9.9.1</jackson.version>
-        <kafka.version>2.3.0</kafka.version>
-        <elasticsearch.version>6.3.2</elasticsearch.version>
-        <hadoop.version>2.7.7</hadoop.version>
-    </properties>
-
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->

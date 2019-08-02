@@ -17,6 +17,9 @@
         <jsoup.version>1.12.1</jsoup.version>
         <kafka.client.version>2.3.0</kafka.client.version>
         <jackson.version>2.9.9.1</jackson.version>
+        <yammer.version>2.2.0</yammer.version>
+        <embedded.version>0.6</embedded.version>
+        <redisson.verision>3.11.1</redisson.verision>
     </properties>
 
     <dependencies>
@@ -24,13 +27,13 @@
         <dependency>
             <groupId>com.github.kstyrc</groupId>
             <artifactId>embedded-redis</artifactId>
-            <version>0.6</version>
+            <version>${embedded.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
-            <version>3.11.1</version>
+            <version>${redisson.verision}</version>
         </dependency>
 
         <dependency>
@@ -48,22 +51,24 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.9.1</version>
+            <version>${jackson.version}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>ir.jimbo</groupId>
             <artifactId>commons</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>com.yammer.metrics</groupId>
             <artifactId>metrics-core</artifactId>
-            <version>2.2.0</version>
+            <version>${yammer.version}</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
 
 
