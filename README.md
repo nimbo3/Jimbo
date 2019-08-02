@@ -8,14 +8,14 @@ Collaborators:
 
 
 ## Project modules:  
-- commoms (common modules)  
+- commons (common modules)  
 - crawler  
 - es_page_processor (process pages for elasticSearch)  
 - page_processor (process pages for hbase)  
 - search api
 
 ## Build with :  
-- Spark         - Used to run mapReduces  
+- Spark         - Used to run mapReduce  
 - Kafka         - A distrbuted queue that contains 3 main topic (links, page for hbase, page for elasticsearch)  
 - ElasticSearch - Used to store data and run search queries  
 - Redis         - Used to check politness for domains and check to reduce updating pages for page_processors  
