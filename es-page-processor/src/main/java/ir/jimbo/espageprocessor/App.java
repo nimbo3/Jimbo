@@ -1,6 +1,7 @@
 package ir.jimbo.espageprocessor;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.espageprocessor.config.ElasticSearchConfiguration;
 import ir.jimbo.espageprocessor.config.JConfig;
@@ -43,10 +44,9 @@ public class App {
 
     private static void aliveThreadCounter(MetricConfiguration metrics, long duration, String counterName) {
         new Thread(() -> {
-            Counter hBaseThreadNum = metrics.getNewCounter(counterName);
+            Histogram hBaseThreadNum = metrics.getNewHistogram(counterName);
             while (true) {
-                hBaseThreadNum.dec(hBaseThreadNum.getCount());
-                hBaseThreadNum.inc(getAllWakeThreads(hBaseThreadNum));
+                hBaseThreadNum.update(getAllWakeThreads());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -56,12 +56,13 @@ public class App {
         }).start();
     }
 
-    private static long getAllWakeThreads(Counter counter) {
+    private static int getAllWakeThreads() {
+        int count = 0;
         for (Thread parser: pageProcessors) {
             if (parser.isAlive()) {
-                counter.inc();
+                count ++;
             }
         }
-        return counter.getCount();
+        return count;
     }
 }

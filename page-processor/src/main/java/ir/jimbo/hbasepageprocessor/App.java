@@ -1,6 +1,7 @@
 package ir.jimbo.hbasepageprocessor;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.hbasepageprocessor.config.HConfig;
 import ir.jimbo.hbasepageprocessor.config.JConfig;
@@ -54,10 +55,9 @@ public class App {
 
     private static void aliveThreadCounter(MetricConfiguration metrics, long duration, String counterName) {
         new Thread(() -> {
-            Counter hBaseThreadNum = metrics.getNewCounter(counterName);
+            Histogram hBaseThreadNum = metrics.getNewHistogram(counterName);
             while (true) {
-                hBaseThreadNum.dec(hBaseThreadNum.getCount());
-                hBaseThreadNum.inc(getAllWakeThreads(hBaseThreadNum));
+                hBaseThreadNum.update(getAllWakeThreads());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -67,12 +67,13 @@ public class App {
         }).start();
     }
 
-    private static long getAllWakeThreads(Counter counter) {
+    private static long getAllWakeThreads() {
+        int counter = 0;
         for (PageProcessorThread parser: pageProcessors) {
             if (parser.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 }
