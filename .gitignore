@@ -58,6 +58,7 @@ fabric.properties
 
 *.iml
 *.log
+es-page-processor/embeddedEs/**
 
 .idea
 

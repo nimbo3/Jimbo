@@ -15,6 +15,7 @@
         <spark.version>2.0.0</spark.version>
         <hbase.version>1.4.10</hbase.version>
         <elasticsearch.spark.version>6.3.2</elasticsearch.spark.version>
+        <jackson.version>2.6.5</jackson.version>
     </properties>
 
     <dependencies>
@@ -32,7 +33,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.6.5</version>
+            <version>${jackson.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -41,12 +42,6 @@
             <version>${hbase.version}</version>
         </dependency>
 
-
-        <!--<dependency>-->
-        <!--<groupId>org.elasticsearch</groupId>-->
-        <!--<artifactId>elasticsearch-spark-20_2.11</artifactId>-->
-        <!--<version>${elasticsearch.spark.version}</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
