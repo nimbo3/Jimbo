@@ -12,6 +12,12 @@
     <description>"page processor module"</description>
     <dependencies>
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.9.9.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>ir.jimbo</groupId>
             <artifactId>commons</artifactId>
             <version>${project.version}</version>

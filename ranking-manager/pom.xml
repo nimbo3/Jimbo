@@ -8,62 +8,56 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>page-processor</artifactId>
-    <description>"page processor module"</description>
+
+    <artifactId>ranking-manager</artifactId>
+    <properties>
+        <elasticsearch.version>6.3.2</elasticsearch.version>
+        <spark.version>2.0.0</spark.version>
+        <hbase.version>1.4.10</hbase.version>
+        <elasticsearch.spark.version>6.3.2</elasticsearch.spark.version>
+    </properties>
+
     <dependencies>
         <dependency>
-            <groupId>ir.jimbo</groupId>
-            <artifactId>commons</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>transport</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-spark-20_2.11</artifactId>
+            <version>${elasticsearch.spark.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.9.1</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>ir.jimbo</groupId>
-            <artifactId>crawler</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>2.6.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-testing-util</artifactId>
+            <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
-            <scope>test</scope>
+        </dependency>
+
+
+        <!--<dependency>-->
+        <!--<groupId>org.elasticsearch</groupId>-->
+        <!--<artifactId>elasticsearch-spark-20_2.11</artifactId>-->
+        <!--<version>${elasticsearch.spark.version}</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+            <version>${hbase.version}</version>
         </dependency>
     </dependencies>
-    <properties>
-        <hbase.version>1.4.10</hbase.version>
-        <jackson.version>2.9.9.1</jackson.version>
-        <kafka.version>2.3.0</kafka.version>
-        <elasticsearch.version>6.3.2</elasticsearch.version>
-        <hadoop.version>2.7.7</hadoop.version>
-    </properties>
-
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
+
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
@@ -141,6 +135,25 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.2</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -152,7 +165,7 @@
                     <transformers>
                         <transformer implementation=
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.hbasepageprocessor.App</mainClass>
+                            <mainClass>ir.jimbo.rankingmanager.App</mainClass>
                         </transformer>
                     </transformers>
                 </configuration>
@@ -165,6 +178,8 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
+
 </project>

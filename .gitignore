@@ -57,6 +57,7 @@ fabric.properties
 *.rar
 
 *.iml
+*.log
 
 .idea
 
