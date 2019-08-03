@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 public class LinkProducerApp {
+
     public static KafkaConfiguration kafkaConfiguration;
 
     public static void main(String[] args) throws IOException {

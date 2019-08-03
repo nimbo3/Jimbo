@@ -46,7 +46,7 @@ public class MetricConfiguration {
     private void connectToReporter() {
         graphite = new Graphite(new InetSocketAddress(graphiteUrl, graphitePort));
         final GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-                .prefixedWith("web1.example.com")
+                .prefixedWith("joojle")
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)

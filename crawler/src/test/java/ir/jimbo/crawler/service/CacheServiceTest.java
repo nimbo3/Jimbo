@@ -15,6 +15,7 @@ public class CacheServiceTest {
 
     private CacheService cacheService;
     private RedisServer redisServer;
+
     @Before
     public void setUp() throws IOException {
         MetricConfiguration metrics = new MetricConfiguration();

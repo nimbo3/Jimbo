@@ -7,20 +7,29 @@
         <groupId>ir.jimbo</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-
-    <properties>
-        <embeddedElastic.version>2.10.0</embeddedElastic.version>
-        <hbase.version>1.4.10</hbase.version>
-        <jackson.version>2.9.9.1</jackson.version>
-        <kafka.version>2.3.0</kafka.version>
-        <elasticsearch.version>6.3.2</elasticsearch.version>
-        <jackson.version>2.9.9.1</jackson.version>
-    </properties>
-    
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>es-page-processor</artifactId>
-    <description>"page processor module"</description>
+
+    <artifactId>ranking-manager</artifactId>
+    <properties>
+        <elasticsearch.version>6.3.2</elasticsearch.version>
+        <spark.version>2.0.0</spark.version>
+        <hbase.version>1.4.10</hbase.version>
+        <elasticsearch.spark.version>6.3.2</elasticsearch.spark.version>
+        <jackson.version>2.6.5</jackson.version>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-spark-20_2.11</artifactId>
+            <version>${elasticsearch.spark.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -28,43 +37,41 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>ir.jimbo</groupId>
-            <artifactId>commons</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>transport</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
+            <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ir.jimbo</groupId>
-            <artifactId>crawler</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>pl.allegro.tech</groupId>
-            <artifactId>embedded-elasticsearch</artifactId>
-            <version>${embeddedElastic.version}</version>
-            <scope>test</scope>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-common</artifactId>
+            <version>${hbase.version}</version>
         </dependency>
     </dependencies>
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
+
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
@@ -153,7 +160,7 @@
                     <transformers>
                         <transformer implementation=
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.espageprocessor.App</mainClass>
+                            <mainClass>ir.jimbo.rankingmanager.App</mainClass>
                         </transformer>
                     </transformers>
                 </configuration>
@@ -166,6 +173,8 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
     </build>
+
 </project>
