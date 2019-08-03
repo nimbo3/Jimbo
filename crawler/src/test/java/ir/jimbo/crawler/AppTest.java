@@ -44,20 +44,20 @@ public class AppTest {
         for (int i = 0; i < 3; i++) {
             App.getConsumers()[i] = new InfiniteThread();
         }
-        Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 0);
+        Assert.assertEquals(App.getAllWakeConsumers(), 0);
         for (int i = 0; i < 3; i++) {
             App.getConsumers()[i].start();
         }
-        Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 3);
+        Assert.assertEquals(App.getAllWakeConsumers(), 3);
         App.getConsumers()[2].interrupt();
         Thread.sleep(1100);
-        Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 2);
+        Assert.assertEquals(App.getAllWakeConsumers(), 2);
         App.getConsumers()[1].interrupt();
         Thread.sleep(1100);
-        Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 1);
+        Assert.assertEquals(App.getAllWakeConsumers(), 1);
         App.getConsumers()[0].interrupt();
         Thread.sleep(1100);
-        Assert.assertEquals(App.getAllWakeConsumers(new Counter()), 0);
+        Assert.assertEquals(App.getAllWakeConsumers(), 0);
     }
 
     @Test
@@ -66,21 +66,21 @@ public class AppTest {
         for (int i = 0; i < 3; i++) {
             App.getProducers()[i] = new InfiniteThread();
         }
-        Assert.assertEquals(App.getAllWakeProducers(new Counter()), 0);
+        Assert.assertEquals(App.getAllWakeProducers(), 0);
         for (int i = 0; i < 3; i++) {
             App.getProducers()[i].start();
         }
         Thread.sleep(1000);
-        Assert.assertEquals(App.getAllWakeProducers(new Counter()), 3);
+        Assert.assertEquals(App.getAllWakeProducers(), 3);
         App.getProducers()[2].interrupt();
         Thread.sleep(1100);
-        Assert.assertEquals(App.getAllWakeProducers(new Counter()), 2);
+        Assert.assertEquals(App.getAllWakeProducers(), 2);
         App.getProducers()[1].interrupt();
         Thread.sleep(1100);
-        Assert.assertEquals(App.getAllWakeProducers(new Counter()), 1);
+        Assert.assertEquals(App.getAllWakeProducers(), 1);
         App.getProducers()[0].interrupt();
         Thread.sleep(1100);
-        Assert.assertEquals(App.getAllWakeProducers(new Counter()), 0);
+        Assert.assertEquals(App.getAllWakeProducers(), 0);
     }
 
     private class InfiniteThread extends Thread {

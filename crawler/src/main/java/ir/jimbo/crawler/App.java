@@ -1,7 +1,6 @@
 package ir.jimbo.crawler;
 
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.AppConfiguration;
@@ -80,13 +79,11 @@ public class App {
     private static void aliveThreadCounter(MetricConfiguration metrics) {
         final long duration = Long.parseLong(metrics.getProperty("crawler.check.duration"));
         new Thread(() -> {
-            Counter consumerThreadNum = metrics.getNewCounter(metrics.getProperty("crawler.consumer.thread.counter.name"));
-            Counter parserThreadNum = metrics.getNewCounter(metrics.getProperty("crawler.parser.thread.counter.name"));
+            Histogram consumerThreadNum = metrics.getNewHistogram(metrics.getProperty("crawler.consumer.thread.histogram.name"));
+            Histogram parserThreadNum = metrics.getNewHistogram(metrics.getProperty("crawler.parser.thread.histogram.name"));
             while (repeat.get()) {
-                consumerThreadNum.dec(consumerThreadNum.getCount());
-                consumerThreadNum.inc(getAllWakeConsumers(consumerThreadNum));
-                parserThreadNum.dec(parserThreadNum.getCount());
-                parserThreadNum.inc(getAllWakeProducers(parserThreadNum));
+                consumerThreadNum.update(getAllWakeConsumers());
+                parserThreadNum.update(getAllWakeProducers());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -96,22 +93,24 @@ public class App {
         }).start();
     }
 
-    static long getAllWakeConsumers(Counter counter) {
+    static int getAllWakeConsumers() {
+        int counter = 0;
         for (Thread consumer : consumers) {
             if (consumer.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 
-    static long getAllWakeProducers(Counter counter) {
+    static int getAllWakeProducers() {
+        int counter = 0;
         for (Thread producer : producers) {
             if (producer.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 
     private static void addShutDownHook(CountDownLatch parserLatch, int parserThreadSize, CountDownLatch consumerLatch, int consumerThreadSize) {
