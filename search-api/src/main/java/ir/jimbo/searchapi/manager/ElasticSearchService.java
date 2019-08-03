@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ElasticSearchService {
     private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
@@ -32,6 +35,15 @@ public class ElasticSearchService {
     private String pageIndexName;
     private ObjectMapper mapper;
     private List<String> fieldNames = new ArrayList<>(Arrays.asList("h1List", "h2List", "h3to6List", "metaTags", "text", "title", "url"));
+    private Map<String, Float> filedScores = Stream.of(new Object[][]{
+            {"title", 1000},
+            {"url", 1},
+            {"metaTags", 1},
+            {"text", 1},
+            {"h1List", 1},
+            {"h2List", 1},
+            {"h3to6List", 1},
+    }).collect(Collectors.toMap(data -> (String) data[0], data -> (Float) data[1]));
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
@@ -44,15 +56,18 @@ public class ElasticSearchService {
     public SearchResult getSearch(SearchQuery query) {
         long startTime = System.currentTimeMillis();
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName);
+
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+
+
         SearchResult searchResult = new SearchResult();
         LOGGER.info("start to create Query for :" + query.toString());
         if (query.getFuzzyQuery() != null && !query.getFuzzyQuery().trim().equals("")) {
-            for (String fieldName : fieldNames) {
-                boolQueryBuilder.should(new FuzzyQueryBuilder(fieldName, query.getFuzzyQuery()));
-            }
+            filedScores.forEach((fieldName, weight) -> {
+                FuzzyQueryBuilder queryBuilder = new FuzzyQueryBuilder(fieldName, query.getFuzzyQuery());
+                boolQueryBuilder.should(queryBuilder);
+            });
         }
-
         if (query.getExactQuery() != null && !query.getExactQuery().trim().equals("")) {
             BoolQueryBuilder mustBoolQuery = new BoolQueryBuilder();
             for (String fieldName : fieldNames) {
@@ -67,8 +82,8 @@ public class ElasticSearchService {
         }
         SearchResponse searchResponse = searchRequestBuilder.setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .setQuery(boolQueryBuilder)
-                .setTimeout(TimeValue.timeValueMillis(10000))
-                .setSize(50).setExplain(false).get();
+                .setTimeout(TimeValue.timeValueMillis(100000))
+                .setSize(10).setExplain(false).get();
         LOGGER.info("execute of query finished, query :" + query.toString());
 
         parseSearchResults(searchResult, searchResponse);
