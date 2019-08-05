@@ -123,7 +123,7 @@ public class App {
         }));
     }
 
-    private static void parserThreadInterruption(CountDownLatch parserThreadSize, int producersThreadSize) {
+    private static void parserThreadInterruption(CountDownLatch parsersCountDownLatch, int producersThreadSize) {
 
         LOGGER.info("start interrupting parser threads...");
         for (int i = 0; i < producersThreadSize; i++) {
@@ -131,10 +131,10 @@ public class App {
         }
         try {
             LOGGER.info("before parser threads");
-            parserThreadSize.await();
+            parsersCountDownLatch.await();
             LOGGER.info("after parser threads");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            parserThreadInterruption(parsersCountDownLatch, producersThreadSize);
         }
         LOGGER.info("parser threads interrupted");
     }
@@ -164,9 +164,9 @@ public class App {
             LOGGER.info("before consumer await. size : " + countDownLatch.getCount());
             countDownLatch.await();
             LOGGER.info("after consumer await");
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             LOGGER.warn("interrupted exception in closing consumer threads");
-            Thread.currentThread().interrupt();
+            consumerThreadInterruption(countDownLatch, consumerThreadSize);
         }
         LOGGER.info("end interrupting consumer threads");
     }

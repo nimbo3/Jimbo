@@ -1,6 +1,5 @@
 package ir.jimbo.hbasepageprocessor;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.hbasepageprocessor.config.HConfig;
