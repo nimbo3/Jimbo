@@ -11,8 +11,10 @@
             </PatternLayout>
         </File>
         <File name="Warns" fileName="logs/hbase_warns.log">
-            <ThresholdFilter level="ERROR" onMatch="FALSE" onMismatch="NEUTRAL"/>
-            <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="FALSE" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
             <PatternLayout>
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
             </PatternLayout>
