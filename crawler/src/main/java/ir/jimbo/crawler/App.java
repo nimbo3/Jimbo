@@ -27,6 +27,7 @@ public class App {
     private static Thread[] consumers;
     private static Thread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
+    public static boolean produceLink = true;
 
     public static void main(String[] args) throws IOException {
         LOGGER.info("crawler app starting...");
@@ -180,15 +181,18 @@ public class App {
         for (String path : args) {
             String key = path.split(":")[0];
             String value = path.split(":")[1];
-            switch (key) {
+            switch (key.toLowerCase().trim()) {
                 case "redis":
-                    redisPath = value;
+                    redisPath = value.trim();
                     break;
                 case "kafka":
-                    kafkaPath = value;
+                    kafkaPath = value.trim();
                     break;
                 case "app":
-                    appPath = value;
+                    appPath = value.trim();
+                    break;
+                case "producer":
+                    produceLink = Boolean.parseBoolean(value.trim());
                     break;
                 default:
                     //
