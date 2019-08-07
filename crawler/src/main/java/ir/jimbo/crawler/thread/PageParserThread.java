@@ -4,6 +4,7 @@ import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.crawler.App;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
@@ -88,7 +89,8 @@ public class PageParserThread extends Thread {
                 pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(hbasePage);
+                if (App.produceLink)
+                    addLinksToKafka(hbasePage);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }

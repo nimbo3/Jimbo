@@ -121,9 +121,12 @@ public class LinkConsumer extends Thread {
         logger.info("consumer countdown latch before");
         countDownLatch.countDown();
         logger.info("consumer count down latch. size = " + countDownLatch.getCount());
-        producer.close();
-        consumer.close();
-
+        try {
+            producer.close();
+            consumer.close();
+        } catch (Exception e) {
+            logger.info("error in closing producer");
+        }
     }
 
     private void sendUriToKafka(String uri, Producer<Long, String> producer) {

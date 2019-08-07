@@ -27,6 +27,7 @@ public class App {
     private static Thread[] consumers;
     private static Thread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
+    public static boolean produceLink = true;
 
     public static void main(String[] args) throws IOException {
         LOGGER.info("crawler app starting...");
@@ -123,7 +124,7 @@ public class App {
         }));
     }
 
-    private static void parserThreadInterruption(CountDownLatch parserThreadSize, int producersThreadSize) {
+    private static void parserThreadInterruption(CountDownLatch parsersCountDownLatch, int producersThreadSize) {
 
         LOGGER.info("start interrupting parser threads...");
         for (int i = 0; i < producersThreadSize; i++) {
@@ -131,10 +132,10 @@ public class App {
         }
         try {
             LOGGER.info("before parser threads");
-            parserThreadSize.await();
+            parsersCountDownLatch.await();
             LOGGER.info("after parser threads");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            parserThreadInterruption(parsersCountDownLatch, producersThreadSize);
         }
         LOGGER.info("parser threads interrupted");
     }
@@ -164,9 +165,9 @@ public class App {
             LOGGER.info("before consumer await. size : " + countDownLatch.getCount());
             countDownLatch.await();
             LOGGER.info("after consumer await");
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             LOGGER.warn("interrupted exception in closing consumer threads");
-            Thread.currentThread().interrupt();
+            consumerThreadInterruption(countDownLatch, consumerThreadSize);
         }
         LOGGER.info("end interrupting consumer threads");
     }
@@ -180,15 +181,18 @@ public class App {
         for (String path : args) {
             String key = path.split(":")[0];
             String value = path.split(":")[1];
-            switch (key) {
+            switch (key.toLowerCase().trim()) {
                 case "redis":
-                    redisPath = value;
+                    redisPath = value.trim();
                     break;
                 case "kafka":
-                    kafkaPath = value;
+                    kafkaPath = value.trim();
                     break;
                 case "app":
-                    appPath = value;
+                    appPath = value.trim();
+                    break;
+                case "producer":
+                    produceLink = Boolean.parseBoolean(value.trim());
                     break;
                 default:
                     //

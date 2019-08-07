@@ -3,7 +3,6 @@ package ir.jimbo.espageprocessor.manager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.commons.model.Page;
 import ir.jimbo.commons.util.HashUtil;
@@ -18,10 +17,6 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
