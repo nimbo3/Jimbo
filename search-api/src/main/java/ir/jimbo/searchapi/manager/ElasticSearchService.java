@@ -59,8 +59,8 @@ public class ElasticSearchService {
 
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
 
-
         SearchResult searchResult = new SearchResult();
+
         LOGGER.info("start to create Query for :" + query.toString());
         if (query.getFuzzyQuery() != null && !query.getFuzzyQuery().trim().equals("")) {
             filedScores.forEach((fieldName, weight) -> {
