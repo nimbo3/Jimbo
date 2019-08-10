@@ -66,8 +66,8 @@
 
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-graphite</artifactId>
-            <version>4.1.0</version>
+            <artifactId>metrics-jmx</artifactId>
+            <version>4.0.5</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
