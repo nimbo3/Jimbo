@@ -1,7 +1,6 @@
 package ir.jimbo.crawler;
 
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.AppConfiguration;
@@ -17,23 +16,25 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
 public class App {
 
     private static final Logger LOGGER = LogManager.getLogger(App.class);
-    static ArrayBlockingQueue<String> linkQueue;
+    private static ArrayBlockingQueue<String> queue;
     private static RedisConfiguration redisConfiguration;
     private static KafkaConfiguration kafkaConfiguration;
     private static AppConfiguration appConfiguration;
-    private static linkConsumer[] consumers;
-    private static PageParserThread[] producers;
+    private static Thread[] consumers;
+    private static Thread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
+    public static boolean produceLink = true;
 
     public static void main(String[] args) throws IOException {
         LOGGER.info("crawler app starting...");
         initializeConfigurations(args);
-        MetricConfiguration metrics = new MetricConfiguration();    // Throws IOException
+        MetricConfiguration metrics = MetricConfiguration.getInstance();    // Throws IOException
         CacheService cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
-        linkQueue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
+        queue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
         int parserThreadSize = appConfiguration.getPageParserSize();
@@ -45,14 +46,14 @@ public class App {
         LOGGER.info("starting parser threads");
         producers = new PageParserThread[parserThreadSize];
         for (int i = 0; i < parserThreadSize; i++) {
-            producers[i] = new PageParserThread(linkQueue, kafkaConfiguration, parserLatch, cacheService, metrics);
+            producers[i] = new PageParserThread(queue, kafkaConfiguration, parserLatch, cacheService, metrics);
             producers[i].start();
         }
 
-        consumers = new linkConsumer[consumerThreadSize];
+        consumers = new LinkConsumer[consumerThreadSize];
         LOGGER.info("starting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
-            consumers[i] = new linkConsumer(kafkaConfiguration, cacheService, consumerLatch, metrics);
+            consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch, queue, metrics);
             consumers[i].start();
         }
         LOGGER.info("end starting threads");
@@ -63,10 +64,10 @@ public class App {
     private static void queueSizeChecker(MetricConfiguration metrics) {
         final long duration = Long.parseLong(metrics.getProperty("crawler.check.duration"));
         Histogram histogram = metrics.getNewHistogram(metrics.getProperty("crawler.queue.size.histogram.name"));
-        histogram.update(linkQueue.size());
+        histogram.update(queue.size());
         new Thread(() -> {
             while (repeat.get()) {
-                histogram.update(linkQueue.size());
+                histogram.update(queue.size());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -79,13 +80,11 @@ public class App {
     private static void aliveThreadCounter(MetricConfiguration metrics) {
         final long duration = Long.parseLong(metrics.getProperty("crawler.check.duration"));
         new Thread(() -> {
-            Counter consumerThreadNum = metrics.getNewCounter(metrics.getProperty("crawler.consumer.thread.counter.name"));
-            Counter parserThreadNum = metrics.getNewCounter(metrics.getProperty("crawler.parser.thread.counter.name"));
+            Histogram consumerThreadNum = metrics.getNewHistogram(metrics.getProperty("crawler.consumer.thread.histogram.name"));
+            Histogram parserThreadNum = metrics.getNewHistogram(metrics.getProperty("crawler.parser.thread.histogram.name"));
             while (repeat.get()) {
-                consumerThreadNum.dec(consumerThreadNum.getCount());
-                consumerThreadNum.inc(getAllWakeConsumers(consumerThreadNum));
-                parserThreadNum.dec(parserThreadNum.getCount());
-                parserThreadNum.inc(getAllWakeProducers(parserThreadNum));
+                consumerThreadNum.update(getAllWakeConsumers());
+                parserThreadNum.update(getAllWakeProducers());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -95,22 +94,24 @@ public class App {
         }).start();
     }
 
-    private static long getAllWakeConsumers(Counter counter) {
-        for (linkConsumer consumer: consumers) {
+    static int getAllWakeConsumers() {
+        int counter = 0;
+        for (Thread consumer : consumers) {
             if (consumer.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 
-    private static long getAllWakeProducers(Counter counter) {
-        for (PageParserThread producer: producers) {
+    static int getAllWakeProducers() {
+        int counter = 0;
+        for (Thread producer : producers) {
             if (producer.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 
     private static void addShutDownHook(CountDownLatch parserLatch, int parserThreadSize, CountDownLatch consumerLatch, int consumerThreadSize) {
@@ -123,18 +124,18 @@ public class App {
         }));
     }
 
-    private static void parserThreadInterruption(CountDownLatch parserThreadSize, int producersThreadSize) {
+    private static void parserThreadInterruption(CountDownLatch parsersCountDownLatch, int producersThreadSize) {
 
         LOGGER.info("start interrupting parser threads...");
         for (int i = 0; i < producersThreadSize; i++) {
-            producers[i].close();
+            producers[i].interrupt();
         }
         try {
             LOGGER.info("before parser threads");
-            parserThreadSize.await();
+            parsersCountDownLatch.await();
             LOGGER.info("after parser threads");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            parserThreadInterruption(parsersCountDownLatch, producersThreadSize);
         }
         LOGGER.info("parser threads interrupted");
     }
@@ -142,7 +143,7 @@ public class App {
     private static void queueEmptyChecker() {
         while (true) {
             LOGGER.info("waiting for queue to become empty...");
-            if (linkQueue.isEmpty()) {
+            if (queue.isEmpty()) {
                 break;
             } else {
                 try {
@@ -158,20 +159,20 @@ public class App {
     private static void consumerThreadInterruption(CountDownLatch countDownLatch, int consumerThreadSize) {
         LOGGER.info("start interrupting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
-            consumers[i].close();
+            consumers[i].interrupt();
         }
         try {
             LOGGER.info("before consumer await. size : " + countDownLatch.getCount());
             countDownLatch.await();
             LOGGER.info("after consumer await");
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             LOGGER.warn("interrupted exception in closing consumer threads");
-            Thread.currentThread().interrupt();
+            consumerThreadInterruption(countDownLatch, consumerThreadSize);
         }
         LOGGER.info("end interrupting consumer threads");
     }
 
-    private static void initializeConfigurations(String[] args) {
+    static void initializeConfigurations(String[] args) throws IOException {
 
         String redisPath = null;
         String kafkaPath = null;
@@ -180,15 +181,18 @@ public class App {
         for (String path : args) {
             String key = path.split(":")[0];
             String value = path.split(":")[1];
-            switch (key) {
+            switch (key.toLowerCase().trim()) {
                 case "redis":
-                    redisPath = value;
+                    redisPath = value.trim();
                     break;
                 case "kafka":
-                    kafkaPath = value;
+                    kafkaPath = value.trim();
                     break;
                 case "app":
-                    appPath = value;
+                    appPath = value.trim();
+                    break;
+                case "producer":
+                    produceLink = Boolean.parseBoolean(value.trim());
                     break;
                 default:
                     //
@@ -196,39 +200,52 @@ public class App {
         }
 
         redisConfiguration = null;
-        try {
-            if (redisPath == null) {
-                redisConfiguration = new RedisConfiguration();
-            } else {
-                redisConfiguration = new RedisConfiguration(redisPath);
-            }
-        } catch (IOException e) {
-            LOGGER.error("error loading redis configs", e);
-            System.exit(-1);
+        if (redisPath == null) {
+            redisConfiguration = new RedisConfiguration();
+        } else {
+            redisConfiguration = new RedisConfiguration(redisPath);
         }
 
         kafkaConfiguration = null;
-        try {
-            if (kafkaPath == null) {
-                kafkaConfiguration = new KafkaConfiguration();
-            } else {
-                kafkaConfiguration = new KafkaConfiguration(kafkaPath);
-            }
-        } catch (IOException e) {
-            LOGGER.error("error loading kafka configs", e);
-            System.exit(-1);
+        if (kafkaPath == null) {
+            kafkaConfiguration = new KafkaConfiguration();
+        } else {
+            kafkaConfiguration = new KafkaConfiguration(kafkaPath);
         }
 
         appConfiguration = null;
-        try {
-            if (appPath == null) {
-                appConfiguration = new AppConfiguration();
-            } else {
-                appConfiguration = new AppConfiguration(appPath);
-            }
-        } catch (IOException e) {
-            LOGGER.error("error loading app configs", e);
-            System.exit(-1);
+        if (appPath == null) {
+            appConfiguration = new AppConfiguration();
+        } else {
+            appConfiguration = new AppConfiguration(appPath);
         }
+    }
+
+    public static RedisConfiguration getRedisConfiguration() {
+        return redisConfiguration;
+    }
+
+    public static AppConfiguration getAppConfiguration() {
+        return appConfiguration;
+    }
+
+    public static KafkaConfiguration getKafkaConfiguration() {
+        return kafkaConfiguration;
+    }
+
+    public static Thread[] getConsumers() {
+        return consumers;
+    }
+
+    public static void setConsumers(Thread[] array) {
+        consumers = array;
+    }
+
+    public static Thread[] getProducers() {
+        return producers;
+    }
+
+    public static void setProducers(Thread[] array) {
+        producers = array;
     }
 }

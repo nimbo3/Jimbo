@@ -18,16 +18,16 @@ public class RedisConfiguration {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
                 "redisConfig.properties")));
-        nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
-        isStandAlone = Boolean.parseBoolean(properties.getProperty("redis.standalone"));
-        password = properties.getProperty("redis.password");
-        domainExpiredTime = Integer.parseInt(properties.getProperty("cache.expired_time"));
-        urlExpiredTime = Integer.parseInt(properties.getProperty("cache.url_expired_time"));
+        initValues(properties);
     }
 
     public RedisConfiguration(String path) throws IOException {
         Properties properties = new Properties();
         properties.load(new FileInputStream(path));
+        initValues(properties);
+    }
+
+    private void initValues(Properties properties) {
         nodes = Arrays.asList(properties.getProperty("redis.url").split(","));
         isStandAlone = Boolean.parseBoolean(properties.getProperty("redis.standalone"));
         password = properties.getProperty("redis.password");
@@ -39,7 +39,7 @@ public class RedisConfiguration {
         return nodes;
     }
 
-    public boolean isStandAlone() {
+    boolean isStandAlone() {
         return isStandAlone;
     }
 

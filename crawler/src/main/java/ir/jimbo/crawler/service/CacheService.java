@@ -38,7 +38,11 @@ public class CacheService extends HealthCheck {
         }));
 
         Config config = new Config();
-        config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0));
+        if (! redisConfiguration.getPassword().isEmpty()) {
+            config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0)).setPassword(redisConfiguration.getPassword());
+        } else {
+            config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0));
+        }
         redis = Redisson.create(config);
         expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
         expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();
@@ -57,7 +61,7 @@ public class CacheService extends HealthCheck {
         if (url.trim().isEmpty()) {
             return;
         }
-        String hashedUri = getMd5(url);
+        String hashedUri = hashUtil.getMd5(url);
         RBucket<Long> bucket = redis.getBucket(hashedUri);
         bucket.set(System.currentTimeMillis());
     }
@@ -84,7 +88,7 @@ public class CacheService extends HealthCheck {
         if (uri.trim().isEmpty()) {
             return false;
         }
-        String hashedUri = getMd5(uri);
+        String hashedUri = hashUtil.getMd5(uri);
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(hashedUri).get();
@@ -96,23 +100,6 @@ public class CacheService extends HealthCheck {
             return true;
         } else {
             return false;
-        }
-    }
-
-    private String getMd5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            BigInteger no = new BigInteger(1, messageDigest);
-            StringBuilder hashText = new StringBuilder(no.toString(16));
-            while (hashText.length() < 32) {
-                hashText.insert(0, "0");
-            }
-            return hashText.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new JimboException("fail in creating hash");
         }
     }
 

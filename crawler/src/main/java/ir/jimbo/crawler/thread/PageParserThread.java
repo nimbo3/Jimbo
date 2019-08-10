@@ -4,6 +4,7 @@ import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
 import ir.jimbo.commons.model.Page;
+import ir.jimbo.crawler.App;
 import ir.jimbo.crawler.config.KafkaConfiguration;
 import ir.jimbo.crawler.service.CacheService;
 import org.apache.kafka.clients.producer.Producer;
@@ -69,8 +70,8 @@ public class PageParserThread extends Thread {
             Page hbasePage = null;
             try {
                 PagePair parse = parse(uri);
-                elasticPage = parse.getHBasePage();
-                hbasePage = parse.getElasticPage();
+                hbasePage = parse.getHBasePage();
+                elasticPage = parse.getElasticPage();
 
                 if (elasticPage == null || hbasePage == null) {
                     continue;
@@ -88,7 +89,8 @@ public class PageParserThread extends Thread {
                 pageProducer.send(elasticRecord);
 
                 logger.info("page added to kafka");
-                addLinksToKafka(hbasePage);
+                if (App.produceLink)
+                    addLinksToKafka(hbasePage);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -148,7 +150,7 @@ public class PageParserThread extends Thread {
             document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return");
-            return new PagePair(elasticPage, hbasePage);
+            return new PagePair(hbasePage, elasticPage);
         }
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
@@ -190,11 +192,14 @@ public class PageParserThread extends Thread {
         logger.info("parsing page done.");
         elasticPage.setValid(true);
         hbasePage.setValid(true);
-        return new PagePair(elasticPage, hbasePage);
+        return new PagePair(hbasePage, elasticPage);
     }
 
-    public void close() {
+    @Override
+    public void interrupt() {
+        logger.info("before setting producer thread to false");
         repeat.set(false);
+        logger.info("after setting producer thread to false, repeat {}", repeat.get());
     }
 
     static class PagePair {

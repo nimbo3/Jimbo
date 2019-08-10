@@ -14,7 +14,7 @@ public class KafkaConfigurationTest {
     @BeforeClass
     public static void init() throws IOException {
         configWithoutPath = new KafkaConfiguration();
-        configWithPath = new KafkaConfiguration("src/test/resources/kafkaConfig.properties");
+        configWithPath = new KafkaConfiguration("src/test/resources/appConfig.properties");
     }
 
     @Test
@@ -33,19 +33,19 @@ public class KafkaConfigurationTest {
         Assert.assertEquals(withoutPath, "links");
     }
 
-//    @Test
-//    public void getHBasePageTopicName() {
-//        String withPath = configWithPath.getHBasePageTopicName();
-//        String withoutPath = configWithoutPath.getHBasePageTopicName();
-//        Assert.assertEquals(withPath, "page_link");
-//        Assert.assertEquals(withoutPath, "pages_link");
-//    }
-//
-//    @Test
-//    public void getElasticPageTopicName() {
-//        String withPath = configWithPath.getElasticPageTopicName();
-//        String withoutPath = configWithoutPath.getElasticPageTopicName();
-//        Assert.assertEquals(withPath, "pages_content");
-//        Assert.assertEquals(withoutPath, "pages_content");
-//    }
+    @Test
+    public void getHBasePageTopicName() {
+        String withPath = configWithPath.getHBasePageTopicName();
+        String withoutPath = configWithoutPath.getHBasePageTopicName();
+        Assert.assertEquals(withPath, "page_link");
+        Assert.assertEquals(withoutPath, "page_link");
+    }
+
+    @Test
+    public void getElasticPageTopicName() {
+        String withPath = configWithPath.getElasticPageTopicName();
+        String withoutPath = configWithoutPath.getElasticPageTopicName();
+        Assert.assertEquals(withPath, "page_content");
+        Assert.assertEquals(withoutPath, "page_content");
+    }
 }

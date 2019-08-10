@@ -36,6 +36,16 @@ public class KafkaConfiguration {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("kafkaConfig.properties")));
+        initValues(properties);
+    }
+
+    public KafkaConfiguration(String path) throws IOException {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(path));
+        initValues(properties);
+    }
+
+    private void initValues(Properties properties) {
         hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
         elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
@@ -47,21 +57,6 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
-    }
-
-    public KafkaConfiguration(String path) throws IOException {
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(path));
-        hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
-        elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
-        pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
-        linkTopicName = properties.getProperty("links.topic.name");
-        autoOffsetReset = properties.getProperty("auto.offset.reset");
-        autoCommit = properties.getProperty("auto.commit");
-        maxPollRecord = Integer.parseInt(properties.getProperty("max.poll.record"));
-        groupId = properties.getProperty("group.id");
-        clientId = properties.getProperty("client.id");
-        bootstrapServers = properties.getProperty("bootstrap.servers");
     }
 
     public int getPollDuration() {
