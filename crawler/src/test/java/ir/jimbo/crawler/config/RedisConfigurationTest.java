@@ -15,7 +15,7 @@ public class RedisConfigurationTest {
     @BeforeClass
     public static void init() throws IOException {
         configWithoutPath = new RedisConfiguration();
-        configWithPath = new RedisConfiguration("src/test/resources/appConfig.properties");
+        configWithPath = new RedisConfiguration("src/test/resources/redisConfig.properties");
     }
 
     @Test
