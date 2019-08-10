@@ -18,6 +18,7 @@ public class ApplicationConfiguration {
     private String elasticSearchNodes;
     private String autoIndexCreate;
     private String elasticSearchIndexName;
+    private String flagColumnName;
 
     public ApplicationConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -41,7 +42,14 @@ public class ApplicationConfiguration {
         elasticSearchNodes = properties.getProperty("elasticsearch.nodes");
         autoIndexCreate = properties.getProperty("elasticsearch.index.auto_create");
         elasticSearchIndexName = properties.getProperty("elasticsearch.index.name");
-
+        flagColumnName = properties.getProperty("hbase.flag.column");
     }
 
+    public String getFlagColumnName() {
+        return flagColumnName;
+    }
+
+    public void setFlagColumnName(String flagColumnName) {
+        this.flagColumnName = flagColumnName;
+    }
 }

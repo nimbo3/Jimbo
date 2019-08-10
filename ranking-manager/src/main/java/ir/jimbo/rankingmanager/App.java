@@ -17,6 +17,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,9 +32,12 @@ public class App {
 
         SparkConf sparkConf = new SparkConf();
         sparkConf.setAppName(appConfig.getAppName());
-        sparkConf.setMaster(appConfig.getMaster());
         sparkConf.set("es.nodes", appConfig.getElasticSearchNodes());
         sparkConf.set("es.mapping.id", "id");
+        sparkConf.set("spark.cores.max", "4");
+        sparkConf.set("spark.executor.cores", "2");
+        sparkConf.set("es.write.operation", "upsert");
+        sparkConf.set("es.nodes.wan.only", "true");
         sparkConf.set("es.index.auto.create", appConfig.getAutoIndexCreate());
 
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
@@ -50,17 +54,16 @@ public class App {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).values();
         String columnFamily = appConfig.getColumnFamily();
+        String flagColumnName = appConfig.getFlagColumnName();
 
-        JavaRDD<UpdateObject> map = hBaseRDD.map((Function<Result, UpdateObject>) row -> {
+        JavaRDD<Result> flagFilter = hBaseRDD.filter((Function<Result, Boolean>) e ->
+                e.getFamilyMap(Bytes.toBytes(columnFamily)).containsKey(Bytes.toBytes(flagColumnName)));
+
+        JavaRDD<UpdateObject> map = flagFilter.map((Function<Result, UpdateObject>) row -> {
             Map<String, Integer> anchors = new HashMap<>();
             NavigableMap<byte[], byte[]> familyMap = row.getFamilyMap(Bytes.toBytes(columnFamily));
             AtomicInteger count = new AtomicInteger();
-            String urlHash;
-            if (row.getRow().length >= 16) {
-                urlHash = new String(Arrays.copyOfRange(row.getRow(), row.getRow().length - 16, row.getRow().length));
-            } else {
-                urlHash = new String(Arrays.copyOfRange(row.getRow(), 0, row.getRow().length));
-            }
+            String key = DatatypeConverter.printHexBinary(Arrays.copyOfRange(row.getRow(), row.getRow().length - 16, row.getRow().length)).toLowerCase();
             familyMap.forEach((qualifier, value) -> {
                 count.getAndIncrement();
                 String text = Bytes.toString(value);
@@ -70,6 +73,7 @@ public class App {
                     anchors.put(text, 1);
                 }
             });
+
             List<String> collect = anchors.entrySet().stream()
                     .sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
             List<String> topAnchors;
@@ -78,12 +82,13 @@ public class App {
             } else {
                 topAnchors = collect;
             }
-            return new UpdateObject(urlHash, count.get(), topAnchors);
+            return new UpdateObject(key, count.get(), topAnchors);
         });
 
         String indexName = appConfig.getElasticSearchIndexName();
         LOGGER.info("updating elastic search documents");
         JavaEsSpark.saveToEs(map, indexName + "/_doc");
         LOGGER.info("updating elastic search finished");
+        javaSparkContext.close();
     }
 }

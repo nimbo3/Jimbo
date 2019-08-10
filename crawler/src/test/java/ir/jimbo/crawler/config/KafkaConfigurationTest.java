@@ -14,7 +14,7 @@ public class KafkaConfigurationTest {
     @BeforeClass
     public static void init() throws IOException {
         configWithoutPath = new KafkaConfiguration();
-        configWithPath = new KafkaConfiguration("src/test/resources/kafkaConfig.properties");
+        configWithPath = new KafkaConfiguration("src/test/resources/appConfig.properties");
     }
 
     @Test
