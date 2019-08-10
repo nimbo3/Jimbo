@@ -83,4 +83,19 @@ public class Page {
     public int hashCode() {
         return Objects.hash(url, title, metadata, links, h1List, h2List, h3to6List, plainTextList);
     }
+
+    @Override
+    public String toString() {
+        return "Page{" +
+                "url='" + url + '\'' +
+                ", title='" + title + '\'' +
+                ", metadata=" + metadata +
+                ", links=" + links +
+                ", h1List=" + h1List +
+                ", h2List=" + h2List +
+                ", h3to6List=" + h3to6List +
+                ", plainTextList=" + plainTextList +
+                ", isValid=" + isValid +
+                '}';
+    }
 }

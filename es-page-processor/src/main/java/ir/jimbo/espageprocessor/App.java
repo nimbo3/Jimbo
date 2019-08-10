@@ -4,12 +4,14 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.espageprocessor.config.ElasticSearchConfiguration;
+import ir.jimbo.espageprocessor.config.HConfig;
 import ir.jimbo.espageprocessor.config.JConfig;
 import ir.jimbo.espageprocessor.manager.ElasticSearchService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
     private static final List<Thread> pageProcessors = new ArrayList<>();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
         MetricConfiguration metrics = new MetricConfiguration();
         final JConfig jConfig = JConfig.getInstance();
         ElasticSearchConfiguration elasticSearchConfiguration = ElasticSearchConfiguration.getInstance();
@@ -25,9 +27,15 @@ public class App {
         int numberOfRetry = elasticSearchConfiguration.getNumberOfRetry();
 
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
+        HConfig hConfig = HConfig.getInstance();
+
+        String hTableName = hConfig.getPropertyValue("tableName");
+        String hColumnFamily = hConfig.getPropertyValue("columnFamily");
+
 
         for (int i = 0; i < threadCount; i++) {
-            final PageProcessorThread pageProcessorThread = new PageProcessorThread(elasticSearchService, metrics , numberOfRetry);
+            final PageProcessorThread pageProcessorThread = new PageProcessorThread(elasticSearchService, metrics
+                    , numberOfRetry, hTableName, hColumnFamily);
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
         }

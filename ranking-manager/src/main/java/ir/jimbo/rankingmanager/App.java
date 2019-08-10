@@ -54,10 +54,13 @@ public class App {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).values();
         String columnFamily = appConfig.getColumnFamily();
+        String flagColumnName = appConfig.getFlagColumnName();
 
-        JavaRDD<UpdateObject> map = hBaseRDD.map((Function<Result, UpdateObject>) row -> {
+        JavaRDD<Result> flagFilter = hBaseRDD.filter((Function<Result, Boolean>) e ->
+                e.getFamilyMap(Bytes.toBytes(columnFamily)).containsKey(Bytes.toBytes(flagColumnName)));
+
+        JavaRDD<UpdateObject> map = flagFilter.map((Function<Result, UpdateObject>) row -> {
             Map<String, Integer> anchors = new HashMap<>();
-
             NavigableMap<byte[], byte[]> familyMap = row.getFamilyMap(Bytes.toBytes(columnFamily));
             AtomicInteger count = new AtomicInteger();
             String key = DatatypeConverter.printHexBinary(Arrays.copyOfRange(row.getRow(), row.getRow().length - 16, row.getRow().length)).toLowerCase();
@@ -70,6 +73,7 @@ public class App {
                     anchors.put(text, 1);
                 }
             });
+
             List<String> collect = anchors.entrySet().stream()
                     .sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
             List<String> topAnchors;
