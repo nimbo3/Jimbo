@@ -20,24 +20,23 @@ public class App {
     public static void main(String[] args) throws IOException {
         MetricConfiguration metrics = new MetricConfiguration();
         final JConfig jConfig = JConfig.getInstance();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-//            try {
-//                HTableManager.closeConnection();
-            pageProcessors.forEach(Thread::interrupt);
-//            } catch (IOException e) {
-//                LOGGER.error("", e);
-//            }
-        }));
         ElasticSearchConfiguration elasticSearchConfiguration = ElasticSearchConfiguration.getInstance();
         ElasticSearchService elasticSearchService = new ElasticSearchService(elasticSearchConfiguration);
+        int numberOfRetry = elasticSearchConfiguration.getNumberOfRetry();
 
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
 
         for (int i = 0; i < threadCount; i++) {
-            final PageProcessorThread pageProcessorThread = new PageProcessorThread(elasticSearchService, metrics);
+            final PageProcessorThread pageProcessorThread = new PageProcessorThread(elasticSearchService, metrics , numberOfRetry);
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            pageProcessors.forEach(Thread::interrupt);
+            elasticSearchService.getClient().close();
+        }));
+
         aliveThreadCounter(metrics, Long.parseLong(metrics.getProperty("metric.check.threads.duration.milis")),
                 metrics.getProperty("checker.thread.name"));
     }
