@@ -9,14 +9,23 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class MetricConfiguration {
+    private static MetricConfiguration metricConfiguration;
     private MetricRegistry metricRegistry;
     private Properties properties;
 
-    public MetricConfiguration() throws IOException {
+    private MetricConfiguration() throws IOException {
         properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("metric.properties")));
         connectToReporter();
+    }
+
+    public static MetricConfiguration getInstance() throws IOException {
+        if (metricConfiguration == null) {
+            return metricConfiguration = new MetricConfiguration();
+        } else {
+            return metricConfiguration;
+        }
     }
 
     public Meter getNewMeter(String name) {
@@ -36,6 +45,7 @@ public class MetricConfiguration {
     }
 
     private void connectToReporter() {
+        SharedMetricRegistries.setDefault("joojle");
         metricRegistry = SharedMetricRegistries.getDefault();
         final JmxReporter reporter = JmxReporter.forRegistry(metricRegistry)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)

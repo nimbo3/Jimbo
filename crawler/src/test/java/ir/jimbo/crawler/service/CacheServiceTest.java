@@ -18,7 +18,7 @@ public class CacheServiceTest {
 
     @Before
     public void setUp() throws IOException {
-        MetricConfiguration metrics = new MetricConfiguration();
+        MetricConfiguration metrics = MetricConfiguration.getInstance();
         redisServer = new RedisServer(6380);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
