@@ -2,7 +2,6 @@ package ir.jimbo.crawler.service;
 
 
 import com.yammer.metrics.core.HealthCheck;
-import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
@@ -11,11 +10,6 @@ import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 
 /**
  * class for connecting to redis database (LRU cache)
