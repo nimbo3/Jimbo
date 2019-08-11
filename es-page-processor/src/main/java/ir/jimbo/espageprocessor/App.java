@@ -1,6 +1,5 @@
 package ir.jimbo.espageprocessor;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.espageprocessor.config.ElasticSearchConfiguration;
@@ -20,7 +19,7 @@ public class App {
     private static final List<Thread> pageProcessors = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-        MetricConfiguration metrics = new MetricConfiguration();
+        MetricConfiguration metrics = MetricConfiguration.getInstance();
         final JConfig jConfig = JConfig.getInstance();
         ElasticSearchConfiguration elasticSearchConfiguration = ElasticSearchConfiguration.getInstance();
         ElasticSearchService elasticSearchService = new ElasticSearchService(elasticSearchConfiguration);
