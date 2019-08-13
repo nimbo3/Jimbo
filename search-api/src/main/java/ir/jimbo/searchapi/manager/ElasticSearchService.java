@@ -8,16 +8,16 @@ import ir.jimbo.searchapi.model.SearchQuery;
 import ir.jimbo.searchapi.model.SearchResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.search.SearchAction;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.FuzzyQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,13 +36,13 @@ public class ElasticSearchService {
     private ObjectMapper mapper;
     private List<String> fieldNames = new ArrayList<>(Arrays.asList("h1List", "h2List", "h3to6List", "metaTags", "text", "title", "url"));
     private Map<String, Float> filedScores = Stream.of(new Object[][]{
-            {"title", 1000},
-            {"url", 1},
-            {"metaTags", 1},
-            {"text", 1},
-            {"h1List", 1},
-            {"h2List", 1},
-            {"h3to6List", 1},
+            {"title", 1000.0F},
+            {"url", 1.0F},
+            {"metaTags", 1.0F},
+            {"text", 1.0F},
+            {"h1List", 1.0F},
+            {"h2List", 1.0F},
+            {"h3to6List", 1.0F},
     }).collect(Collectors.toMap(data -> (String) data[0], data -> (Float) data[1]));
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
@@ -55,9 +55,17 @@ public class ElasticSearchService {
 
     public SearchResult getSearch(SearchQuery query) {
         long startTime = System.currentTimeMillis();
+        HighlightBuilder highlightQuery = new HighlightBuilder()
+                .numOfFragments(3)
+                .fragmentSize(150)
+                .preTags("<b>")
+                .postTags("</b>")
+                .field("text");
+
         SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName);
 
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+
 
         SearchResult searchResult = new SearchResult();
 
@@ -80,6 +88,7 @@ public class ElasticSearchService {
                 boolQueryBuilder.should(new MatchQueryBuilder(fieldName, query.getNormalQuery()));
             }
         }
+        SearchRequestBuilder queryBuilder = new SearchRequestBuilder(client, SearchAction.INSTANCE).setQuery(boolQueryBuilder).highlighter(highlightQuery);
         SearchResponse searchResponse = searchRequestBuilder.setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .setQuery(boolQueryBuilder)
                 .setTimeout(TimeValue.timeValueMillis(100000))
@@ -95,13 +104,16 @@ public class ElasticSearchService {
         for (SearchHit hit : searchResponse.getHits().getHits()) {
             try {
                 ElasticPage page = mapper.readValue(hit.getSourceAsString(), ElasticPage.class);
-                String text = "";
-                if (page.getText().length() > 250) {
-                    text = page.getText().substring(0, 250);
-                } else {
-                    text = page.getText();
-                }
-                searchResult.getSearchItemList().add(new SearchItem(page.getTitle(), text, page.getUrl()));
+                StringBuilder text = new StringBuilder();
+
+                hit.getHighlightFields().forEach((fieldName, fieldValue) -> {
+                    text.append(fieldValue.toString());
+                    for (Text fragment : fieldValue.getFragments()) {
+                        text.append(fragment.string()).append("<br/>");
+                    }
+                });
+
+                searchResult.getSearchItemList().add(new SearchItem(page.getTitle(), text.toString(), page.getUrl()));
             } catch (IOException e) {
                 LOGGER.error("error in parsing document :" + hit.getSourceAsString());
             }
