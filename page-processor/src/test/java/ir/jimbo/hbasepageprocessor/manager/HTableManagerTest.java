@@ -7,14 +7,16 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-import org.junit.*;
-
-import static org.junit.Assert.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class HTableManagerTest {
     private static final String TABLE = "table";
@@ -60,21 +62,21 @@ public class HTableManagerTest {
 
     @Test
     public void put() throws IOException, NoSuchAlgorithmException {
-        final HTableManager hTableManager = new HTableManager(TABLE, COLUMN_FAMILY, "h", new
-                MetricConfiguration());
+        final HTableManager hTableManager = new HTableManager(TABLE, COLUMN_FAMILY, "h",
+                MetricConfiguration.getInstance());
         hTableManager.put(new HRow(ROW_KEY, QUALIFIER, VALUE));
         try (final Table table = connection.getTable(TableName.valueOf(TABLE))) {
             final byte[] value = table.get(new Get(hTableManager.getHash(ROW_KEY
             ))).getValue(COLUMN_FAMILY.getBytes(), hTableManager.getHash(QUALIFIER));
-            assertEquals(new String(value), VALUE);
+            assertEquals(VALUE, new String(value));
             table.delete(new Delete(hTableManager.getHash(ROW_KEY)));
         }
     }
 
     @Test
     public void putList() throws IOException, NoSuchAlgorithmException {
-        final HTableManager hTableManager = new HTableManager(TABLE, COLUMN_FAMILY, "h", new
-                MetricConfiguration());
+        final HTableManager hTableManager = new HTableManager(TABLE, COLUMN_FAMILY, "h",
+                MetricConfiguration.getInstance());
         List<HRow> hRowList = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_ROWS; i++)
             hRowList.add(new HRow(ROW_KEY + i, QUALIFIER + i, VALUE + i));

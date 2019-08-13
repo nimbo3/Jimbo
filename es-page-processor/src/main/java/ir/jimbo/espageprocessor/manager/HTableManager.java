@@ -1,9 +1,9 @@
-package ir.jimbo.hbasepageprocessor.manager;
+package ir.jimbo.espageprocessor.manager;
 
 import com.codahale.metrics.Timer;
 import com.yammer.metrics.core.HealthCheck;
 import ir.jimbo.commons.config.MetricConfiguration;
-import ir.jimbo.hbasepageprocessor.assets.HRow;
+import ir.jimbo.espageprocessor.assets.HRow;
 import lombok.Setter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -69,8 +69,13 @@ public class HTableManager extends HealthCheck {
         return Bytes.toBytes(string);
     }
 
-    private Table getTable(String tableName, String columnFamilyName) throws IOException {
 
+    private static byte[] getBytes(int integer) {
+        return Bytes.toBytes(integer);
+    }
+
+
+    private Table getTable(String tableName, String columnFamilyName) throws IOException {
         final Admin admin = connection.getAdmin();
         final TableName tableNameValue = TableName.valueOf(tableName);
         if (admin.tableExists(tableNameValue)) {
@@ -98,9 +103,9 @@ public class HTableManager extends HealthCheck {
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
+        Timer.Context putContext = hBaseInsertTime.time();
         for (HRow link : links)
             puts.add(getPut(link));
-        Timer.Context putContext = hBaseInsertTime.time();
         table.put(puts);
         putContext.stop();
     }
@@ -110,7 +115,7 @@ public class HTableManager extends HealthCheck {
     }
 
     private Put getPut(HRow link) {
-        return new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier()),
+        return new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getBytes(link.getQualifier()),
                 getBytes(link.getValue()));
     }
 

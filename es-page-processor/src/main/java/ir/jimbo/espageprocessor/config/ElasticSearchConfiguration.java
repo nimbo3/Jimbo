@@ -26,6 +26,7 @@ public class ElasticSearchConfiguration extends Config {
     private TransportClient client;
 
     private int requestTimeOutNanos;
+    private int numberOfRetry;
 
     public static ElasticSearchConfiguration getInstance() throws IOException {
         if (instance == null)
@@ -39,6 +40,7 @@ public class ElasticSearchConfiguration extends Config {
         urls = Arrays.asList(getPropertyValue("nodes.url").split(","));
         indexName = getPropertyValue("index.name");
         clusterName = getPropertyValue("cluster.name");
+        numberOfRetry = Integer.parseInt(getPropertyValue("retry.number"));
     }
 
     public TransportClient getClient() {
@@ -63,5 +65,13 @@ public class ElasticSearchConfiguration extends Config {
 
     public void setRequestTimeOutNanos(int requestTimeOutNanos) {
         this.requestTimeOutNanos = requestTimeOutNanos;
+    }
+
+    public int getNumberOfRetry() {
+        return numberOfRetry;
+    }
+
+    public void setNumberOfRetry(int numberOfRetry) {
+        this.numberOfRetry = numberOfRetry;
     }
 }

@@ -18,9 +18,7 @@ public class App {
     private static final List<PageProcessorThread> pageProcessors = new ArrayList<>();
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
-
-        MetricConfiguration metrics = new MetricConfiguration();
-
+        MetricConfiguration metrics = MetricConfiguration.getInstance();
         final JConfig jConfig = JConfig.getInstance();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {

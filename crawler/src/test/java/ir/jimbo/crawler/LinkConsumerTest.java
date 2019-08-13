@@ -27,7 +27,7 @@ public class LinkConsumerTest {
 
     @Before
     public void setUp() throws IOException {
-        MetricConfiguration metrics = new MetricConfiguration();
+        MetricConfiguration metrics = MetricConfiguration.getInstance();
         redisServer = new RedisServer(6380);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
@@ -46,7 +46,7 @@ public class LinkConsumerTest {
                 cacheService,
                 new CountDownLatch(1),
                 queue,
-                new MetricConfiguration());
+                MetricConfiguration.getInstance());
         MockConsumer<Long, String> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         kafkaConsumer.subscribe(Collections.singletonList("testTopic"));
         consumer.setConsumer(kafkaConsumer);
@@ -74,7 +74,7 @@ public class LinkConsumerTest {
                 cacheService,
                 new CountDownLatch(3),
                 new ArrayBlockingQueue<>(3),
-                new MetricConfiguration());
+                MetricConfiguration.getInstance());
         Assert.assertEquals(consumer.getDomain("http://stackoverflow.com/"), "stackoverflow.com");
         Assert.assertEquals(consumer.getDomain("https://stackoverflow.com/"), "stackoverflow.com");
         Assert.assertEquals(consumer.getDomain("http://stackoverflow.com"), "stackoverflow.com");
@@ -98,7 +98,7 @@ public class LinkConsumerTest {
                 cacheService,
                 new CountDownLatch(3),
                 new ArrayBlockingQueue<>(3),
-                new MetricConfiguration());
+                MetricConfiguration.getInstance());
         consumer.getDomain("hello.com");
     }
 
@@ -113,7 +113,7 @@ public class LinkConsumerTest {
                 cacheService,
                 new CountDownLatch(3),
                 new ArrayBlockingQueue<>(3),
-                new MetricConfiguration());
+                MetricConfiguration.getInstance());
         consumer.getDomain("www.hello.com");
     }
 
@@ -127,7 +127,7 @@ public class LinkConsumerTest {
                 cacheService,
                 new CountDownLatch(3),
                 new ArrayBlockingQueue<>(3),
-                new MetricConfiguration());
+                MetricConfiguration.getInstance());
         consumer.getDomain("http://www.");
     }
 }

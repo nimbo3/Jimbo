@@ -2,7 +2,6 @@ package ir.jimbo.crawler.service;
 
 
 import com.yammer.metrics.core.HealthCheck;
-import ir.jimbo.commons.exceptions.JimboException;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.crawler.config.RedisConfiguration;
 import org.apache.logging.log4j.LogManager;
@@ -11,11 +10,6 @@ import org.redisson.Redisson;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 
 /**
  * class for connecting to redis database (LRU cache)
@@ -61,7 +55,7 @@ public class CacheService extends HealthCheck {
         if (url.trim().isEmpty()) {
             return;
         }
-        String hashedUri = getMd5(url);
+        String hashedUri = hashUtil.getMd5(url);
         RBucket<Long> bucket = redis.getBucket(hashedUri);
         bucket.set(System.currentTimeMillis());
     }
@@ -88,7 +82,7 @@ public class CacheService extends HealthCheck {
         if (uri.trim().isEmpty()) {
             return false;
         }
-        String hashedUri = getMd5(uri);
+        String hashedUri = hashUtil.getMd5(uri);
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(hashedUri).get();
@@ -100,23 +94,6 @@ public class CacheService extends HealthCheck {
             return true;
         } else {
             return false;
-        }
-    }
-
-    private String getMd5(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-
-            byte[] messageDigest = md.digest(input.getBytes());
-
-            BigInteger no = new BigInteger(1, messageDigest);
-            StringBuilder hashText = new StringBuilder(no.toString(16));
-            while (hashText.length() < 32) {
-                hashText.insert(0, "0");
-            }
-            return hashText.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new JimboException("fail in creating hash");
         }
     }
 
