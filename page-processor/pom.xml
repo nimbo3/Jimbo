@@ -146,9 +146,10 @@
                     </transformers>
                     <filters>
                         <filter>
-                            <artifact>*:*</artifact>
+                            <artifact>ir.jimbo:page-processor</artifact>
                             <excludes>
-                                <exclude>configs.properties</exclude>
+                                <exclude>*.properties</exclude>
+                                <exclude>*.xml</exclude>
                             </excludes>
                         </filter>
                     </filters>
