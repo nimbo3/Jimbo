@@ -48,18 +48,17 @@ public class PageProcessorThread extends Thread {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
                 Timer.Context pagesProcessDurationContext = insertHBaseTimer.time();
                 for (ConsumerRecord<Long, Page> record : records) {
-                    Timer.Context oneInsertContext = insertHBaseTimer.time();
                     Page page = record.value();
                     for (HtmlTag link : page.getLinks()) {
                         final String href = link.getProps().get("href");
                         if (href != null && !href.isEmpty())
                             links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
-                    long hbaseInsertDuration = oneInsertContext.stop();
-                    ///////
-                    LOGGER.info("time passed for processing one page : {}", hbaseInsertDuration);
                 }
+                Timer.Context oneInsertContext = insertHBaseTimer.time();
                 hTableManager.put(links);
+                long hbaseInsertDuration = oneInsertContext.stop();
+                LOGGER.info("time passed for processing one page : {}", hbaseInsertDuration);
                 LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), pagesProcessDurationContext.stop());
                 histogram.update(links.size());
                 links.clear();

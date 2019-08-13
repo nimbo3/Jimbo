@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 mvn clean package -DskipTests
 echo "Sending to the first server"
 ssh -p $2 $1 'rm page-processor*.jar'
