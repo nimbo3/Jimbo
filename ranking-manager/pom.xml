@@ -160,9 +160,21 @@
                     <transformers>
                         <transformer implementation=
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.rankingmanager.App</mainClass>
+                            <manifestEntries>
+                                <Main-Class>ir.jimbo.rankingmanager.App</Main-Class>
+                                <Class-Path>./hconfig/</Class-Path>
+                            </manifestEntries>
                         </transformer>
                     </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>${project.groupId}:${project.artifactId}</artifact>
+                            <excludes>
+                                <exclude>*.properties</exclude>
+                                <exclude>*.xml</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>
