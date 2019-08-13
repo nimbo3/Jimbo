@@ -47,7 +47,7 @@ public class App {
             pageProcessors.add(pageProcessorThread);
             pageProcessorThread.start();
         }
-        aliveThreadCounter(metrics, Long.parseLong(metrics.getProperty("metric.check.threads.duration.milis")),
+        aliveThreadCounter(metrics, Long.parseLong(metrics.getProperty("metric.check.threads.duration.millis")),
                 metrics.getProperty("checker.thread.name"));
     }
 

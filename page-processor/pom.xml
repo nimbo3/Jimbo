@@ -139,7 +139,7 @@
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                             <manifestEntries>
                                 <Main-Class>ir.jimbo.hbasepageprocessor.App</Main-Class>
-                                <Class-Path>./hconfig/</Class-Path>
+                                <Class-Path>./config/</Class-Path>
                             </manifestEntries>
                         </transformer>
                     </transformers>

@@ -3,9 +3,9 @@ mvn clean package -DskipTests
 echo "Sending to the first server"
 ssh -p $2 $1 'rm -rf ~/page-processor'
 ssh -p $2 $1 'mkdir ~/page-processor'
-ssh -p $2 $1 'mkdir ~/page-processor/hconfig'
+ssh -p $2 $1 'mkdir ~/page-processor/config'
 scp -P $2 target/page-processor*.jar $1:~/page-processor
-scp -P $2 src/main/resources/* $1:~/page-processor/hconfig
+scp -P $2 src/main/resources/* $1:~/page-processor/config
 echo "echo 'java -javaagent:\$HOME/prometheus_jmx/jmx_prometheus_javaagent-0.12.0.jar=8765:\$HOME/prometheus_jmx/config.yaml -jar page-processor*.jar' > ~/page-processor/page-processor.sh;" | ssh -p $2 $1
 ssh -p $2 $1 'chmod 775 ~/page-processor/page-processor.sh'
 echo "Sending to other servers from the first one"

@@ -52,7 +52,7 @@ public class App {
             elasticSearchService.getClient().close();
         }));
 
-        aliveThreadCounter(metrics, Long.parseLong(metrics.getProperty("metric.check.threads.duration.milis")),
+        aliveThreadCounter(metrics, Long.parseLong(metrics.getProperty("metric.check.threads.duration.millis")),
                 metrics.getProperty("checker.thread.name"));
     }
 
