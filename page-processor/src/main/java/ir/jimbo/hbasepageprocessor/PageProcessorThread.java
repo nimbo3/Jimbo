@@ -58,7 +58,7 @@ public class PageProcessorThread extends Thread {
                 Timer.Context oneInsertContext = insertHBaseTimer.time();
                 hTableManager.put(links);
                 long hbaseInsertDuration = oneInsertContext.stop();
-                LOGGER.info("time passed for processing one page : {}", hbaseInsertDuration);
+                LOGGER.info("Time passed to insert links in HBase : {}", hbaseInsertDuration);
                 LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), pagesProcessDurationContext.stop());
                 histogram.update(links.size());
                 links.clear();
