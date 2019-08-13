@@ -40,7 +40,8 @@ public class App {
         String hTableName = hConfig.getPropertyValue("tableName");
         String hColumnFamily = hConfig.getPropertyValue("columnFamily");
         int threadCount = Integer.parseInt(jConfig.getPropertyValue("processor.threads.num"));
-        LOGGER.info("Number of threads to run: " + threadCount);
+        final String message = String.format("Number of threads to run: %d", threadCount);
+        LOGGER.info(message);
         for (int i = 0; i < threadCount; i++) {
             final PageProcessorThread pageProcessorThread = new PageProcessorThread(hTableName, hColumnFamily, metrics);
             pageProcessors.add(pageProcessorThread);
