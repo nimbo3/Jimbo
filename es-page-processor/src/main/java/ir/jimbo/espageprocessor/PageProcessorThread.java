@@ -30,7 +30,7 @@ public class PageProcessorThread extends Thread {
     private MetricConfiguration metrics;
     private int numberOfRetry = 10;
 
-    public PageProcessorThread(ElasticSearchService esService, MetricConfiguration metrics, int numberOfRetry, String hTableName, String hColumnFamily) throws IOException, NoSuchAlgorithmException {
+    public PageProcessorThread(ElasticSearchService esService, MetricConfiguration metrics, int numberOfRetry, String hTableName, String hColumnFamily) throws IOException, NoSuchAlgorithmException, IOException, NoSuchAlgorithmException {
         KafkaConfiguration kafkaConfiguration = KafkaConfiguration.getInstance();
         pageConsumer = kafkaConfiguration.getPageConsumer();
         hTableManager = new HTableManager(hTableName, hColumnFamily,"HBaseHealthChecker", metrics);
@@ -59,6 +59,7 @@ public class PageProcessorThread extends Thread {
                 histogram.update(pages.size());
                 boolean isAdded = false;
                 int retryCounter = 0;
+                long start = System.currentTimeMillis();
                 while (!isAdded && retryCounter < numberOfRetry) {
                     isAdded = esService.insertPages(pages);
                     if (!isAdded) {
@@ -67,6 +68,7 @@ public class PageProcessorThread extends Thread {
                         LOGGER.info("ES insertion failed.");
                     }
                 }
+                long end = System.currentTimeMillis();
                 if (!isAdded) {
                     throw new Exception("pages don't insert " + Arrays.toString(pages.toArray()));
                 }
@@ -74,7 +76,7 @@ public class PageProcessorThread extends Thread {
                 hTableManager.put(flags);
                 pageConsumer.commitSync();
                 timerContext.stop();
-                LOGGER.info("record_size: " + records.count());
+                LOGGER.info("record_size: " + records.count() + " " + (start-end)  + "re" + retryCounter );
             } catch (Exception e) {
                 LOGGER.error("error in process messages", e);
             }

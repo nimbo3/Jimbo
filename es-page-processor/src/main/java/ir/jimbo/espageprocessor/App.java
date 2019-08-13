@@ -41,6 +41,14 @@ public class App {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             pageProcessors.forEach(Thread::interrupt);
+            while (pageProcessors.stream().anyMatch(Thread::isAlive)) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    //ignore
+                    break;
+                }
+            }
             elasticSearchService.getClient().close();
         }));
 
