@@ -41,7 +41,7 @@ public class PageProcessorThread extends Thread {
     @Override
     public void run() {
         Timer insertHBaseTimer = metrics.getNewTimer(metrics.getProperty("hbase.record.process.timer.name"));
-        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("hbase.links.readed.from.kafka.histogram.name"));
+        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("hbase.links.read.from.kafka.histogram.name"));
         histogram.update(0);
         while (!interrupted()) {
             try {

@@ -21,8 +21,10 @@ public class MetricConfiguration {
     }
 
     public static MetricConfiguration getInstance() throws IOException {
+        System.err.println("innstannce");
         if (metricConfiguration == null) {
-            return metricConfiguration = new MetricConfiguration();
+            metricConfiguration = new MetricConfiguration();
+            return metricConfiguration;
         } else {
             return metricConfiguration;
         }

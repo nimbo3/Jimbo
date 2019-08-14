@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 while read -a host
 do
 	ssh-copy-id -p ${host[1]} ${host[0]}
