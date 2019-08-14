@@ -19,6 +19,8 @@ public class ApplicationConfiguration {
     private String autoIndexCreate;
     private String elasticSearchIndexName;
     private String flagColumnName;
+    private int pageRankMaxIteration;
+    private double resetProbability;
 
     public ApplicationConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -43,6 +45,8 @@ public class ApplicationConfiguration {
         autoIndexCreate = properties.getProperty("elasticsearch.index.auto_create");
         elasticSearchIndexName = properties.getProperty("elasticsearch.index.name");
         flagColumnName = properties.getProperty("hbase.flag.column");
+        pageRankMaxIteration = Integer.parseInt(properties.getProperty("pagerank.iteration.max"));
+        resetProbability = Double.parseDouble(properties.getProperty("pagerank.resetProbability"));
     }
 
     public String getFlagColumnName() {
@@ -51,5 +55,21 @@ public class ApplicationConfiguration {
 
     public void setFlagColumnName(String flagColumnName) {
         this.flagColumnName = flagColumnName;
+    }
+
+    public int getPageRankMaxIteration() {
+        return pageRankMaxIteration;
+    }
+
+    public void setPageRankMaxIteration(int pageRankMaxIteration) {
+        this.pageRankMaxIteration = pageRankMaxIteration;
+    }
+
+    public double getResetProbability() {
+        return resetProbability;
+    }
+
+    public void setResetProbability(double resetProbability) {
+        this.resetProbability = resetProbability;
     }
 }
