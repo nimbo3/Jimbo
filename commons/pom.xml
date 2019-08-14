@@ -7,9 +7,18 @@
         <groupId>ir.jimbo</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
+    <properties>
+        <tika.version>1.22</tika.version>
+    </properties>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>commons</artifactId>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.panforge</groupId>
             <artifactId>robots</artifactId>
