@@ -18,33 +18,26 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.slice.SliceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ElasticSearchService {
     private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
-    private static final Object lock = new Object();
     private static final int SCROLL_SIZE = 10;
-    private static final int MAX_SLICES = 27;
-    private static AtomicInteger lastScrollID = new AtomicInteger(0);
+    private static final long SCROLL_TIMEOUT = 1;
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
     private int requestTimeOutNanos;
     private LanguageDetector languageDetector;
     private HashUtil hashUtil;
-    private int scrollID;
     private String esScrollID = null;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
-        scrollID = lastScrollID.getAndIncrement();
         this.configuration = configuration;
         languageDetector = LanguageDetector.getDefaultLanguageDetector();
         try {
@@ -97,17 +90,16 @@ public class ElasticSearchService {
         }
     }
 
-    public List<ElasticPage> getSourcePages() {
+    public synchronized List<ElasticPage> getSourcePages() {
         SearchResponse scrollResp;
-        if (esScrollID == null) {
+        if (esScrollID == null)
             scrollResp = client.prepareSearch(configuration.getSourceName())
-                    .setScroll(TimeValue.timeValueNanos(requestTimeOutNanos))
-                    .slice(new SliceBuilder(scrollID, MAX_SLICES))
+                    .setScroll(TimeValue.timeValueMinutes(SCROLL_TIMEOUT))
                     .setQuery(QueryBuilders.matchAllQuery())
-                    .setSize(100)
+                    .setSize(SCROLL_SIZE)
                     .get();
-        } else
-            scrollResp = client.prepareSearchScroll(esScrollID).setScroll(TimeValue.timeValueNanos(requestTimeOutNanos)).execute().actionGet();
+        else
+            scrollResp = client.prepareSearchScroll(esScrollID).setScroll(TimeValue.timeValueMinutes(SCROLL_TIMEOUT)).execute().actionGet();
         esScrollID = scrollResp.getScrollId();
         List<ElasticPage> pages = new ArrayList<>();
         SearchHit[] searchHits = scrollResp.getHits().getHits();
