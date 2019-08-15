@@ -19,6 +19,7 @@
         <module>es-page-processor</module>
         <module>search-api</module>
         <module>ranking-manager</module>
+        <module>shuffler</module>
     </modules>
 
     <properties>
