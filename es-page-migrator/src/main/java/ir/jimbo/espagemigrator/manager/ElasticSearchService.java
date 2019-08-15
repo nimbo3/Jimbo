@@ -18,26 +18,33 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.slice.SliceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ElasticSearchService {
     private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
+    private static final Object lock = new Object();
+    private static final int SCROLL_SIZE = 10;
+    private static final int MAX_SLICES = 27;
+    private static AtomicInteger lastScrollID = new AtomicInteger(0);
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
     private int requestTimeOutNanos;
     private LanguageDetector languageDetector;
     private HashUtil hashUtil;
-    private static int sourceRead = 0;
-    private static final Object lock = new Object();
-    private int scrollSize = 10;
+    private int scrollID;
+    private String esScrollID = null;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
+        scrollID = lastScrollID.getAndIncrement();
         this.configuration = configuration;
         languageDetector = LanguageDetector.getDefaultLanguageDetector();
         try {
@@ -91,25 +98,26 @@ public class ElasticSearchService {
     }
 
     public List<ElasticPage> getSourcePages() {
-        List<ElasticPage> pages = new ArrayList<>();
-        synchronized (lock) {
-            SearchResponse response = client.prepareSearch(configuration.getSourceName())
-                    .setTypes("_doc")
+        SearchResponse scrollResp;
+        if (esScrollID == null) {
+            scrollResp = client.prepareSearch(configuration.getSourceName())
+                    .setScroll(TimeValue.timeValueNanos(requestTimeOutNanos))
+                    .slice(new SliceBuilder(scrollID, MAX_SLICES))
                     .setQuery(QueryBuilders.matchAllQuery())
-                    .setSize(scrollSize)
-                    .setFrom(sourceRead * scrollSize)
-                    .execute()
-                    .actionGet();
-            SearchHit[] searchHits = response.getHits().getHits();
-            ObjectMapper reader = new ObjectMapper();
-            for (SearchHit hit : searchHits) {
-                try {
-                    pages.add(reader.readValue(hit.getSourceAsString(), ElasticPage.class));
-                } catch (IOException e) {
-                    LOGGER.error("Source page parse exception", e);
-                }
+                    .setSize(100)
+                    .get();
+        } else
+            scrollResp = client.prepareSearchScroll(esScrollID).setScroll(TimeValue.timeValueNanos(requestTimeOutNanos)).execute().actionGet();
+        esScrollID = scrollResp.getScrollId();
+        List<ElasticPage> pages = new ArrayList<>();
+        SearchHit[] searchHits = scrollResp.getHits().getHits();
+        ObjectMapper reader = new ObjectMapper();
+        for (SearchHit hit : searchHits) {
+            try {
+                pages.add(reader.readValue(hit.getSourceAsString(), ElasticPage.class));
+            } catch (IOException e) {
+                LOGGER.error("Source page parse exception", e);
             }
-            sourceRead++;
         }
         return pages;
     }
