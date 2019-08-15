@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.model.ElasticPage;
-import ir.jimbo.commons.model.Page;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.espagemigrator.config.ElasticSearchConfiguration;
 import org.apache.logging.log4j.LogManager;
@@ -15,11 +14,15 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -30,34 +33,36 @@ public class ElasticSearchService {
     private int requestTimeOutNanos;
     private LanguageDetector languageDetector;
     private HashUtil hashUtil;
+    private int sourceRead = 0;
+    private int scrollSize = 10;
+
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
         languageDetector = LanguageDetector.getDefaultLanguageDetector();
         try {
             languageDetector.loadModels();
         } catch (IOException e) {//we trust that it never happens
-            LOGGER.error("error in loading language detector modules; " , e);
+            LOGGER.error("error in loading language detector modules; ", e);
         }
         hashUtil = new HashUtil();
         requestTimeOutNanos = configuration.getRequestTimeOutNanos();
         client = configuration.getClient();
     }
 
-    public boolean insertPages(List<Page> pages) {
+    public boolean insertPages(List<ElasticPage> pages) {
         BulkRequest bulkRequest = new BulkRequest();
         String indexName = configuration.getIndexName();
         ObjectWriter writer = new ObjectMapper().writer();
-        for (Page page : pages) {
-            IndexRequest doc = new IndexRequest(indexName, "_doc", hashUtil.getMd5(page.getUrl()));
+        for (ElasticPage elasticPage : pages) {
+            IndexRequest doc = new IndexRequest(indexName, "_doc", hashUtil.getMd5(elasticPage.getUrl()));
             byte[] bytes;
             try {
                 languageDetector.reset();
-                ElasticPage elasticPage = new ElasticPage(page);
                 languageDetector.addText(elasticPage.getText());
                 elasticPage.setLanguage(languageDetector.detect().getLanguage());
                 bytes = writer.writeValueAsBytes(elasticPage);
             } catch (JsonProcessingException e) {
-                LOGGER.error("error in parsing page with url with jackson:" + page.getUrl(), e);
+                LOGGER.error("error in parsing page with url with jackson:" + elasticPage.getUrl(), e);
                 continue;
             }
             doc.source(bytes, XContentType.JSON);
@@ -82,6 +87,28 @@ public class ElasticSearchService {
             LOGGER.error("bulk insert has failures", e);
             return false;
         }
+    }
+
+    public List<ElasticPage> getSourcePages() {
+        SearchResponse response = client.prepareSearch(configuration.getSourceName())
+                .setTypes("_doc")
+                .setQuery(QueryBuilders.matchAllQuery())
+                .setSize(scrollSize)
+                .setFrom(sourceRead * scrollSize)
+                .execute()
+                .actionGet();
+        SearchHit[] searchHits = response.getHits().getHits();
+        List<ElasticPage> pages = new ArrayList<>();
+        ObjectMapper reader = new ObjectMapper();
+        for (SearchHit hit : searchHits) {
+            try {
+                pages.add(reader.readValue(hit.getSourceAsString(), ElasticPage.class));
+            } catch (IOException e) {
+                LOGGER.error("Source page parse exception", e);
+            }
+        }
+        sourceRead++;
+        return pages;
     }
 
     public TransportClient getClient() {

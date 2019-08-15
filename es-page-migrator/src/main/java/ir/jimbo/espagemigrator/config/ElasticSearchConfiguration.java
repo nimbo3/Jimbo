@@ -22,6 +22,7 @@ public class ElasticSearchConfiguration extends Config {
 
     private List<String> urls;
     private String indexName;
+    private String sourceName;
     private String clusterName;
     private TransportClient client;
 
@@ -39,6 +40,7 @@ public class ElasticSearchConfiguration extends Config {
         requestTimeOutNanos = Integer.parseInt(getPropertyValue("request.timeout"));
         urls = Arrays.asList(getPropertyValue("nodes.url").split(","));
         indexName = getPropertyValue("index.name");
+        sourceName = getPropertyValue("source.name");
         clusterName = getPropertyValue("cluster.name");
         numberOfRetry = Integer.parseInt(getPropertyValue("retry.number"));
     }

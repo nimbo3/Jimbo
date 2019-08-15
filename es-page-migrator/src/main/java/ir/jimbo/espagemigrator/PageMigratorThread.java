@@ -3,12 +3,11 @@ package ir.jimbo.espagemigrator;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
-import ir.jimbo.commons.model.Page;
+import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.espagemigrator.manager.ElasticSearchService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,7 +15,7 @@ public class PageMigratorThread extends Thread {
     private static final Logger LOGGER = LogManager.getLogger(PageMigratorThread.class);
     private ElasticSearchService esService;
     private MetricConfiguration metrics;
-    private int numberOfRetry = 10;
+    private int numberOfRetry;
 
     public PageMigratorThread(ElasticSearchService esService, MetricConfiguration metrics, int numberOfRetry) {
         this.esService = esService;
@@ -32,13 +31,8 @@ public class PageMigratorThread extends Thread {
         histogram.update(0);
         while (!interrupted()) {
             try {
-                List<Page> pages = new ArrayList<>();
                 Timer.Context timerContext = processTime.time();
-                esService.
-//                for (ConsumerRecord<Long, Page> record : records) {
-//                    pages.add(record.value());
-//                    flags.add(new HRow(record.value().getUrl(), "f", 1));
-//                }
+                List<ElasticPage> pages = esService.getSourcePages();
                 histogram.update(pages.size());
                 boolean isAdded = false;
                 int retryCounter = 0;
@@ -57,7 +51,8 @@ public class PageMigratorThread extends Thread {
                 }
 
                 timerContext.stop();
-                LOGGER.info("record_size: " + records.count() + " " + (start-end)  + "re" + retryCounter );
+                final String message = String.format("record_size: %d %dre%d", pages.size(), start - end, retryCounter);
+                LOGGER.info(message);
             } catch (Exception e) {
                 LOGGER.error("error in process messages", e);
             }
