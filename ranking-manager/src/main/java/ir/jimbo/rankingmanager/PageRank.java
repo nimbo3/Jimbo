@@ -5,6 +5,7 @@ import ir.jimbo.rankingmanager.model.Link;
 import ir.jimbo.rankingmanager.model.Vertex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -22,10 +23,11 @@ import org.graphframes.GraphFrame;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
 
 public class PageRank {
     private static final Logger LOGGER = LogManager.getLogger(PageRank.class);
+
     public static void main(String[] args) {
         ApplicationConfiguration appConfig = null;
         try {
@@ -45,6 +47,7 @@ public class PageRank {
 
         SparkSession session = SparkSession.builder()
                 .config("spark.hadoop.validateOutputSpecs", false)
+                .config("spark.sql.broadcastTimeout", "30000")
                 .config(sparkConf).getOrCreate();
 //        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
 
@@ -60,6 +63,7 @@ public class PageRank {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD().map(e -> e._2);
 
+
         String columnFamily = appConfig.getColumnFamily();
         String flagColumnName = appConfig.getFlagColumnName();
 
@@ -69,21 +73,15 @@ public class PageRank {
         JavaRDD<Vertex> vertices = filterData.map(row -> new Vertex(DatatypeConverter
                 .printHexBinary(Arrays.copyOfRange(row.getRow()
                         , row.getRow().length - 16, row.getRow().length)).toLowerCase()));
-
-        JavaRDD<Link> links = filterData.flatMap(row -> {
-            String destination = DatatypeConverter.printHexBinary(Arrays.copyOfRange(row.getRow()
-                    , row.getRow().length - 16, row.getRow().length)).toLowerCase();
-            NavigableMap<byte[], byte[]> familyMap = row.getFamilyMap(Bytes.toBytes(columnFamily));
-            List<Link> list = new ArrayList<>();
-            familyMap.forEach((qualifier, value) -> {
-                String anchor = Bytes.toString(value);
-                if (qualifier.length > 16) {
-                    String source = DatatypeConverter.printHexBinary(Arrays.copyOfRange(qualifier
-                            , qualifier.length - 16, qualifier.length)).toLowerCase();
-                    list.add(new Link(source, destination, anchor));
-                }
-            });
-            return list.iterator();
+        JavaRDD<Cell> cellJavaRDD = filterData.flatMap(row -> row.listCells().iterator());
+        JavaRDD<Cell> cellsFilter = cellJavaRDD.filter(cell -> cell.getQualifierArray().length >= 16);
+        JavaRDD<Link> links = cellsFilter.map(cell -> {
+            String destination = DatatypeConverter.printHexBinary(Arrays.copyOfRange(cell.getRowArray()
+                    , cell.getRowArray().length - 16, cell.getRowArray().length)).toLowerCase();
+            byte[] qualifier = cell.getQualifierArray();
+            String source = DatatypeConverter.printHexBinary(Arrays.copyOfRange(qualifier
+                    , qualifier.length - 16, qualifier.length)).toLowerCase();
+            return new Link(source, destination);
         });
 
         Dataset<Row> verticesDateSet = session.createDataFrame(vertices, Vertex.class);
@@ -92,8 +90,10 @@ public class PageRank {
         GraphFrame graph = new GraphFrame(verticesDateSet, linksDataSet);
         int rankMaxIteration = appConfig.getPageRankMaxIteration();
         double resetProbability = appConfig.getResetProbability();
+
+//        System.out.printf("number of links: %d", links.count());
+//        System.out.printf("number of vertices: %d", vertices.count());
         GraphFrame pageRankGraph = graph.pageRank().maxIter(rankMaxIteration).resetProbability(resetProbability).run();
         pageRankGraph.vertices().show();
-//        JavaRDD<Row> rows = pageRankGraph.vertices().toJavaRDD()
     }
 }
