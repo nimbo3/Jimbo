@@ -33,7 +33,8 @@ public class ElasticSearchService {
     private int requestTimeOutNanos;
     private LanguageDetector languageDetector;
     private HashUtil hashUtil;
-    private int sourceRead = 0;
+    private static int sourceRead = 0;
+    private static final Object lock = new Object();
     private int scrollSize = 10;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
@@ -90,24 +91,26 @@ public class ElasticSearchService {
     }
 
     public List<ElasticPage> getSourcePages() {
-        SearchResponse response = client.prepareSearch(configuration.getSourceName())
-                .setTypes("_doc")
-                .setQuery(QueryBuilders.matchAllQuery())
-                .setSize(scrollSize)
-                .setFrom(sourceRead * scrollSize)
-                .execute()
-                .actionGet();
-        SearchHit[] searchHits = response.getHits().getHits();
         List<ElasticPage> pages = new ArrayList<>();
-        ObjectMapper reader = new ObjectMapper();
-        for (SearchHit hit : searchHits) {
-            try {
-                pages.add(reader.readValue(hit.getSourceAsString(), ElasticPage.class));
-            } catch (IOException e) {
-                LOGGER.error("Source page parse exception", e);
+        synchronized (lock) {
+            SearchResponse response = client.prepareSearch(configuration.getSourceName())
+                    .setTypes("_doc")
+                    .setQuery(QueryBuilders.matchAllQuery())
+                    .setSize(scrollSize)
+                    .setFrom(sourceRead * scrollSize)
+                    .execute()
+                    .actionGet();
+            SearchHit[] searchHits = response.getHits().getHits();
+            ObjectMapper reader = new ObjectMapper();
+            for (SearchHit hit : searchHits) {
+                try {
+                    pages.add(reader.readValue(hit.getSourceAsString(), ElasticPage.class));
+                } catch (IOException e) {
+                    LOGGER.error("Source page parse exception", e);
+                }
             }
+            sourceRead++;
         }
-        sourceRead++;
         return pages;
     }
 
