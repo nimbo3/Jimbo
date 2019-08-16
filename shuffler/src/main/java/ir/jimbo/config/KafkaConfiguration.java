@@ -1,7 +1,5 @@
-package config;
+package ir.jimbo.config;
 
-import ir.jimbo.commons.model.Page;
-import ir.jimbo.crawler.config.PageSerializer;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -21,9 +19,8 @@ import java.util.Properties;
 
 public class KafkaConfiguration {
 
-    private String hBasePageTopicName;
-    private String elasticPageTopicName;
     private String linkTopicName;
+    private String shuffledLinksTopicName;
     private int pollDuration;
     private String autoOffsetReset;
     private String autoCommit;
@@ -47,8 +44,6 @@ public class KafkaConfiguration {
     }
 
     private void initValues(Properties properties) {
-        hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
-        elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
         linkTopicName = properties.getProperty("links.topic.name");
         autoOffsetReset = properties.getProperty("auto.offset.reset");
@@ -58,6 +53,7 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
+        shuffledLinksTopicName = properties.getProperty("shuffle.link.topic.name");
     }
 
     public int getPollDuration() {
@@ -66,15 +62,6 @@ public class KafkaConfiguration {
 
     public String getLinkTopicName() {
         return linkTopicName;
-    }
-
-    public Producer<Long, Page> getPageProducer() {
-        Properties producerProperties = new Properties();
-        producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
-        producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
-        producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, PageSerializer.class.getName());
-        return new KafkaProducer<>(producerProperties);
     }
 
     public Producer<Long, String> getLinkProducer() {
@@ -101,11 +88,7 @@ public class KafkaConfiguration {
         return consumer;
     }
 
-    public String getHBasePageTopicName() {
-        return hBasePageTopicName;
-    }
-
-    public String getElasticPageTopicName() {
-        return elasticPageTopicName;
+    public String getShuffledLinksTopicName() {
+        return shuffledLinksTopicName;
     }
 }
