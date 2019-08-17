@@ -18,6 +18,17 @@ public class ElasticPage {
     private String language;
     private String id;
 
+    public ElasticPage() {
+        this.url = "";
+        this.title = "";
+        this.h1List = new ArrayList<>();
+        this.h2List = new ArrayList<>();
+        this.h3to6List = new ArrayList<>();
+        this.text = "";
+        this.metaTags = new ArrayList<>();
+        this.id = "";
+    }
+
     // Map page to ElasticPage
     public ElasticPage(Page page) {
         this.url = page.getUrl();
