@@ -16,6 +16,7 @@ public class ElasticPage {
     private List<String> h3to6List;
     private String text;
     private String language;
+    private String id;
 
     public ElasticPage() {
         this.url = "";
