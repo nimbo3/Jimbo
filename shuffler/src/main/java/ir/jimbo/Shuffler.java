@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Shuffler {
@@ -126,6 +127,24 @@ public class Shuffler {
             }
         }
         LOGGER.info("end sending links to kafka");
+    }
+
+    String getDomain(String url) {
+        final Matcher matcher = domainPattern.matcher(url);
+        String result = null;
+        if (matcher.matches())
+            result = matcher.group(4);
+        if (result == null) {
+            throw new NoDomainFoundException();
+        }
+
+        if (result.startsWith("www.")) {
+            result = result.substring(4);
+        }
+        if (result.isEmpty()) {
+            throw new NoDomainFoundException();
+        }
+        return result;
     }
 
     private void sendLink(String link) {
