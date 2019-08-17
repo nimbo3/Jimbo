@@ -192,10 +192,10 @@
                     <filters>
                         <filter>
                             <artifact>${project.groupId}:${project.artifactId}</artifact>
-                            <excludes>
-                                <exclude>*.properties</exclude>
-                                <exclude>*.xml</exclude>
-                            </excludes>
+<!--                            <excludes>-->
+<!--                                <exclude>*.properties</exclude>-->
+<!--                                <exclude>*.xml</exclude>-->
+<!--                            </excludes>-->
                         </filter>
                     </filters>
                 </configuration>

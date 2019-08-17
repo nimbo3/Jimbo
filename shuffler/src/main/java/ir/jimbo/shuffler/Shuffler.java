@@ -104,7 +104,7 @@ public class Shuffler {
     }
 
     private void sortLinks(List<Link> links) {
-        links.sort(Comparator.comparing(Link::getDomain));
+        links.sort(Comparator.comparing(Link::getUrl));
     }
 
     private void shuffleLinks(List<Link> links) {
@@ -114,6 +114,11 @@ public class Shuffler {
         LOGGER.info("start producing links.lists size : {}", size);
         while (size != 0) {
             sendLink(links.get(index).getUrl());
+            try {
+                Thread.sleep(20);
+            } catch (Exception e) {
+                LOGGER.error("error in sleeping", e);
+            }
             links.remove(index);
             size -= 1;
             index += skipStep;

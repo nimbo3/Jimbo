@@ -67,8 +67,10 @@ public class CacheService extends HealthCheck {
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(key).get();
-        } catch (Exception e) {
+        } catch (NullPointerException e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastTime < expiredTimeDomainMilis) {

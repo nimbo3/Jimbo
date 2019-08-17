@@ -98,6 +98,7 @@ public class KafkaConfiguration {
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
         Consumer<Long, String> consumer = new KafkaConsumer<>(consumerProperties);
+        System.err.println("shuffled links topic name : " + shuffledLinkTopicName);
         consumer.subscribe(Collections.singletonList(shuffledLinkTopicName));
         return consumer;
     }
