@@ -13,6 +13,6 @@ while true; do
         exit 0;
     fi
     for i in "${servers[@]}"; do
-        ssh -p 3031 jimbo@${i} '~/'${application}'/run.sh';
+        echo "screen -dm -S ${application} ~/'${application}'/run.sh" | ssh -p 3031 jimbo@${i}
     done
 done
