@@ -9,6 +9,11 @@ public class AppConfig {
     private int linksPerProcessSize;
     private int pollAttempts;
     private int skipStep;
+    private String shuffleProcessTimerName;
+    private String consumeTimerName;
+    private String sortTimerName;
+    private String produceTimerName;
+    private String listSizeHistogramName;
 
     public AppConfig() throws IOException {
         Properties properties = new Properties();
@@ -21,7 +26,11 @@ public class AppConfig {
         linksPerProcessSize = Integer.parseInt(properties.getProperty("links.per.process.size"));
         pollAttempts = Integer.parseInt(properties.getProperty("max.poll.attempt"));
         skipStep = Integer.parseInt(properties.getProperty("links.skip.step"));
-
+        shuffleProcessTimerName = properties.getProperty("shuffle.process.timer.name");
+        consumeTimerName = properties.getProperty("consume.timer.name");
+        sortTimerName = properties.getProperty("sort.timer.name");
+        produceTimerName = properties.getProperty("produce.timer.name");
+        listSizeHistogramName = properties.getProperty("list.size.histogram.name");
     }
 
     public int getLinksPerProcessSize() {
@@ -34,5 +43,25 @@ public class AppConfig {
 
     public int getSkipStep() {
         return skipStep;
+    }
+
+    public String getShuffleProcessTimerName() {
+        return shuffleProcessTimerName;
+    }
+
+    public String getConsumeTimerName() {
+        return consumeTimerName;
+    }
+
+    public String getSortTimerName() {
+        return sortTimerName;
+    }
+
+    public String getProduceTimerName() {
+        return produceTimerName;
+    }
+
+    public String getListSizeHistogramName() {
+        return listSizeHistogramName;
     }
 }

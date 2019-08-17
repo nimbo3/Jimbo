@@ -1,5 +1,7 @@
 package ir.jimbo;
 
+import com.codahale.metrics.Histogram;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.config.AppConfig;
 import ir.jimbo.config.KafkaConfiguration;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
@@ -9,6 +11,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import com.codahale.metrics.Timer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -23,7 +28,9 @@ class Shuffler {
     private boolean repeat;
     private Consumer<Long, String> linkConsumer;
     private Producer<Long, String> linkProducer;
+    private MetricConfiguration metricConfiguration;
     private int skipStep;
+    private static final Logger LOGGER = LogManager.getLogger(Shuffler.class);
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     // Regex pattern to extract domain from URL
     // Please refer to RFC 3986 - Appendix B for more information
@@ -31,19 +38,37 @@ class Shuffler {
     Shuffler() throws IOException {
         kafkaConfiguration = new KafkaConfiguration();
         appConfig = new AppConfig();
+        metricConfiguration = MetricConfiguration.getInstance();
     }
 
     void start() {
         repeat = true;
+        LOGGER.info("creating kafka consumer and producer");
         linkConsumer = kafkaConfiguration.getConsumer();
         linkProducer = kafkaConfiguration.getLinkProducer();
         skipStep = appConfig.getSkipStep();
         Integer size;
+        LOGGER.info("creating metrics");
+        Timer wholeTime = metricConfiguration.getNewTimer(appConfig.getShuffleProcessTimerName());
+        Timer consumeTimer = metricConfiguration.getNewTimer(appConfig.getConsumeTimerName());
+        Timer sortTimer = metricConfiguration.getNewTimer(appConfig.getSortTimerName());
+        Timer produceTimer = metricConfiguration.getNewTimer(appConfig.getProduceTimerName());
+        Histogram listSizeHistogram = metricConfiguration.getNewHistogram(appConfig.getListSizeHistogramName());
+        LOGGER.info("starting process...");
         while (repeat) {
             size = 0;
+            Timer.Context wholeTimeContext = wholeTime.time();
+            Timer.Context consumeTimerContext = consumeTimer.time();
             List<Link> links = consumeLinks(size);
+            listSizeHistogram.update(links.size());
+            consumeTimerContext.stop();
+            Timer.Context sortTimerContext = sortTimer.time();
             sortLinks(links);
+            sortTimerContext.stop();
+            Timer.Context produceTimerContext = produceTimer.time();
             produceLink(links, size);
+            produceTimerContext.stop();
+            wholeTimeContext.stop();
         }
     }
 
@@ -51,21 +76,28 @@ class Shuffler {
         int attempt = 0;
         String url;
         List<Link> links = new ArrayList<>();
+        LOGGER.info("start consuming links...");
         while (size < appConfig.getLinksPerProcessSize()) {
             ConsumerRecords<Long, String> consumerRecords = linkConsumer.poll(Duration.ofMillis(kafkaConfiguration.getPollDuration()));
             size += consumerRecords.count();
+            LOGGER.info("links consumed to now : {}", size);
             for (ConsumerRecord<Long, String> consumerRecord : consumerRecords) {
                 url = consumerRecord.value();
-                links.add(new Link(getDomain(url), url));
+                try {
+                    links.add(new Link(getDomain(url), url));
+                } catch (NoDomainFoundException e) {
+                    LOGGER.error("cant extract domain from url {}", url, e);
+                }
             }
             attempt ++;
             if (attempt > appConfig.getPollAttempts()) {
+                LOGGER.warn("maximum number of poll attempts reached. breaking from loop");
                 break;
             }
             try {
                 linkConsumer.commitSync();
             } catch (Exception e) {
-                // TODO LOG
+                LOGGER.error("an error occurred during commit", e);
             }
         }
         return links;
@@ -78,6 +110,8 @@ class Shuffler {
     private void produceLink(List<Link> links, int size) {
         int index = 0;
         boolean flag = true;
+        LOGGER.info("start producing links.lists size : {}", size);
+        LOGGER.info("list size : {}", links.size());
         while (size != 0) {
             sendLink(links.get(index).getUrl());
             links.remove(index);
@@ -93,6 +127,7 @@ class Shuffler {
                 }
             }
         }
+        LOGGER.info("end sending links to kafka");
     }
 
     private void sendLink(String link) {
@@ -119,8 +154,11 @@ class Shuffler {
     }
 
     public void close() {
+        LOGGER.info("start closing shuffling app");
         repeat = false;
+        LOGGER.info("setting repeat to false");
         linkConsumer.close();
         linkProducer.close();
+        LOGGER.info("producer and consumer closed");
     }
 }
