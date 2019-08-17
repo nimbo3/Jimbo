@@ -67,15 +67,13 @@ public class CacheService extends HealthCheck {
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(key).get();
+        } catch (NullPointerException e) {
+            return true;
         } catch (Exception e) {
             return false;
         }
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastTime < expiredTimeDomainMilis) {
-            return true;
-        } else {
-            return false;
-        }
+        return currentTime - lastTime < expiredTimeDomainMilis;
     }
 
     public boolean isUrlExists(String uri) {
