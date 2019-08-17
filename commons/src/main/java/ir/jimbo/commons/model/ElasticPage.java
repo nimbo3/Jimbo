@@ -21,11 +21,12 @@ public class ElasticPage {
     public ElasticPage() {
         this.url = "";
         this.title = "";
+        this.metaTags = new ArrayList<>();
         this.h1List = new ArrayList<>();
         this.h2List = new ArrayList<>();
         this.h3to6List = new ArrayList<>();
         this.text = "";
-        this.metaTags = new ArrayList<>();
+        this.language = "";
         this.id = "";
     }
 
