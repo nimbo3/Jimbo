@@ -18,10 +18,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class Shuffler {
+public class Shuffler {
 
     private KafkaConfiguration kafkaConfiguration;
     private AppConfig appConfig;
@@ -35,7 +34,7 @@ class Shuffler {
     // Regex pattern to extract domain from URL
     // Please refer to RFC 3986 - Appendix B for more information
 
-    Shuffler() throws IOException {
+    public Shuffler() throws IOException {
         kafkaConfiguration = new KafkaConfiguration();
         appConfig = new AppConfig();
         metricConfiguration = MetricConfiguration.getInstance();
@@ -47,7 +46,6 @@ class Shuffler {
         linkConsumer = kafkaConfiguration.getConsumer();
         linkProducer = kafkaConfiguration.getLinkProducer();
         skipStep = appConfig.getSkipStep();
-        Integer size;
         LOGGER.info("creating metrics");
         Timer wholeTime = metricConfiguration.getNewTimer(appConfig.getShuffleProcessTimerName());
         Timer consumeTimer = metricConfiguration.getNewTimer(appConfig.getConsumeTimerName());
@@ -56,24 +54,24 @@ class Shuffler {
         Histogram listSizeHistogram = metricConfiguration.getNewHistogram(appConfig.getListSizeHistogramName());
         LOGGER.info("starting process...");
         while (repeat) {
-            size = 0;
             Timer.Context wholeTimeContext = wholeTime.time();
             Timer.Context consumeTimerContext = consumeTimer.time();
-            List<Link> links = consumeLinks(size);
+            List<Link> links = consumeLinks();
             listSizeHistogram.update(links.size());
             consumeTimerContext.stop();
             Timer.Context sortTimerContext = sortTimer.time();
             sortLinks(links);
             sortTimerContext.stop();
             Timer.Context produceTimerContext = produceTimer.time();
-            produceLink(links, size);
+            shuffleLinks(links);
             produceTimerContext.stop();
             wholeTimeContext.stop();
         }
     }
 
-    private List<Link> consumeLinks(Integer size) {
+    private List<Link> consumeLinks() {
         int attempt = 0;
+        int size = 0;
         String url;
         List<Link> links = new ArrayList<>();
         LOGGER.info("start consuming links...");
@@ -89,15 +87,15 @@ class Shuffler {
                     LOGGER.error("cant extract domain from url {}", url, e);
                 }
             }
-            attempt ++;
-            if (attempt > appConfig.getPollAttempts()) {
-                LOGGER.warn("maximum number of poll attempts reached. breaking from loop");
-                break;
-            }
             try {
                 linkConsumer.commitSync();
             } catch (Exception e) {
                 LOGGER.error("an error occurred during commit", e);
+            }
+            attempt ++;
+            if (attempt > appConfig.getPollAttempts()) {
+                LOGGER.warn("maximum number of poll attempts reached. breaking from loop");
+                break;
             }
         }
         return links;
@@ -107,11 +105,11 @@ class Shuffler {
         links.sort(Comparator.comparing(Link::getDomain));
     }
 
-    private void produceLink(List<Link> links, int size) {
+    private void shuffleLinks(List<Link> links) {
         int index = 0;
         boolean flag = true;
+        int size = links.size();
         LOGGER.info("start producing links.lists size : {}", size);
-        LOGGER.info("list size : {}", links.size());
         while (size != 0) {
             sendLink(links.get(index).getUrl());
             links.remove(index);
@@ -133,24 +131,6 @@ class Shuffler {
     private void sendLink(String link) {
         ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getShuffledLinksTopicName(), link);
         linkProducer.send(record);
-    }
-
-    private String getDomain(String url) {
-        final Matcher matcher = domainPattern.matcher(url);
-        String result = null;
-        if (matcher.matches())
-            result = matcher.group(4);
-        if (result == null) {
-            throw new NoDomainFoundException();
-        }
-
-        if (result.startsWith("www.")) {
-            result = result.substring(4);
-        }
-        if (result.isEmpty()) {
-            throw new NoDomainFoundException();
-        }
-        return result;
     }
 
     public void close() {
