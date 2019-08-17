@@ -1,4 +1,4 @@
-package ir.jimbo.model;
+package ir.jimbo.shuffler.model;
 
 public class Link {
 

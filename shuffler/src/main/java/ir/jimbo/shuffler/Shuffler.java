@@ -1,11 +1,11 @@
-package ir.jimbo;
+package ir.jimbo.shuffler;
 
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
-import ir.jimbo.config.AppConfig;
-import ir.jimbo.config.KafkaConfiguration;
-import ir.jimbo.crawler.exceptions.NoDomainFoundException;
-import ir.jimbo.model.Link;
+import ir.jimbo.shuffler.config.AppConfig;
+import ir.jimbo.shuffler.config.KafkaConfiguration;
+import ir.jimbo.commons.exceptions.NoDomainFoundException;
+import ir.jimbo.shuffler.model.Link;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -82,6 +82,7 @@ public class Shuffler {
             LOGGER.info("links consumed to now : {}", size);
             for (ConsumerRecord<Long, String> consumerRecord : consumerRecords) {
                 url = consumerRecord.value();
+                LOGGER.info("url readed from kafka : {}", url);
                 try {
                     links.add(new Link(getDomain(url), url));
                 } catch (NoDomainFoundException e) {

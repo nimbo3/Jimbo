@@ -1,4 +1,4 @@
-package ir.jimbo.config;
+package ir.jimbo.shuffler.config;
 
 import java.io.IOException;
 import java.util.Objects;

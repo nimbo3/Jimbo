@@ -1,4 +1,4 @@
-package ir.jimbo;
+package ir.jimbo.shuffler;
 
 
 import java.io.IOException;
