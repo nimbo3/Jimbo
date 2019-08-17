@@ -6,8 +6,8 @@ ssh -p $2 $1 'mkdir ~/crawler'
 ssh -p $2 $1 'mkdir ~/crawler/config'
 scp -P $2 target/crawler*.jar $1:~/crawler
 scp -P $2 src/main/resources/* $1:~/crawler/config
-echo "echo 'java -javaagent:\$HOME/prometheus_jmx/jmx_prometheus_javaagent-0.12.0.jar=5678:\$HOME/prometheus_jmx/config.yaml -jar crawler*.jar' > ~/crawler/crawler.sh;" | ssh -p $2 $1
-ssh -p $2 $1 'chmod 775 ~/crawler/crawler.sh'
+echo "echo 'java -javaagent:\$HOME/prometheus_jmx/jmx_prometheus_javaagent-0.12.0.jar=5678:\$HOME/prometheus_jmx/config.yaml -jar crawler*.jar' > ~/crawler/run.sh;" | ssh -p $2 $1
+ssh -p $2 $1 'chmod 775 ~/crawler/run.sh'
 echo "Sending to other servers from the first one"
 while read -a host
 do

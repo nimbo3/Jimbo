@@ -7,16 +7,14 @@
         <groupId>ir.jimbo</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-
     <properties>
         <embeddedElastic.version>2.10.0</embeddedElastic.version>
         <hbase.version>1.4.10</hbase.version>
         <jackson.version>2.9.9.1</jackson.version>
         <kafka.version>2.3.0</kafka.version>
         <elasticsearch.version>6.3.2</elasticsearch.version>
-        <jackson.version>2.9.9.1</jackson.version>
+        <tika.version>1.22</tika.version>
     </properties>
-    
     <modelVersion>4.0.0</modelVersion>
     <artifactId>es-page-processor</artifactId>
     <description>"page processor module"</description>
@@ -48,20 +46,17 @@
             <version>${kafka.version}</version>
         </dependency>
         <dependency>
-            <groupId>ir.jimbo</groupId>
-            <artifactId>crawler</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>pl.allegro.tech</groupId>
             <artifactId>embedded-elasticsearch</artifactId>
             <version>${embeddedElastic.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
     </dependencies>
-
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
@@ -107,26 +102,7 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.2</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>report</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.2</version>
+                    <version>${jacoco.version}</version>
                     <executions>
                         <execution>
                             <goals>

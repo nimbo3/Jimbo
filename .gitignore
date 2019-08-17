@@ -65,5 +65,4 @@ embeddedEs/
 hs_err_pid*
 common/
 target/
-
 dependency-reduced-pom.xml
