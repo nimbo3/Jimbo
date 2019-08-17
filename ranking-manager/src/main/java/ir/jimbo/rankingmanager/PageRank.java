@@ -2,9 +2,11 @@ package ir.jimbo.rankingmanager;
 
 import ir.jimbo.rankingmanager.config.ApplicationConfiguration;
 import ir.jimbo.rankingmanager.model.Link;
+import ir.jimbo.rankingmanager.model.RankObject;
 import ir.jimbo.rankingmanager.model.Vertex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -14,18 +16,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 public class PageRank {
     private static final Logger LOGGER = LogManager.getLogger(PageRank.class);
+
     public static void main(String[] args) {
         ApplicationConfiguration appConfig = null;
         try {
@@ -45,6 +52,7 @@ public class PageRank {
 
         SparkSession session = SparkSession.builder()
                 .config("spark.hadoop.validateOutputSpecs", false)
+                .config("spark.sql.broadcastTimeout", "30000")
                 .config(sparkConf).getOrCreate();
 //        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
 
@@ -60,6 +68,7 @@ public class PageRank {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD().map(e -> e._2);
 
+
         String columnFamily = appConfig.getColumnFamily();
         String flagColumnName = appConfig.getFlagColumnName();
 
@@ -69,21 +78,15 @@ public class PageRank {
         JavaRDD<Vertex> vertices = filterData.map(row -> new Vertex(DatatypeConverter
                 .printHexBinary(Arrays.copyOfRange(row.getRow()
                         , row.getRow().length - 16, row.getRow().length)).toLowerCase()));
-
-        JavaRDD<Link> links = filterData.flatMap(row -> {
-            String destination = DatatypeConverter.printHexBinary(Arrays.copyOfRange(row.getRow()
-                    , row.getRow().length - 16, row.getRow().length)).toLowerCase();
-            NavigableMap<byte[], byte[]> familyMap = row.getFamilyMap(Bytes.toBytes(columnFamily));
-            List<Link> list = new ArrayList<>();
-            familyMap.forEach((qualifier, value) -> {
-                String anchor = Bytes.toString(value);
-                if (qualifier.length > 16) {
-                    String source = DatatypeConverter.printHexBinary(Arrays.copyOfRange(qualifier
-                            , qualifier.length - 16, qualifier.length)).toLowerCase();
-                    list.add(new Link(source, destination, anchor));
-                }
-            });
-            return list.iterator();
+        JavaRDD<Cell> cellJavaRDD = filterData.flatMap(row -> row.listCells().iterator());
+        JavaRDD<Cell> cellsFilter = cellJavaRDD.filter(cell -> cell.getQualifierArray().length >= 16);
+        JavaRDD<Link> links = cellsFilter.map(cell -> {
+            String destination = DatatypeConverter.printHexBinary(Arrays.copyOfRange(cell.getRowArray()
+                    , cell.getRowArray().length - 16, cell.getRowArray().length)).toLowerCase();
+            byte[] qualifier = cell.getQualifierArray();
+            String source = DatatypeConverter.printHexBinary(Arrays.copyOfRange(qualifier
+                    , qualifier.length - 16, qualifier.length)).toLowerCase();
+            return new Link(source, destination);
         });
 
         Dataset<Row> verticesDateSet = session.createDataFrame(vertices, Vertex.class);
@@ -92,8 +95,20 @@ public class PageRank {
         GraphFrame graph = new GraphFrame(verticesDateSet, linksDataSet);
         int rankMaxIteration = appConfig.getPageRankMaxIteration();
         double resetProbability = appConfig.getResetProbability();
+        String indexName = appConfig.getElasticSearchIndexName();
         GraphFrame pageRankGraph = graph.pageRank().maxIter(rankMaxIteration).resetProbability(resetProbability).run();
-        pageRankGraph.vertices().show();
-//        JavaRDD<Row> rows = pageRankGraph.vertices().toJavaRDD()
+        JavaRDD<RankObject> rankMap = pageRankGraph.vertices().toJavaRDD().map(row -> new RankObject(row.getString(0), row.getDouble(1)));
+        JavaEsSpark.saveToEs(rankMap, indexName + "/_doc");
+        int graphSampleSize = appConfig.getGraphSampleSize();
+        List<RankObject> topRank = rankMap.takeOrdered(graphSampleSize, new Comparator<RankObject>() {
+            @Override
+            public int compare(RankObject rankObject, RankObject t1) {
+                return t1.getRank() - rankObject.getRank() > 0 ? 1 : t1.getRank() - rankObject.getRank() == 0 ? 0 : -1;
+            }
+        });
+        int graphIndex = appConfig.getGraphIndex();
+        JavaSparkContext javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+        JavaRDD<RankObject> topRanksRdd = javaSparkContext.parallelize(topRank);
+        JavaEsSpark.saveToEs(topRanksRdd, graphIndex + "/_doc");
     }
 }
