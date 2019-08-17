@@ -21,6 +21,7 @@ public class AppConfig {
         linksPerProcessSize = Integer.parseInt(properties.getProperty("links.per.process.size"));
         pollAttempts = Integer.parseInt(properties.getProperty("max.poll.attempt"));
         skipStep = Integer.parseInt(properties.getProperty("links.skip.step"));
+
     }
 
     public int getLinksPerProcessSize() {

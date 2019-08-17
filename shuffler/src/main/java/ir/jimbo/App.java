@@ -5,6 +5,8 @@ import java.io.IOException;
 
 public class App {
     public static void main( String[] args ) throws IOException {
-        new Shuffler().start();
+        Shuffler shuffler = new Shuffler();
+        shuffler.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(shuffler::close));
     }
 }

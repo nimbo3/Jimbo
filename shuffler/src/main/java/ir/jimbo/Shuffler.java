@@ -2,7 +2,6 @@ package ir.jimbo;
 
 import ir.jimbo.config.AppConfig;
 import ir.jimbo.config.KafkaConfiguration;
-import ir.jimbo.crawler.LinkConsumer;
 import ir.jimbo.crawler.exceptions.NoDomainFoundException;
 import ir.jimbo.model.Link;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -24,6 +23,7 @@ class Shuffler {
     private boolean repeat;
     private Consumer<Long, String> linkConsumer;
     private Producer<Long, String> linkProducer;
+    private int skipStep;
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     // Regex pattern to extract domain from URL
     // Please refer to RFC 3986 - Appendix B for more information
@@ -37,6 +37,7 @@ class Shuffler {
         repeat = true;
         linkConsumer = kafkaConfiguration.getConsumer();
         linkProducer = kafkaConfiguration.getLinkProducer();
+        skipStep = appConfig.getSkipStep();
         Integer size;
         while (repeat) {
             size = 0;
@@ -61,6 +62,11 @@ class Shuffler {
             if (attempt > appConfig.getPollAttempts()) {
                 break;
             }
+            try {
+                linkConsumer.commitSync();
+            } catch (Exception e) {
+                // TODO LOG
+            }
         }
         return links;
     }
@@ -70,15 +76,31 @@ class Shuffler {
     }
 
     private void produceLink(List<Link> links, int size) {
-
+        int index = 0;
+        boolean flag = true;
+        while (size != 0) {
+            sendLink(links.get(index).getUrl());
+            links.remove(index);
+            size -= 1;
+            index += skipStep;
+            if (index >= size) {
+                if (flag) {
+                    index = size - 1;
+                    flag = false;
+                } else {
+                    index = 0;
+                    flag = true;
+                }
+            }
+        }
     }
 
     private void sendLink(String link) {
-        ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getLinkTopicName(), link);
+        ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getShuffledLinksTopicName(), link);
         linkProducer.send(record);
     }
 
-    String getDomain(String url) {
+    private String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         String result = null;
         if (matcher.matches())
@@ -98,5 +120,7 @@ class Shuffler {
 
     public void close() {
         repeat = false;
+        linkConsumer.close();
+        linkProducer.close();
     }
 }

@@ -47,7 +47,7 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
-        shuffledLinksTopicName = properties.getProperty("shuffle.link.topic.name");
+        shuffledLinksTopicName = properties.getProperty("shuffled.links.topic.name");
     }
 
     public int getPollDuration() {
