@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Shuffler {
+public class Shuffler extends Thread{
 
     private KafkaConfiguration kafkaConfiguration;
     private AppConfig appConfig;
@@ -35,13 +35,14 @@ public class Shuffler {
     // Regex pattern to extract domain from URL
     // Please refer to RFC 3986 - Appendix B for more information
 
-    public Shuffler() throws IOException {
+    public Shuffler(AppConfig appConfig) throws IOException {
+        this.appConfig = appConfig;
         kafkaConfiguration = new KafkaConfiguration();
-        appConfig = new AppConfig();
         metricConfiguration = MetricConfiguration.getInstance();
     }
 
-    void start() {
+    @Override
+    public void run() {
         repeat = true;
         LOGGER.info("creating kafka consumer and producer");
         linkConsumer = kafkaConfiguration.getConsumer();
@@ -114,11 +115,6 @@ public class Shuffler {
         LOGGER.info("start producing links.lists size : {}", size);
         while (size != 0) {
             sendLink(links.get(index).getUrl());
-            try {
-                Thread.sleep(20);
-            } catch (Exception e) {
-                LOGGER.error("error in sleeping", e);
-            }
             links.remove(index);
             size -= 1;
             index += skipStep;
@@ -129,6 +125,11 @@ public class Shuffler {
                 } else {
                     index = 0;
                     flag = true;
+                    try {
+                        Thread.sleep(appConfig.getSleepDuration());
+                    } catch (Exception e) {
+                        LOGGER.error("error in sleeping", e);
+                    }
                 }
             }
         }
@@ -158,7 +159,8 @@ public class Shuffler {
         linkProducer.send(record);
     }
 
-    public void close() {
+    @Override
+    public void interrupt() {
         LOGGER.info("start closing shuffling app");
         repeat = false;
         LOGGER.info("setting repeat to false");

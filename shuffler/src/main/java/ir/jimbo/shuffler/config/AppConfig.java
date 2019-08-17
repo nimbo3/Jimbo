@@ -14,6 +14,8 @@ public class AppConfig {
     private String sortTimerName;
     private String produceTimerName;
     private String listSizeHistogramName;
+    private int threadsNum;
+    private int sleepDuration;
 
     public AppConfig() throws IOException {
         Properties properties = new Properties();
@@ -31,6 +33,8 @@ public class AppConfig {
         sortTimerName = properties.getProperty("sort.timer.name");
         produceTimerName = properties.getProperty("produce.timer.name");
         listSizeHistogramName = properties.getProperty("list.size.histogram.name");
+        threadsNum = Integer.parseInt(properties.getProperty("threads.num"));
+        sleepDuration = Integer.parseInt(properties.getProperty("sleep.duration.per.send"));
     }
 
     public int getLinksPerProcessSize() {
@@ -63,5 +67,13 @@ public class AppConfig {
 
     public String getListSizeHistogramName() {
         return listSizeHistogramName;
+    }
+
+    public int getThreadsNum() {
+        return threadsNum;
+    }
+
+    public int getSleepDuration() {
+        return sleepDuration;
     }
 }
