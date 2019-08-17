@@ -2,6 +2,7 @@ package ir.jimbo.rankingmanager;
 
 import ir.jimbo.rankingmanager.config.ApplicationConfiguration;
 import ir.jimbo.rankingmanager.model.Link;
+import ir.jimbo.rankingmanager.model.RankObject;
 import ir.jimbo.rankingmanager.model.Vertex;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -15,15 +16,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 public class PageRank {
     private static final Logger LOGGER = LogManager.getLogger(PageRank.class);
@@ -90,10 +95,20 @@ public class PageRank {
         GraphFrame graph = new GraphFrame(verticesDateSet, linksDataSet);
         int rankMaxIteration = appConfig.getPageRankMaxIteration();
         double resetProbability = appConfig.getResetProbability();
-
-//        System.out.printf("number of links: %d", links.count());
-//        System.out.printf("number of vertices: %d", vertices.count());
+        String indexName = appConfig.getElasticSearchIndexName();
         GraphFrame pageRankGraph = graph.pageRank().maxIter(rankMaxIteration).resetProbability(resetProbability).run();
-        pageRankGraph.vertices().show();
+        JavaRDD<RankObject> rankMap = pageRankGraph.vertices().toJavaRDD().map(row -> new RankObject(row.getString(0), row.getDouble(1)));
+        JavaEsSpark.saveToEs(rankMap, indexName + "/_doc");
+        int graphSampleSize = appConfig.getGraphSampleSize();
+        List<RankObject> topRank = rankMap.takeOrdered(graphSampleSize, new Comparator<RankObject>() {
+            @Override
+            public int compare(RankObject rankObject, RankObject t1) {
+                return t1.getRank() - rankObject.getRank() > 0 ? 1 : t1.getRank() - rankObject.getRank() == 0 ? 0 : -1;
+            }
+        });
+        int graphIndex = appConfig.getGraphIndex();
+        JavaSparkContext javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+        JavaRDD<RankObject> topRanksRdd = javaSparkContext.parallelize(topRank);
+        JavaEsSpark.saveToEs(topRanksRdd, graphIndex + "/_doc");
     }
 }
