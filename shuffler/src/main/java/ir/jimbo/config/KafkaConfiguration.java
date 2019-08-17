@@ -33,13 +33,7 @@ public class KafkaConfiguration {
     public KafkaConfiguration() throws IOException {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("kafkaConfig.properties")));
-        initValues(properties);
-    }
-
-    public KafkaConfiguration(String path) throws IOException {
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(path));
+                .getResourceAsStream("configs.properties")));
         initValues(properties);
     }
 
