@@ -65,7 +65,7 @@ public class PageParserThread extends Thread {
             if (uri == null) {
                 continue;
             }
-            logger.info("uri " + uri + " catches from queue");
+            logger.info("uri {} catches from queue", uri);
             Page elasticPage = null;
             Page hbasePage = null;
             try {

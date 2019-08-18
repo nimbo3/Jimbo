@@ -11,6 +11,7 @@ import ir.jimbo.crawler.thread.PageParserThread;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.swing.plaf.TableHeaderUI;
 import java.io.IOException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +30,7 @@ public class App {
     private static AtomicBoolean repeat = new AtomicBoolean(true);
     public static boolean produceLink = true;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         LOGGER.info("crawler app starting...");
         initializeConfigurations(args);
         MetricConfiguration metrics = MetricConfiguration.getInstance();    // Throws IOException
@@ -54,7 +55,10 @@ public class App {
         LOGGER.info("starting consumer threads");
         for (int i = 0; i < consumerThreadSize; i++) {
             consumers[i] = new LinkConsumer(kafkaConfiguration, cacheService, consumerLatch, queue, metrics);
-            consumers[i].start();
+        }
+        Thread.sleep(1000);
+        for (Thread consumer : consumers) {
+            consumer.start();
         }
         LOGGER.info("end starting threads");
         aliveThreadCounter(metrics);
@@ -94,7 +98,7 @@ public class App {
         }).start();
     }
 
-    static int getAllWakeConsumers() {
+    public static int getAllWakeConsumers() {
         int counter = 0;
         for (Thread consumer : consumers) {
             if (consumer.isAlive()) {
