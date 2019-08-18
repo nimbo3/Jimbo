@@ -78,7 +78,8 @@ public class ElasticSearchService {
             if (!bulkItemResponses.hasFailures())
                 return true;
             else {
-                LOGGER.error(bulkItemResponses.buildFailureMessage());
+                final String message = bulkItemResponses.buildFailureMessage();
+                LOGGER.error(message);
                 for (BulkItemResponse bulkItemResponse : bulkItemResponses) {
                     LOGGER.info(bulkItemResponse.getResponse().getResult());
                 }
