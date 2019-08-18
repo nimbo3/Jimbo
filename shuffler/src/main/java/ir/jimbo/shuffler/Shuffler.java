@@ -91,11 +91,11 @@ public class Shuffler extends Thread{
                     LOGGER.error("cant extract domain from url {}", url, e);
                 }
             }
-            try {
-                linkConsumer.commitSync();
-            } catch (Exception e) {
-                LOGGER.error("an error occurred during commit", e);
-            }
+//            try {
+//                linkConsumer.commitSync();
+//            } catch (Exception e) {
+//                LOGGER.error("an error occurred during commit", e);
+//            }
             attempt ++;
             if (attempt > appConfig.getPollAttempts()) {
                 LOGGER.warn("maximum number of poll attempts reached. breaking from loop");
