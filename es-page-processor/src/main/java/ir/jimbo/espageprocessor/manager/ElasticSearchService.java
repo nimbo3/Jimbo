@@ -36,7 +36,7 @@ public class ElasticSearchService {
         try {
             languageDetector.loadModels();
         } catch (IOException e) {//we trust that it never happens
-            LOGGER.error("error in loading language detector modules; " , e);
+            LOGGER.error("error in loading lang detector modules; " , e);
         }
         hashUtil = new HashUtil();
         requestTimeOutNanos = configuration.getRequestTimeOutNanos();
@@ -54,7 +54,7 @@ public class ElasticSearchService {
                 languageDetector.reset();
                 ElasticPage elasticPage = new ElasticPage(page);
                 languageDetector.addText(elasticPage.getText());
-                elasticPage.setLanguage(languageDetector.detect().getLanguage());
+                elasticPage.setLang(languageDetector.detect().getLanguage());
                 bytes = writer.writeValueAsBytes(elasticPage);
             } catch (JsonProcessingException e) {
                 LOGGER.error("error in parsing page with url with jackson:" + page.getUrl(), e);
