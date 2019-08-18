@@ -78,7 +78,7 @@ public class LinkConsumer extends Thread {
                         backToKafka = true;
                         if (isPolite(uri)) {
                             boolean isAdded;
-                            isAdded = queue.offer(uri, 2000, TimeUnit.MILLISECONDS);
+                            isAdded = queue.offer(uri, 200, TimeUnit.MILLISECONDS);
                             if (isAdded) {
                                 logger.info("uri added to queue : {}", uri);
                                 linksAddToQueueCounter.inc();
