@@ -32,6 +32,7 @@ public class KafkaConfiguration {
     private String groupId;
     private String clientId;
     private String bootstrapServers;
+    private int minFetchSize;
 
     public KafkaConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -59,6 +60,7 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
+        minFetchSize = Integer.parseInt(properties.getProperty("kafka.consumer.fetch.min.bytes"));
     }
 
     public int getPollDuration() {
@@ -97,6 +99,7 @@ public class KafkaConfiguration {
         consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollInterval);
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        consumerProperties.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, minFetchSize);
         Consumer<Long, String> consumer = new KafkaConsumer<>(consumerProperties);
         System.err.println("shuffled links topic name : " + shuffledLinkTopicName);
         consumer.subscribe(Collections.singletonList(shuffledLinkTopicName));
