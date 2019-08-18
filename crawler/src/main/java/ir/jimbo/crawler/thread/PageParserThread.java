@@ -98,7 +98,7 @@ public class PageParserThread extends Thread {
         }
         logger.info("before producers countDown latch");
         countDownLatch.countDown();
-        logger.info("after producers countDown latch. countDown latch : " + countDownLatch.getCount());
+        logger.info("after producers countDown latch. countDown latch : {}", countDownLatch.getCount());
         try {
             pageProducer.close();
             linkProducer.close();

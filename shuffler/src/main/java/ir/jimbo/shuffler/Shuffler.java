@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,7 +26,7 @@ public class Shuffler extends Thread{
 
     private KafkaConfiguration kafkaConfiguration;
     private AppConfig appConfig;
-    private boolean repeat;
+    private AtomicBoolean repeat;
     private Consumer<Long, String> linkConsumer;
     private Producer<Long, String> linkProducer;
     private MetricConfiguration metricConfiguration;
@@ -43,7 +44,7 @@ public class Shuffler extends Thread{
 
     @Override
     public void run() {
-        repeat = true;
+        repeat = new AtomicBoolean(true);
         LOGGER.info("creating kafka consumer and producer");
         linkConsumer = kafkaConfiguration.getConsumer();
         linkProducer = kafkaConfiguration.getLinkProducer();
@@ -55,7 +56,7 @@ public class Shuffler extends Thread{
         Timer produceTimer = metricConfiguration.getNewTimer(appConfig.getProduceTimerName());
         Histogram listSizeHistogram = metricConfiguration.getNewHistogram(appConfig.getListSizeHistogramName());
         LOGGER.info("starting process...");
-        while (repeat) {
+        while (repeat.get()) {
             Timer.Context wholeTimeContext = wholeTime.time();
             Timer.Context consumeTimerContext = consumeTimer.time();
             List<Link> links = consumeLinks();
@@ -85,7 +86,7 @@ public class Shuffler extends Thread{
                 url = consumerRecord.value();
                 LOGGER.info("url readed from kafka : {}", url);
                 try {
-                    links.add(new Link(getDomain(url), url));
+                    links.add(new Link(new StringBuilder(getDomain(url)).reverse().toString(), url));
                 } catch (NoDomainFoundException e) {
                     LOGGER.error("cant extract domain from url {}", url, e);
                 }
@@ -105,14 +106,14 @@ public class Shuffler extends Thread{
     }
 
     private void sortLinks(List<Link> links) {
-        links.sort(Comparator.comparing(Link::getUrl));
+        links.sort(Comparator.comparing(Link::getDomain));
     }
 
     private void shuffleLinks(List<Link> links) {
         int index = 0;
         boolean flag = true;
         int size = links.size();
-        LOGGER.info("start producing links.lists size : {}", size);
+        LOGGER.debug("start producing links.lists size : {}", size);
         while (size != 0) {
             sendLink(links.get(index).getUrl());
             links.remove(index);
@@ -162,7 +163,7 @@ public class Shuffler extends Thread{
     @Override
     public void interrupt() {
         LOGGER.info("start closing shuffling app");
-        repeat = false;
+        repeat.set(false);
         LOGGER.info("setting repeat to false");
         linkConsumer.close();
         linkProducer.close();
