@@ -13,13 +13,11 @@ import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,18 +45,20 @@ public class ElasticSearchService {
 
     public SearchResult getSearch(BoolQueryBuilder query) {
         long startTime = System.currentTimeMillis();
-
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName);
-
-        SearchResult searchResult = new SearchResult();
-
+        HighlightBuilder highlightQuery = new HighlightBuilder()
+                .numOfFragments(3)
+                .fragmentSize(150)
+                .field("text")
+                .preTags("")
+                .postTags("");
+        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName).highlighter(highlightQuery);
         SearchResponse searchResponse = searchRequestBuilder.setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .setQuery(query)
                 .setTimeout(TimeValue.timeValueMillis(100000))
                 .setSize(10).setExplain(false).get();
         final String message = String.format("execute of query finished, query :%s", query.toString());
         LOGGER.info(message);
-
+        SearchResult searchResult = new SearchResult();
         parseSearchResults(searchResult, searchResponse);
         searchResult.setSearchTime(System.currentTimeMillis() - startTime);
         return searchResult;
@@ -71,10 +71,8 @@ public class ElasticSearchService {
                 StringBuilder text = new StringBuilder();
 
                 hit.getHighlightFields().forEach((fieldName, fieldValue) -> {
-                    text.append(fieldValue.toString());
-                    for (Text fragment : fieldValue.getFragments()) {
-                        text.append(fragment.string()).append("<br/>");
-                    }
+                    for (Text fragment : fieldValue.getFragments())
+                        text.append(fragment.string());
                 });
 
                 searchResult.getSearchItemList().add(new SearchItem(page.getTitle(), text.toString(), page.getUrl()));

@@ -58,32 +58,29 @@ public class App {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             String normalQuery = query.replaceAll(FUZZY_PATTERN, "").replaceAll(MUST_PATTERN, "")
                     .replaceAll(PREFIX_PATTERN, "");
-            for (String field : fields)
-                boolQuery = boolQuery.should(QueryBuilders.matchPhraseQuery(field, normalQuery));
             while (fuzzyMatcher.find()) {
                 String fuzzyExp = fuzzyMatcher.group(1);
                 if (!fuzzyExp.isEmpty())
                     for (String field : fields)
-                        boolQuery = boolQuery.must(QueryBuilders.fuzzyQuery(field, fuzzyExp));
+                        boolQuery = boolQuery.should(QueryBuilders.fuzzyQuery(field, fuzzyExp));
             }
             while (mustMatcher.find()) {
-                final String mustExp = mustMatcher.group(1);
+                String mustExp = mustMatcher.group(1);
                 if (!mustExp.isEmpty())
                     boolQuery = boolQuery.must(QueryBuilders.multiMatchQuery(mustExp, fields.toArray(new String
                             []{})));
             }
             while (prefixMatcher.find()) {
-                for (String field : fields) {
-                    final String prefixExp = prefixMatcher.group(1);
-                    if (!prefixExp.isEmpty())
-                        boolQuery = boolQuery.must(QueryBuilders.prefixQuery(field, prefixExp));
-                }
+                String prefixExp = prefixMatcher.group(1);
+                if (!prefixExp.isEmpty())
+                    for (String field : fields)
+                        boolQuery = boolQuery.should(QueryBuilders.prefixQuery(field, prefixExp));
             }
             while (exactMatcher.find()) {
                 String exactExp = exactMatcher.group(1);
                 if (!exactExp.isEmpty())
                     for (String field : fields)
-                        boolQuery = boolQuery.must(QueryBuilders.termQuery(field + ".keyword", exactExp));
+                        boolQuery = boolQuery.should(QueryBuilders.termQuery(field + ".keyword", exactExp));
             }
             boolQuery = boolQuery.should(QueryBuilders.multiMatchQuery(normalQuery, fields.toArray(new String[]{})));
             final String lang = req.queryParams("lang");
