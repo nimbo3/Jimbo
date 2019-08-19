@@ -22,7 +22,7 @@ public class ApplicationConfiguration {
     private int pageRankMaxIteration;
     private double resetProbability;
     private int graphSampleSize;
-    private int graphIndex;
+    private String graphIndex;
 
     public ApplicationConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -50,7 +50,7 @@ public class ApplicationConfiguration {
         pageRankMaxIteration = Integer.parseInt(properties.getProperty("pagerank.iteration.max"));
         resetProbability = Double.parseDouble(properties.getProperty("pagerank.resetProbability"));
         graphSampleSize = Integer.parseInt(properties.getProperty("sample.graph.size"));
-        graphIndex = Integer.parseInt(properties.getProperty("graph.index"));
+        graphIndex = properties.getProperty("sample.graph.index");
     }
 
     public String getFlagColumnName() {
@@ -85,11 +85,11 @@ public class ApplicationConfiguration {
         this.graphSampleSize = graphSampleSize;
     }
 
-    public int getGraphIndex() {
+    public String getGraphIndex() {
         return graphIndex;
     }
 
-    public void setGraphIndex(int graphIndex) {
+    public void setGraphIndex(String graphIndex) {
         this.graphIndex = graphIndex;
     }
 }
