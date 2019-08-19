@@ -11,13 +11,16 @@
   <modelVersion>4.0.0</modelVersion>
   <description>""</description>
 
-  <artifactId>WebGraph</artifactId>
+  <artifactId>web_graph</artifactId>
 
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <hbase.version>1.4.10</hbase.version>
+    <jackson.version>2.9.9.1</jackson.version>
+    <elasticsearch.version>6.3.2</elasticsearch.version>
   </properties>
 
   <dependencies>
@@ -26,6 +29,31 @@
       <artifactId>junit</artifactId>
       <version>4.11</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${jackson.version}</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ir.jimbo</groupId>
+      <artifactId>commons</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.elasticsearch.client</groupId>
+      <artifactId>transport</artifactId>
+      <version>${elasticsearch.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-client</artifactId>
+      <version>${hbase.version}</version>
     </dependency>
   </dependencies>
 
