@@ -1,4 +1,4 @@
-package ir.jimbo.webGraph.config;
+package ir.jimbo.web.graph.config;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,10 +7,8 @@ import java.util.Properties;
 
 public class AppConfiguration {
 
-    private int pageParserSize;
-    private int linkConsumerSize;
-    private int queueSize;
     private Properties properties;
+    private int graphNodeNumber;
 
     public AppConfiguration() throws IOException {
         properties = new Properties();
@@ -26,24 +24,14 @@ public class AppConfiguration {
     }
 
     private void initValues(Properties properties) {
-        linkConsumerSize = Integer.parseInt(properties.getProperty("consumer.threads.size"));
-        pageParserSize = Integer.parseInt(properties.getProperty("parser.threads.size"));
-        queueSize = Integer.parseInt(properties.getProperty("queue.size"));
-    }
-
-    public int getPageParserSize() {
-        return pageParserSize;
-    }
-
-    public int getLinkConsumerSize() {
-        return linkConsumerSize;
-    }
-
-    public int getQueueSize() {
-        return queueSize;
+        graphNodeNumber = Integer.parseInt(properties.getProperty("graph.node.number"));
     }
 
     public String getProperty(String key) {
         return properties.getProperty(key);
+    }
+
+    public int getGraphNodeNumber() {
+        return graphNodeNumber;
     }
 }

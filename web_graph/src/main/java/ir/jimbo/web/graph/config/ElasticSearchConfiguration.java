@@ -1,4 +1,4 @@
-package ir.jimbo.webGraph.config;
+package ir.jimbo.web.graph.config;
 
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +21,6 @@ public class ElasticSearchConfiguration extends Config {
     private static ElasticSearchConfiguration instance = null;
 
     private List<String> urls;
-    private String indexName;
     private String sourceName;
     private String clusterName;
     private TransportClient client;
@@ -39,7 +38,6 @@ public class ElasticSearchConfiguration extends Config {
         super(PREFIX);
         requestTimeOutNanos = Integer.parseInt(getPropertyValue("request.timeout"));
         urls = Arrays.asList(getPropertyValue("nodes.url").split(","));
-        indexName = getPropertyValue("index.name");
         sourceName = getPropertyValue("source.name");
         clusterName = getPropertyValue("cluster.name");
         numberOfRetry = Integer.parseInt(getPropertyValue("retry.number"));
@@ -54,7 +52,7 @@ public class ElasticSearchConfiguration extends Config {
                 try {
                     client.addTransportAddress(new TransportAddress(Inet4Address.getByName(urlAndPort[0]), Integer.parseInt(urlAndPort[1])));
                 } catch (UnknownHostException e) {
-                    LOGGER.error("elasticsearch node with url:" + url + "does't exist", e);
+                    LOGGER.error("elasticsearch node with url: {} does't exist", urlAndPort, e);
                 }
             }
         }

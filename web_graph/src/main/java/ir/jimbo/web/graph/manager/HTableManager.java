@@ -1,7 +1,5 @@
-package ir.jimbo.webGraph.manager;
+package ir.jimbo.web.graph.manager;
 
-import com.codahale.metrics.Timer;
-import ir.jimbo.commons.config.MetricConfiguration;
 import lombok.Setter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -33,11 +31,9 @@ public class HTableManager {
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
     private Table table;
-    private String columnFamilyName;
     private MessageDigest md = MessageDigest.getInstance("MD5");
 
-    public HTableManager(String tableName, String columnFamilyName, MetricConfiguration metrics) throws IOException, NoSuchAlgorithmException {
-        this.columnFamilyName = columnFamilyName;
+    public HTableManager(String tableName, String columnFamilyName) throws IOException, NoSuchAlgorithmException {
         checkConnection();
         table = getTable(tableName, columnFamilyName);
     }
@@ -59,10 +55,6 @@ public class HTableManager {
 
     private static byte[] getBytes(String string) {
         return Bytes.toBytes(string);
-    }
-
-    private static byte[] getBytes(int integer) {
-        return Bytes.toBytes(integer);
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
@@ -101,5 +93,17 @@ public class HTableManager {
             return matcher.group(4);
         LOGGER.warn("No domain found in URL: {}", url);
         return "";
+    }
+
+    /**
+     * @param rowKey url than will convert to <strong>domain_hash + url_hash</strong> in function
+     * @return get method that used for finding row
+     */
+    private Get getGet(String rowKey) {
+        return new Get(this.getHash(rowKey));
+    }
+
+    public Result getRecord(String rowKey) throws IOException {
+        return table.get(getGet(rowKey));
     }
 }

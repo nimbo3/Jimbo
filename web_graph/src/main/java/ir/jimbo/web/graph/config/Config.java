@@ -1,4 +1,4 @@
-package ir.jimbo.webGraph.config;
+package ir.jimbo.web.graph.config;
 
 import java.io.IOException;
 import java.util.Objects;

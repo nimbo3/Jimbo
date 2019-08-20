@@ -122,7 +122,7 @@ public class HTableManager extends HealthCheck {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
-        LOGGER.warn("No domain found in URL: " + url);
+        LOGGER.warn("No domain found in URL: {}", url);
         return "";
     }
 

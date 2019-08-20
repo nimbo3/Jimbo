@@ -111,7 +111,7 @@
             <transformer implementation=
                                  "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
               <manifestEntries>
-                <Main-Class>ir.jimbo.webGraph.App</Main-Class>
+                <Main-Class>ir.jimbo.web.graph.App</Main-Class>
                 <Class-Path>./config/</Class-Path>
               </manifestEntries>
             </transformer>
@@ -119,10 +119,10 @@
           <filters>
             <filter>
               <artifact>${project.groupId}:${project.artifactId}</artifact>
-              <excludes>
-                <exclude>*.properties</exclude>
-                <exclude>*.xml</exclude>
-              </excludes>
+<!--              <excludes>-->
+<!--                <exclude>*.properties</exclude>-->
+<!--                <exclude>*.xml</exclude>-->
+<!--              </excludes>-->
             </filter>
           </filters>
         </configuration>

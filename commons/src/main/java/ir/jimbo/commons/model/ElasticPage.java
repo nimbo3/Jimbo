@@ -56,4 +56,15 @@ public class ElasticPage {
         }
         text = stringBuilder.toString();
     }
+
+    @Override
+    public String toString() {
+        return "ElasticPage{" +
+                "url='" + url + '\'' +
+                ", title='" + title + '\'' +
+                ", metaTags=" + metaTags +
+                ", h1List=" + h1List +
+                ", language='" + language + '\'' +
+                '}';
+    }
 }
