@@ -156,7 +156,8 @@ public class Shuffler extends Thread{
     }
 
     private void sendLink(String link) {
-        ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getShuffledLinksTopicName(), link);
+        ProducerRecord<Long, String> record = new ProducerRecord<>(kafkaConfiguration.getShuffledLinksTopicName()
+                , (long) link.hashCode(), link);
         linkProducer.send(record);
     }
 
