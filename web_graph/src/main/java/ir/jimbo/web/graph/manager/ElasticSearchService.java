@@ -5,6 +5,7 @@ import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
@@ -53,6 +54,19 @@ public class ElasticSearchService {
             }
         }
         return pages;
+    }
+
+    public ElasticPage getDocument(String id) throws IOException {
+        GetRequestBuilder doc = client.prepareGet(configuration.getSourceName(), "_doc", id);
+        System.out.println(doc.get().toString());
+        System.out.println(doc.get().getSource());
+        ObjectMapper reader = new ObjectMapper();
+        String sourceAsString = doc.get().getSourceAsString();
+        if (sourceAsString == null) {
+            return null;
+        } else {
+            return reader.readValue(sourceAsString, ElasticPage.class);
+        }
     }
 
     public TransportClient getClient() {

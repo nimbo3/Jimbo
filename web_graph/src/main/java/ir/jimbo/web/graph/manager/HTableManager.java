@@ -38,6 +38,10 @@ public class HTableManager {
         table = getTable(tableName, columnFamilyName);
     }
 
+    public HTableManager() throws NoSuchAlgorithmException {
+
+    }
+
     public static void closeConnection() throws IOException {
         if (connection != null && !connection.isClosed())
             connection.close();
@@ -87,7 +91,7 @@ public class HTableManager {
         return Bytes.add(getMd5(getDomain(rowKey)), getMd5(rowKey));
     }
 
-    private String getDomain(String url) {
+    public String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
