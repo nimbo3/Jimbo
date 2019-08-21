@@ -43,7 +43,6 @@ public class PageProcessorThread extends Thread {
 
     @Override
     public void run() {
-//        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("elastic.pages.histogram.name"));
         Timer processTime = metrics.getNewTimer(metrics.getProperty("elastic.process.timer.name"));
         Counter insertedPagesCounter = metrics.getNewCounter("insertedPagesCounter");
         Timer insertEsTime = metrics.getNewTimer("insertEsTime");
@@ -54,7 +53,7 @@ public class PageProcessorThread extends Thread {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
                 List<Page> pages = new ArrayList<>();
                 List<HRow> flags = new ArrayList<>();
-                Timer.Context timerContext = insertEsTime.time();
+                Timer.Context timerContext = processTime.time();
                 for (ConsumerRecord<Long, Page> record : records) {
                     pages.add(record.value());
                     flags.add(new HRow(record.value().getUrl(), "f", 1));
