@@ -27,6 +27,7 @@ public class ElasticSearchConfiguration extends Config {
 
     private int requestTimeOutNanos;
     private int numberOfRetry;
+    private int bulkSize;
 
     public static ElasticSearchConfiguration getInstance() throws IOException {
         if (instance == null)
@@ -41,6 +42,7 @@ public class ElasticSearchConfiguration extends Config {
         indexName = getPropertyValue("index.name");
         clusterName = getPropertyValue("cluster.name");
         numberOfRetry = Integer.parseInt(getPropertyValue("retry.number"));
+        bulkSize = Integer.parseInt(getPropertyValue("bulk.size"));
     }
 
     public TransportClient getClient() {

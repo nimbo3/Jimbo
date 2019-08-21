@@ -84,6 +84,10 @@ public class ElasticSearchService {
         }
     }
 
+    public ElasticSearchConfiguration getConfiguration() {
+        return configuration;
+    }
+
     public TransportClient getClient() {
         return client;
     }
