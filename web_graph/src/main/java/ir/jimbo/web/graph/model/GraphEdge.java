@@ -4,27 +4,14 @@ public class GraphEdge {
 
     private String src;
     private String dst;
-    private String incomingUrl;
-    private String anchor;
 
     public GraphEdge() {
 
     }
 
-    public String getIncomingUrl() {
-        return incomingUrl;
-    }
-
-    public void setIncomingUrl(String incomingUrl) {
-        this.incomingUrl = incomingUrl;
-    }
-
-    public String getAnchor() {
-        return anchor;
-    }
-
-    public void setAnchor(String anchor) {
-        this.anchor = anchor;
+    public GraphEdge(String src, String dst) {
+        this.src = src;
+        this.dst = dst;
     }
 
     public String getSrc() {
@@ -41,5 +28,13 @@ public class GraphEdge {
 
     public void setDst(String dst) {
         this.dst = dst;
+    }
+
+    @Override
+    public String toString() {
+        return "GraphEdge{" +
+                "src='" + src + '\'' +
+                ", dst='" + dst + '\'' +
+                '}';
     }
 }

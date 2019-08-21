@@ -38,4 +38,13 @@ public class GraphVertice {
     public void setId(String id) {
         this.id = id;
     }
+
+    @Override
+    public String toString() {
+        return "GraphVertice{" +
+                "id='" + id + '\'' +
+                ", url='" + url + '\'' +
+                ", rank=" + rank +
+                '}';
+    }
 }

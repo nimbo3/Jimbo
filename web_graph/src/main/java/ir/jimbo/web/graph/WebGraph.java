@@ -13,13 +13,12 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.spark.sql.*;
+import org.graphframes.GraphFrame;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class WebGraph {
 
@@ -27,40 +26,38 @@ public class WebGraph {
     private ElasticSearchService elasticSearchService;
     private AppConfiguration appConfiguration;
     private HTableManager hTableManager;
-    private Set<GraphEdge> graphEdges;    // yalha
-    private Set<GraphVertice> graphVertices; // nodes
+    private List<GraphEdge> graphEdges;    // yalha
+    private List<GraphVertice> graphVertices; // nodes
     private HashUtil hashUtil;
 
-    WebGraph() throws IOException, NoSuchAlgorithmException {
+    public WebGraph(AppConfiguration appConfiguration) throws IOException, NoSuchAlgorithmException {
         elasticSearchService = new ElasticSearchService(ElasticSearchConfiguration.getInstance());
-        appConfiguration = new AppConfiguration();
+        this.appConfiguration = appConfiguration;
         HBaseConfiguration hBaseConfiguration = new HBaseConfiguration("hbase");
         hTableManager = new HTableManager(hBaseConfiguration.getTableName(), hBaseConfiguration.getColumnName());
         hashUtil = new HashUtil();
+        graphEdges = new ArrayList<>();
+        graphVertices = new ArrayList<>();
+    }
+
+    public WebGraph() {
+        graphEdges = new ArrayList<>();
+        graphVertices = new ArrayList<>();
     }
 
     public void start() throws IOException {
-        graphEdges = new HashSet<>();
-        graphVertices = new HashSet<>();
         LOGGER.info("reading pages from elastic");
-//        List<ElasticPage> elasticPages = getFromElastic();
-//        LOGGER.info("{} pages readed from elastic", elasticPages.size());
+        List<ElasticPage> elasticPages = getFromElastic();
+        LOGGER.info("{} pages readed from elastic", elasticPages.size());
         LOGGER.info("start finding links on hbase and create vertices and edges lists...");
-//        elasticPages.clear();
-//        ElasticPage elasticPage = new ElasticPage();
-//        elasticPage.setUrl("https://hu.wikipedia.org/wiki/Saint-Maurice_(Val-de-Marne)");
-//        elasticPages.add(elasticPage);
-//        createVerticesAndEdges(elasticPages);
-        ElasticPage document = elasticSearchService.getDocument("055313870c185681932683aba17b9499");
-        System.err.println("url" + document.getUrl());
-        System.err.println(document);
-        LOGGER.info("creating vertices lists");
+        createVerticesAndEdges(elasticPages);
+        LOGGER.info("vertices and edges created");
+        startSparkJobs();
     }
 
     /**
      * getNoVersionMap of result return a navigableMap that have Column family name map to another navigable map
      * that contains qualifiers map to values
-     *
      * @param elasticPages
      * @return
      * @throws IOException
@@ -75,17 +72,11 @@ public class WebGraph {
                 LOGGER.warn("url {} is not in hbase", url);
                 continue;
             }
-            LOGGER.info("creating a vertice by url with high rank, url : {}", elasticPage.getUrl());
-            LOGGER.info("hash util {}", hashUtil);
-            LOGGER.info("get md5 : {}", hashUtil.getMd5(elasticPage.getUrl()));
             GraphVertice vertice = new GraphVertice(hashUtil.getMd5(elasticPage.getUrl()), elasticPage.getUrl(), 1.0);
-            LOGGER.info("vertice : {}", vertice);
-            LOGGER.info("graph vertices : {}", graphVertices);
             graphVertices.add(vertice);
             LOGGER.info("creating some vertice and edges (vertice for incoming links that may not have high rank)");
             record.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
                 // Qualifier is hash of src url and value is its anchor
-                LOGGER.info("qualifier readed from hbase {}", Bytes.toHex(qualifier));
                 ElasticPage document = null;
                 try {
                     document = elasticSearchService.getDocument(Bytes.toHex(qualifier));
@@ -96,6 +87,8 @@ public class WebGraph {
                     LOGGER.warn("page in not in elastic.qualifier : {}", Bytes.toHex(qualifier));
                 } else {
                     LOGGER.info("a follower url : {}", document.getUrl());
+                    graphVertices.add(new GraphVertice(hashUtil.getMd5(document.getUrl()), document.getUrl(), 0.5));
+                    graphEdges.add(new GraphEdge(hashUtil.getMd5(document.getUrl()), hashUtil.getMd5(elasticPage.getUrl())));
                 }
             }));
         }
@@ -111,5 +104,30 @@ public class WebGraph {
                 repeat = false;
         }
         return elasticPages;
+    }
+
+    public void startSparkJobs() {
+        SparkSession spark = SparkSession.builder()
+                .appName("web_graph")
+                .master("local")
+                .getOrCreate();
+
+        System.out.println(graphVertices);
+        System.out.println(graphEdges);
+        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertice.class);
+        Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
+
+        GraphFrame graphFrame = new GraphFrame(verticesDataFrame, edgesDataFrame);
+        graphFrame.vertices().show();
+        graphFrame.edges().show();
+        spark.close();
+    }
+
+    public void setGraphEdges(List<GraphEdge> graphEdges) {
+        this.graphEdges = graphEdges;
+    }
+
+    public void setGraphVertices(List<GraphVertice> graphVertices) {
+        this.graphVertices = graphVertices;
     }
 }

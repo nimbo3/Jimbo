@@ -1,6 +1,7 @@
 package ir.jimbo.web.graph;
 
 
+import ir.jimbo.web.graph.config.AppConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +14,6 @@ public class App {
 
     public static void main( String[] args ) throws IOException, NoSuchAlgorithmException {
         LOGGER.info("starting web_graph module");
-        new WebGraph().start();
+        new WebGraph(new AppConfiguration()).start();
     }
 }
