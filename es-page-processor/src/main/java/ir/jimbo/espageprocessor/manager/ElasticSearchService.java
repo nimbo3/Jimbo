@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class ElasticSearchService {
-    private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
+        private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
     private int requestTimeOutNanos;

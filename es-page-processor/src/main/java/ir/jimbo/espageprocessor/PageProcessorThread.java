@@ -1,6 +1,6 @@
 package ir.jimbo.espageprocessor;
 
-import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.Page;
@@ -43,23 +43,26 @@ public class PageProcessorThread extends Thread {
 
     @Override
     public void run() {
-        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("elastic.pages.histogram.name"));
+//        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("elastic.pages.histogram.name"));
         Timer processTime = metrics.getNewTimer(metrics.getProperty("elastic.process.timer.name"));
-        histogram.update(0);
+        Counter insertedPagesCounter = metrics.getNewCounter("insertedPagesCounter");
+        Timer insertEsTime = metrics.getNewTimer("insertEsTime");
+        Timer putFlagTime = metrics.getNewTimer("hbasePutFlagTime");
+
         while (!interrupted()) {
             try {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
                 List<Page> pages = new ArrayList<>();
                 List<HRow> flags = new ArrayList<>();
-                Timer.Context timerContext = processTime.time();
+                Timer.Context timerContext = insertEsTime.time();
                 for (ConsumerRecord<Long, Page> record : records) {
                     pages.add(record.value());
                     flags.add(new HRow(record.value().getUrl(), "f", 1));
                 }
-                histogram.update(pages.size());
                 boolean isAdded = false;
                 int retryCounter = 0;
                 long start = System.currentTimeMillis();
+                Timer.Context esTime = insertEsTime.time();
                 while (!isAdded && retryCounter < numberOfRetry) {
                     isAdded = esService.insertPages(pages);
                     if (!isAdded) {
@@ -68,12 +71,16 @@ public class PageProcessorThread extends Thread {
                         LOGGER.info("ES insertion failed.");
                     }
                 }
+                esTime.stop();
                 long end = System.currentTimeMillis();
                 if (!isAdded) {
                     throw new Exception("pages don't insert " + Arrays.toString(pages.toArray()));
                 }
 
+                Timer.Context hbaseTime = putFlagTime.time();
                 hTableManager.put(flags);
+                hbaseTime.stop();
+                insertedPagesCounter.inc(records.count());
                 pageConsumer.commitSync();
                 timerContext.stop();
                 LOGGER.info("record_size: " + records.count() + " " + (start-end)  + "re" + retryCounter );
