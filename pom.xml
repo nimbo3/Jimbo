@@ -20,6 +20,7 @@
         <module>search-api</module>
         <module>ranking-manager</module>
         <module>es-page-migrator</module>
+        <module>train_data</module>
     </modules>
 
     <properties>
