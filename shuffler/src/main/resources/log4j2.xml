@@ -10,17 +10,16 @@
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
             </PatternLayout>
         </File>
-        <File name="Warns" fileName="shufflingModule/shuffling_warns.log">
+        <File name="Debug" fileName="shufflingModule/shuffling_warns.log">
             <Filters>
-                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
-                <ThresholdFilter level="WARN" onMatch="Deny" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="INFO" onMatch="DENY" onMismatch="NEUTRAL"/>
                 <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
             </Filters>
             <PatternLayout>
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
             </PatternLayout>
         </File>
-        <File name="Debug" fileName="shufflingModule/shuffling_debug.log">
+        <File name="Warns" fileName="shufflingModule/shuffling_debug.log">
             <Filters>
                 <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
                 <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
