@@ -1,4 +1,4 @@
-package ir.jimbo;
+package ir.jimbo.web.graph;
 
 import static org.junit.Assert.assertTrue;
 

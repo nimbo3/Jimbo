@@ -4,15 +4,15 @@ public class GraphVertice {
 
     private String id;
     private String url;
-    private double rank;
+    private double pagerank;
 
     public GraphVertice() {
     }
 
-    public GraphVertice(String id, String url, double rank) {
+    public GraphVertice(String id, String url, double pagerank) {
         this.id = id;
         this.url = url;
-        this.rank = rank;
+        this.pagerank = pagerank;
     }
 
     public String getUrl() {
@@ -23,12 +23,12 @@ public class GraphVertice {
         this.url = url;
     }
 
-    public double getRank() {
-        return rank;
+    public double getPagerank() {
+        return pagerank;
     }
 
-    public void setRank(double rank) {
-        this.rank = rank;
+    public void setPagerank(double pagerank) {
+        this.pagerank = pagerank;
     }
 
     public String getId() {
@@ -44,7 +44,7 @@ public class GraphVertice {
         return "GraphVertice{" +
                 "id='" + id + '\'' +
                 ", url='" + url + '\'' +
-                ", rank=" + rank +
+                ", rank=" + pagerank +
                 '}';
     }
 }
