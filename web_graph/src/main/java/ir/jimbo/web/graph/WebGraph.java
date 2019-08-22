@@ -13,7 +13,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.spark.sql.*;
+//import org.apache.spark.sql.*;
 //import org.graphframes.GraphFrame;
 
 import java.io.IOException;
@@ -109,14 +109,14 @@ public class WebGraph {
     }
 
     public void startSparkJobs() {
-        SparkSession spark = SparkSession.builder()
-                .appName("web_graph")
-                .master("local")
-                .getOrCreate();
-
-        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertice.class);
-        Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
-
+//        SparkSession spark = SparkSession.builder()
+//                .appName("web_graph")
+//                .master("local")
+//                .getOrCreate();
+//
+//        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertice.class);
+//        Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
+//
 //        GraphFrame graphFrame = new GraphFrame(verticesDataFrame, edgesDataFrame);
 //        graphFrame.vertices().show();
 //        graphFrame.edges().show();
@@ -126,8 +126,8 @@ public class WebGraph {
 //                .run()
 //                .collectAsList()
 //                .forEach(System.out::println);
-
-        spark.close();
+//
+//        spark.close();
     }
 
     public void setGraphEdges(List<GraphEdge> graphEdges) {

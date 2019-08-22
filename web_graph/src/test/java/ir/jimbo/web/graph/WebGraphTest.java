@@ -67,6 +67,6 @@ public class WebGraphTest {
 
     @Test
     public void startSparkJobs() {
-        webGraph.startSparkJobs();
+//        webGraph.startSparkJobs();
     }
 }
