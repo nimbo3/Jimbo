@@ -1,6 +1,8 @@
 package ir.jimbo.train.data;
 
 import ir.jimbo.commons.exceptions.NoDomainFoundException;
+import ir.jimbo.train.data.config.RedisConfiguration;
+import ir.jimbo.train.data.service.CacheService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +12,10 @@ import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -28,9 +33,10 @@ import java.util.regex.Pattern;
 @NoArgsConstructor
 public class CrawlProtected extends Thread {
 
-    private final Logger LOGGER = LogManager.getLogger(this.getClass());
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     private String seedUrl;
+    private String anchor;
     /**
      *  depth of crawl. number of layer that crawler goes in in the url and fetch page.
      *      so if depth of crawl is zero only current url will be checked and crawler wont go to current page links.
@@ -59,7 +65,28 @@ public class CrawlProtected extends Thread {
 
     @Override
     public void run() {
-        super.run();
+        try {
+            CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
+            if (anchorKeyWords != null && !anchorKeyWords.isEmpty())
+                if (anchorKeyWords.containsAll(Collections.singleton(anchor.split(" ")))) {
+                    addUrl();
+                } else {
+                    checkContent();
+                }
+            if (crawlDepth > 0) {
+                createNewUrlSeeds();
+            }
+        } catch (IOException e) {
+            logger.error("exception in creating cache service...", e);
+        }
+    }
+
+    private void createNewUrlSeeds() {
+
+    }
+
+    private void addUrl() {
+
     }
 
     public String getDomain(String url) {
@@ -93,21 +120,21 @@ public class CrawlProtected extends Thread {
                 return true;
             }
         } catch (IndexOutOfBoundsException e) {
-            LOGGER.info("invalid uri : {}", link);
+            logger.info("invalid uri : {}", link);
             return false;
         }
         return false;
     }
 
     public Document fetchUrl() {
-        LOGGER.info("start parsing...");
+        logger.info("start parsing...");
         Document document;
         try {
             Connection connect = Jsoup.connect(seedUrl);
             connect.timeout(2000);
             document = connect.get();
         } catch (Exception e) { //
-            LOGGER.error("exception in connection to url. empty page instance will return", e);
+            logger.error("exception in connection to url. empty page instance will return", e);
             return null;
         }
         return document;
@@ -119,23 +146,43 @@ public class CrawlProtected extends Thread {
      */
     public boolean checkContent() {
         Document pageDocument = fetchUrl();
-        if (checkMetasKeyWords(pageDocument))
-            if (checkContentKeyWords(pageDocument))
+        if (checkMetasKeyWords(pageDocument)) {
+            if (checkContentKeyWords(pageDocument)) {
                 return true;
-            else
-                LOGGER.info("page with link {}, passed due to not containing minimum" +
+            } else {
+                logger.info("page with link {}, passed due to not containing minimum" +
                         " number of keyWords in content", seedUrl);
-        else
-            LOGGER.info("page with link {}, passed due to not containing meta keyWords", seedUrl);
+            }
+        } else {
+            logger.info("page with link {}, passed due to not containing meta keyWords", seedUrl);
+        }
         return false;
     }
 
     public boolean checkContentKeyWords(Document pageDocument) {
+        if (contentKeyWords == null || contentKeyWords.isEmpty())
+            return false;
         String documentText = pageDocument.text();
+        for (Map<String, Integer> map : contentKeyWords) {
+            for (Map.Entry<String, Integer> entry : map.entrySet()){
+                if (documentText.length() - documentText.replaceAll(entry.getKey(), "").length() >= entry.getValue()) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     public boolean checkMetasKeyWords(Document pageDocument) {
+        if (metaContain == null || metaContain.isEmpty())
+            return false;
+        for (Element meta : pageDocument.getElementsByTag("meta")) {
+            String text = meta.text();
+            for (String s : metaContain) {
+                if (text.contains(s))
+                    return true;
+            }
+        }
         return false;
     }
 }
