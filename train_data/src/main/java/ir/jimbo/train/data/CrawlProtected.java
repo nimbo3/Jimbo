@@ -15,9 +15,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,11 +42,11 @@ public class CrawlProtected extends Thread {
      *      so if depth of crawl is zero only current url will be checked and crawler wont go to current page links.
      */
     private int crawlDepth;
+    private int politenessTime;
     /**
-     *  Words that site content must contain
+     *  Words that site anchor must contain. it must contain all of them
      */
     private Set<String> anchorKeyWords;
-    private int politenessTime;
     /**
      *  keyWords in siteContent map to minimum number of repeats in it.
      *  if a site hold one maps conditions in the set we assume that this site holds contentKeyWords condition.
@@ -66,27 +66,61 @@ public class CrawlProtected extends Thread {
     @Override
     public void run() {
         try {
-            CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
-            if (anchorKeyWords != null && !anchorKeyWords.isEmpty())
-                if (anchorKeyWords.containsAll(Collections.singleton(anchor.split(" ")))) {
+            boolean isUrlYetPassed = false;
+            if (anchorKeyWords != null && !anchorKeyWords.isEmpty()) {
+                if (checkAnchorKeyWord()) {
                     addUrl();
-                } else {
-                    checkContent();
+                    isUrlYetPassed = true;
                 }
-            if (crawlDepth > 0) {
-                createNewUrlSeeds();
             }
+            Document pageDocument = null;
+            CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
+            if (! isUrlYetPassed) {
+                pageDocument = fetchUrl(cacheService);
+                checkContent(pageDocument);
+            }
+            if (crawlDepth > 0) {
+                if (pageDocument == null) {
+                    pageDocument = fetchUrl(cacheService);
+                }
+                createNewUrlSeeds(pageDocument);
+            }
+            cacheService.close();
         } catch (IOException e) {
             logger.error("exception in creating cache service...", e);
         }
     }
 
-    private void createNewUrlSeeds() {
+    public boolean checkAnchorKeyWord() {
+        int count = 0;
+        for (String anchorKeyWord : anchorKeyWords) {
+            if (anchor.contains(anchorKeyWord))
+                count ++;
+        }
+        return count == anchorKeyWords.size();
+    }
 
+    private void createNewUrlSeeds(Document pageDocument) {
+        for (Element a : pageDocument.getElementsByTag("a")) {
+            String newAnchor = a.text();
+            String url = a.attr("abs:href");
+            if (isValidUri(url))
+                return;
+            new CrawlProtected(url, newAnchor, crawlDepth - 1, politenessTime, anchorKeyWords
+                            , contentKeyWords, metaContain).start();
+        }
     }
 
     private void addUrl() {
-
+        boolean flag;
+        do {
+            try {
+                flag = App.passedUrls.offer(seedUrl, 100, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                logger.error("exception in offering url {} in the queue", seedUrl, e);
+                flag = true;
+            }
+        } while (!flag);
     }
 
     public String getDomain(String url) {
@@ -126,7 +160,8 @@ public class CrawlProtected extends Thread {
         return false;
     }
 
-    public Document fetchUrl() {
+    public Document fetchUrl(CacheService cacheService) {
+        waitForPoliteness(cacheService);
         logger.info("start parsing...");
         Document document;
         try {
@@ -140,12 +175,24 @@ public class CrawlProtected extends Thread {
         return document;
     }
 
+    private void waitForPoliteness(CacheService cacheService) {
+        logger.info("checking for politeness and waiting until it become polite");
+        String domain = getDomain(seedUrl);
+        while (cacheService.isDomainExist(domain)) {
+            try {
+                logger.info("sleeping for politeness of {} url", seedUrl);
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                logger.error("interrupted while sleeping for politeness", e);
+            }
+        }
+    }
+
     /**
      * Check site content and metas to check whether this site meet the given conditions or not
      * @return true if the content and metas contains given conditions
      */
-    public boolean checkContent() {
-        Document pageDocument = fetchUrl();
+    public boolean checkContent(Document pageDocument) {
         if (checkMetasKeyWords(pageDocument)) {
             if (checkContentKeyWords(pageDocument)) {
                 return true;

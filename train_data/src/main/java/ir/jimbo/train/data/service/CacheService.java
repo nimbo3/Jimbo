@@ -59,4 +59,7 @@ public class CacheService {
         return currentTime - lastTime < politenessTime;
     }
 
+    public void close() {
+        redis.shutdown();
+    }
 }
