@@ -79,14 +79,16 @@ public class CrawlProtected extends Thread {
             CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
             Runtime.getRuntime().addShutdownHook(new Thread(cacheService::close));
             if (! isUrlYetPassed) {
-                pageDocument = fetchUrl(cacheService);
+                waitForPoliteness(cacheService);
+                pageDocument = fetchUrl();
                 if (checkContent(pageDocument)) {
                     addUrl();
                 }
             }
             if (crawlDepth > 0) {
                 if (pageDocument == null) {
-                    pageDocument = fetchUrl(cacheService);
+                    waitForPoliteness(cacheService);
+                    pageDocument = fetchUrl();
                 }
                 createNewUrlSeeds(pageDocument);
             }
@@ -107,6 +109,9 @@ public class CrawlProtected extends Thread {
     }
 
     public boolean checkAnchorKeyWord() {
+        if (anchorKeyWords == null || anchorKeyWords.isEmpty()) {
+            return false;
+        }
         int count = 0;
         for (String anchorKeyWord : anchorKeyWords) {
             if (anchor.contains(anchorKeyWord))
@@ -177,8 +182,7 @@ public class CrawlProtected extends Thread {
         return false;
     }
 
-    public Document fetchUrl(CacheService cacheService) {
-        waitForPoliteness(cacheService);
+    public Document fetchUrl() {
         logger.info("start parsing...");
         Document document;
         try {

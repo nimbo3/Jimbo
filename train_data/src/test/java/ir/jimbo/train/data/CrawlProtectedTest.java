@@ -1,6 +1,7 @@
 package ir.jimbo.train.data;
 
 import com.sun.net.httpserver.HttpServer;
+import org.jsoup.nodes.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -19,10 +20,14 @@ public class CrawlProtectedTest {
     private static CrawlProtected crawlProtected;
     private HttpServer server1;
     private HttpServer server2;
+    private static String server1Host;
+    private static String server2Host;
 
     @BeforeClass
     public static void getClassInstance() {
         crawlProtected = new CrawlProtected();
+        server1Host = "http://localhost:62097/test";
+        server2Host = "http://localhost:62098/test";
     }
 
     @Before
@@ -38,7 +43,7 @@ public class CrawlProtectedTest {
         server1.createContext("/test", httpExchange -> {
             httpExchange.sendResponseHeaders(200, data.length());
             OutputStream os = httpExchange.getResponseBody();
-            os.write(data.toString().getBytes());
+            os.write(data.getBytes());
             os.close();
         });
         server1.start();
@@ -47,7 +52,7 @@ public class CrawlProtectedTest {
     @Before
     public void initServer2() throws IOException {
         String data = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Test page Title</title>" +
-                " <meta name=\"title\" content=\"Test football meta tag\"/> <meta name=\"description\" content=\"sport" +
+                " <meta name=\"title\" content=\"Test meta tag\"/> <meta name=\"description\" content=\"sport" +
                 " description tag\"/> <meta name=\"keywords\" content=\"test, java, junit\"></head><body><h1>Header1</h1>" +
                 "<h2>Header2</h2><h3>Header3</h3><h4>Header4</h4><h5>Header5</h5><h6>Header6</h6><p>paragraph</p><pre>" +
                 "pre</pre><p> <span>span</span> <strong>strong text</strong> <i>italic text</i> <b>bold text</b></p><p>" +
@@ -57,7 +62,7 @@ public class CrawlProtectedTest {
         server2.createContext("/test", httpExchange -> {
             httpExchange.sendResponseHeaders(200, data.length());
             OutputStream os = httpExchange.getResponseBody();
-            os.write(data.toString().getBytes());
+            os.write(data.getBytes());
             os.close();
         });
         server2.start();
@@ -76,9 +81,13 @@ public class CrawlProtectedTest {
     @Test
     public void checkAnchorKeyWord() {
         Set<String> anchorKeyWords = new HashSet<>();
-        anchorKeyWords.add("sport");
-        anchorKeyWords.add("football");
-
+        anchorKeyWords.add("Sport");
+        anchorKeyWords.add("foOtball");
+        crawlProtected.setMetaContain(anchorKeyWords);
+        crawlProtected.setSeedUrl(server1Host);
+        Document document = crawlProtected.fetchUrl();
+        assertTrue(crawlProtected.checkMetasKeyWords(document));
+        assertFalse(crawlProtected.checkContentKeyWords(document));
     }
 
     @Test
