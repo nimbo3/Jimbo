@@ -33,6 +33,10 @@ public class CacheService {
         }
         redis = Redisson.create(config);
         logger.info("redis connection created.");
+        if (redis == null || redis.isShutdown()) {
+            logger.error("redisson in not connected to redis. start shutting down app");
+            System.exit(0);
+        }
     }
 
     public void addDomain(String domain) {
@@ -51,9 +55,9 @@ public class CacheService {
         try {
             lastTime = (long) redis.getBucket(key).get();
         } catch (NullPointerException e) {
-            return true;
-        } catch (Exception e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
         long currentTime = System.currentTimeMillis();
         return currentTime - lastTime < politenessTime;
