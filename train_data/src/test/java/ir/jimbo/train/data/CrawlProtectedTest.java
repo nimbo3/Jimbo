@@ -2,10 +2,7 @@ package ir.jimbo.train.data;
 
 import com.sun.net.httpserver.HttpServer;
 import org.jsoup.nodes.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,20 +23,20 @@ public class CrawlProtectedTest {
     @BeforeClass
     public static void getClassInstance() {
         crawlProtected = new CrawlProtected();
-        server1Host = "http://localhost:62097/test";
-        server2Host = "http://localhost:62098/test";
+        server1Host = "http://localhost:60097/test";
+        server2Host = "http://localhost:60098/test";
     }
 
     @Before
     public void initServer1() throws IOException {
         String data = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Test page Title</title>" +
-                " <meta name=\"title\" content=\"Test football meta tag\"/> <meta name=\"description\" content=\"sport" +
+                " <meta name=\"title\" content=\"Test footBall meta tag\"/> <meta name=\"description\" content=\"Sport" +
                 " description tag\"/> <meta name=\"keywords\" content=\"test, java, junit\"></head><body><h1>Header1</h1>" +
                 "<h2>Header2</h2><h3>Header3</h3><h4>Header4</h4><h5>Header5</h5><h6>Header6</h6><p>paragraph</p><pre>" +
                 "pre</pre><p> <span>span</span> <strong>strong text</strong> <i>italic text</i> <b>bold text</b></p><p>" +
                 " <a href=\"/about\">About</a> <a href=\"/contact\">Contact us</a></p></body></html>";
 
-        server1 = HttpServer.create(new InetSocketAddress(62097), 0);
+        server1 = HttpServer.create(new InetSocketAddress(60097), 0);
         server1.createContext("/test", httpExchange -> {
             httpExchange.sendResponseHeaders(200, data.length());
             OutputStream os = httpExchange.getResponseBody();
@@ -58,7 +55,7 @@ public class CrawlProtectedTest {
                 "pre</pre><p> <span>span</span> <strong>strong text</strong> <i>italic text</i> <b>bold text</b></p><p>" +
                 " <a href=\"/about\">About</a> <a href=\"/contact\">Contact us</a></p></body></html>";
 
-        server2 = HttpServer.create(new InetSocketAddress(62098), 0);
+        server2 = HttpServer.create(new InetSocketAddress(60098), 0);
         server2.createContext("/test", httpExchange -> {
             httpExchange.sendResponseHeaders(200, data.length());
             OutputStream os = httpExchange.getResponseBody();
@@ -81,8 +78,8 @@ public class CrawlProtectedTest {
     @Test
     public void checkAnchorKeyWord() {
         Set<String> anchorKeyWords = new HashSet<>();
-        anchorKeyWords.add("Sport");
-        anchorKeyWords.add("foOtball");
+        anchorKeyWords.add("sport");
+        anchorKeyWords.add("football");
         crawlProtected.setMetaContain(anchorKeyWords);
         crawlProtected.setSeedUrl(server1Host);
         Document document = crawlProtected.fetchUrl();
@@ -122,18 +119,16 @@ public class CrawlProtectedTest {
         assertFalse(crawlProtected.isValidUri("/"));
         assertFalse(crawlProtected.isValidUri("www."));
         assertFalse(crawlProtected.isValidUri("felan.mkv"));
-        assertFalse(crawlProtected.isValidUri("www.felan.mkv"));
-        assertFalse(crawlProtected.isValidUri("https://www.felan.mkv"));
-        assertFalse(crawlProtected.isValidUri("https://felan.mkv"));
-        assertFalse(crawlProtected.isValidUri("www.w3school.com/javaCourse.aspx"));
-    }
+        assertFalse(crawlProtected.isValidUri("www.felan.com/test/skdmfdskdnfmg.mkv"));
+        assertFalse(crawlProtected.isValidUri("https://felan.ir/kadm/sdkmvpsdkmc.mkv"));
 
-    @Test
-    public void fetchUrl() {
+        assertFalse(crawlProtected.isValidUri("www.w3school.com/javaCourse.aspx"));
+        assertTrue(crawlProtected.isValidUri("https://www.felan.mkv"));
     }
 
     @Test
     public void checkContent() {
+
     }
 
     @Test

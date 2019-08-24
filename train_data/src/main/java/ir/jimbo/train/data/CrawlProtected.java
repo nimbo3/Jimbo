@@ -178,8 +178,13 @@ public class CrawlProtected implements Runnable {
             while (link.endsWith("/")) {
                 link = link.substring(0, link.length() - 1);
             }
-            if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
-                    || !link.substring(link.lastIndexOf('/') + 1).contains(".")) {
+            if (link.trim().isEmpty())
+                return false;
+            if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")) {
+                return true;
+            }
+            if (!link.substring(link.lastIndexOf('/') + 1).contains(".")
+                    || link.lastIndexOf('/') == link.indexOf("//") + 1) {
                 return true;
             }
         } catch (IndexOutOfBoundsException e) {
@@ -253,8 +258,10 @@ public class CrawlProtected implements Runnable {
         if (metaContain == null || metaContain.isEmpty())
             return false;
         for (Element meta : pageDocument.getElementsByTag("meta")) {
-            String text = meta.text().toLowerCase();
+            String text = meta.toString().toLowerCase();
             for (String s : metaContain) {
+                System.out.println("meta contain : " + s);
+                System.out.println("text : " + text);
                 if (text.contains(s))
                     return true;
             }
