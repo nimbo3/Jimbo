@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * class to crawl on special conditions.
  *  There are 3 main condition that will be checked. anchor contain special keyWord, metas contain special keyWords,
  *      and text content contains special keyWords at least n times where n must be given.
- *      In case of any one of above conditions is true we assume that this url is proper.
+ *      In case of any one of above conditions is true we assume that this url is passed.
  */
 @Getter
 @Setter
@@ -43,6 +43,7 @@ public class CrawlProtected extends Thread {
      */
     private int crawlDepth;
     private int politenessTime;
+    private boolean stayInDomain;
     /**
      *  Words that site anchor must contain. it must contain all of them
      */
@@ -104,10 +105,12 @@ public class CrawlProtected extends Thread {
         for (Element a : pageDocument.getElementsByTag("a")) {
             String newAnchor = a.text();
             String url = a.attr("abs:href");
-            if (isValidUri(url))
+            if (! isValidUri(url))
                 return;
-            new CrawlProtected(url, newAnchor, crawlDepth - 1, politenessTime, anchorKeyWords
-                            , contentKeyWords, metaContain).start();
+            if (!stayInDomain || getDomain(url).equals(getDomain(seedUrl))) {
+                new CrawlProtected(url, newAnchor, crawlDepth - 1, politenessTime, stayInDomain, anchorKeyWords
+                        , contentKeyWords, metaContain).start();
+            }
         }
     }
 
