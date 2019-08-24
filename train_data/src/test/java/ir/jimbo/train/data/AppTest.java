@@ -1,4 +1,4 @@
-package ir.jimbo;
+package ir.jimbo.train.data;
 
 import static org.junit.Assert.assertTrue;
 
