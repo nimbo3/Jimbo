@@ -5,15 +5,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class App {
 
     private static final Logger logger = LogManager.getLogger(App.class);
-    protected static ArrayBlockingQueue<String> passedUrls;
     public static ThreadPoolExecutor executor;
+    protected static ArrayBlockingQueue<String> passedUrls;
 
-    public static void main( String[] args ) throws IOException {
+    public static void main(String[] args) throws IOException {
         logger.info("app started...");
         AppConfig appConfig = new AppConfig();
         passedUrls = new ArrayBlockingQueue<>(appConfig.getLocalQueueSize());
@@ -33,13 +35,14 @@ public class App {
 
     /**
      * Add seed urls with conditions. code example :
-     *  <code>
-     *      new CrawlProtected("www.varzesh3.com", "sport news", 10, 30000, true, null, null, null);
-     *  </code>
-     *  parameters in order : url, urlsAnchor, crawlDepth, politenessTimeMillis, stayInDomain, anchorsKeyWord
-     *      , contentKeyword, MetaContain
+     * <code>
+     * new CrawlProtected("www.varzesh3.com", "sport news", 10, 30000, true, null, null, null).start();
+     * </code>
+     * parameters in order : url, urlsAnchor, crawlDepth, politenessTimeMillis, stayInDomain, anchorsKeyWord
+     * , contentKeyword, MetaContain
      */
     private static void initApp() {
-
+        new CrawlProtected("www.espn.com", "Sports news", 10, 30000,
+                true, null, null, null).addToThreadPool();
     }
 }

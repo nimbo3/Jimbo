@@ -108,15 +108,15 @@
                             </manifestEntries>
                         </transformer>
                     </transformers>
-                    <!--          <filters>-->
-                    <!--            <filter>-->
-                    <!--              <artifact>${project.groupId}:${project.artifactId}</artifact>-->
-                    <!--              <excludes>-->
-                    <!--                <exclude>*.properties</exclude>-->
-                    <!--                <exclude>*.xml</exclude>-->
-                    <!--              </excludes>-->
-                    <!--            </filter>-->
-                    <!--          </filters>-->
+                    <filters>
+                        <filter>
+                            <artifact>${project.groupId}:${project.artifactId}</artifact>
+                            <excludes>
+                                <exclude>*.properties</exclude>
+                                <exclude>*.xml</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>

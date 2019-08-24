@@ -22,11 +22,13 @@ public class CacheService {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 redis.shutdown();
-            } catch (Exception e) { logger.error("exception in closing redisson", e); }
+            } catch (Exception e) {
+                logger.error("exception in closing redisson", e);
+            }
         }));
         this.politenessTime = politenessTime;
         Config config = new Config();
-        if (! redisConfiguration.getPassword().isEmpty()) {
+        if (!redisConfiguration.getPassword().isEmpty()) {
             config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0)).setPassword(redisConfiguration.getPassword());
         } else {
             config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0));

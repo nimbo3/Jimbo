@@ -23,50 +23,48 @@ import java.util.regex.Pattern;
 
 /**
  * class to crawl on special conditions.
- *  There are 3 main condition that will be checked. anchor contain special keyWord, metas contain special keyWords,
- *      and text content contains special keyWords at least n times where n must be given.
- *      In case of any one of above conditions is true we assume that this url is passed.
+ * There are 3 main condition that will be checked. anchor contain special keyWord, metas contain special keyWords,
+ * and text content contains special keyWords at least n times where n must be given.
+ * In case of any one of above conditions is true we assume that this url is passed.
  */
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CrawlProtected extends Thread {
+public class CrawlProtected implements Runnable {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
-
+    /**
+     * Regex pattern to extract domain from URL. Please refer to RFC 3986 - Appendix B for more information
+     */
+    private final Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     private String seedUrl;
     private String anchor;
     /**
-     *  depth of crawl. number of layer that crawler goes in in the url and fetch page.
-     *      so if depth of crawl is zero only current url will be checked and crawler wont go to current page links.
+     * depth of crawl. number of layer that crawler goes in in the url and fetch page.
+     * so if depth of crawl is zero only current url will be checked and crawler wont go to current page links.
      */
     private int crawlDepth;
     private int politenessTime;
     private boolean stayInDomain;
     /**
-     *  Words that site anchor must contain. it must contain all of them
+     * Words that site anchor must contain. it must contain all of them
      */
     private Set<String> anchorKeyWords;
     /**
-     *  keyWords in siteContent map to minimum number of repeats in it.
-     *  if a site hold one maps conditions in the set we assume that this site holds contentKeyWords condition.
+     * keyWords in siteContent map to minimum number of repeats in it.
+     * if a site hold one maps conditions in the set we assume that this site holds contentKeyWords condition.
      */
     private Set<Map<String, Integer>> contentKeyWords;
     /**
-     *  word that meta tags must contain. there are multiple tags that may lead to site content topic, like
-     *      description meta tag and topic meta tag and sub topic meta tag and keyWords meta tag etc.
-     *      that's why we search on all of meta tags.
+     * word that meta tags must contain. there are multiple tags that may lead to site content topic, like
+     * description meta tag and topic meta tag and sub topic meta tag and keyWords meta tag etc.
+     * that's why we search on all of meta tags.
      */
     private Set<String> metaContain;
-    /**
-     *  Regex pattern to extract domain from URL. Please refer to RFC 3986 - Appendix B for more information
-     */
-    private final Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     @Override
     public void run() {
-        addToThreadPool();
         try {
             boolean isUrlYetPassed = false;
             if (anchorKeyWords != null && !anchorKeyWords.isEmpty()) {
@@ -78,7 +76,7 @@ public class CrawlProtected extends Thread {
             Document pageDocument = null;
             CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
             Runtime.getRuntime().addShutdownHook(new Thread(cacheService::close));
-            if (! isUrlYetPassed) {
+            if (!isUrlYetPassed) {
                 pageDocument = fetchUrl(cacheService);
                 if (checkContent(pageDocument)) {
                     addUrl();
@@ -96,12 +94,19 @@ public class CrawlProtected extends Thread {
         }
     }
 
-    private void addToThreadPool() {
+    public void addToThreadPool() {
         while (true) {
+            logger.info("Adding to thread pool.");
             int threadPoolQueueSize = App.executor.getQueue().size();
-            if (threadPoolQueueSize <= 90) {
+            if (threadPoolQueueSize <= 10) {
                 App.executor.submit(this);
+                logger.info("Added to thread pool.");
                 break;
+            }
+            logger.info("Try again");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
             }
         }
     }
@@ -110,7 +115,7 @@ public class CrawlProtected extends Thread {
         int count = 0;
         for (String anchorKeyWord : anchorKeyWords) {
             if (anchor.contains(anchorKeyWord))
-                count ++;
+                count++;
         }
         return count == anchorKeyWords.size();
     }
@@ -119,11 +124,11 @@ public class CrawlProtected extends Thread {
         for (Element a : pageDocument.getElementsByTag("a")) {
             String newAnchor = a.text();
             String url = a.attr("abs:href");
-            if (! isValidUri(url))
+            if (!isValidUri(url))
                 return;
             if (!stayInDomain || getDomain(url).equals(getDomain(seedUrl))) {
-                new CrawlProtected(url, newAnchor, crawlDepth - 1, politenessTime, stayInDomain, anchorKeyWords
-                        , contentKeyWords, metaContain).start();
+                new CrawlProtected(url, newAnchor, crawlDepth - 1, politenessTime,
+                        stayInDomain, anchorKeyWords, contentKeyWords, metaContain).addToThreadPool();
             }
         }
     }
@@ -207,6 +212,7 @@ public class CrawlProtected extends Thread {
 
     /**
      * Check site content and metas to check whether this site meet the given conditions or not
+     *
      * @return true if the content and metas contains given conditions
      */
     public boolean checkContent(Document pageDocument) {
@@ -228,7 +234,7 @@ public class CrawlProtected extends Thread {
             return false;
         String documentText = pageDocument.text();
         for (Map<String, Integer> map : contentKeyWords) {
-            for (Map.Entry<String, Integer> entry : map.entrySet()){
+            for (Map.Entry<String, Integer> entry : map.entrySet()) {
                 if (documentText.length() - documentText.replaceAll(entry.getKey(), "").length() >= entry.getValue()) {
                     return true;
                 }
