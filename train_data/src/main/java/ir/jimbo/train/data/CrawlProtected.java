@@ -231,7 +231,7 @@ public class CrawlProtected implements Runnable {
             if (checkContentKeyWords(pageDocument)) {
                 return true;
             } else {
-                logger.info("page with link {}, passed due to not containing minimum" +
+                logger.info("page with link {}, passed due to containing minimum" +
                         " number of keyWords in content", seedUrl);
             }
         } else {

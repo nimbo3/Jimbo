@@ -7,7 +7,9 @@ import org.junit.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -33,7 +35,8 @@ public class CrawlProtectedTest {
                 " <meta name=\"title\" content=\"Test footBall meta tag\"/> <meta name=\"description\" content=\"Sport" +
                 " description tag\"/> <meta name=\"keywords\" content=\"test, java, junit\"></head><body><h1>Header1</h1>" +
                 "<h2>Header2</h2><h3>Header3</h3><h4>Header4</h4><h5>Header5</h5><h6>Header6</h6><p>paragraph</p><pre>" +
-                "pre</pre><p> <span>span</span> <strong>strong text</strong> <i>italic text</i> <b>bold text</b></p><p>" +
+                "pre</pre><p> <span>span</span> <p>allah allah allah allah allah allah</p> <strong>strong text</strong>" +
+                " <i>italic text</i> <b>bold jimbo jimbo jimbo text</b></p><p>" +
                 " <a href=\"/about\">About</a> <a href=\"/contact\">Contact us</a></p></body></html>";
 
         server1 = HttpServer.create(new InetSocketAddress(60097), 0);
@@ -78,15 +81,13 @@ public class CrawlProtectedTest {
     @Test
     public void checkAnchorKeyWord() {
         Set<String> anchorKeyWords = new HashSet<>();
-        anchorKeyWords.add("sport");
-        anchorKeyWords.add("football");
-        crawlProtected.setMetaContain(anchorKeyWords);
-        crawlProtected.setSeedUrl(server1Host);
-        Document document = crawlProtected.fetchUrl();
-        assertTrue(crawlProtected.checkMetasKeyWords(document));
-        crawlProtected.setSeedUrl(server2Host);
-        document = crawlProtected.fetchUrl();
-        assertFalse(crawlProtected.checkContentKeyWords(document));
+        anchorKeyWords.add("jimbo");
+        anchorKeyWords.add("nimbo");
+        crawlProtected.setAnchorKeyWords(anchorKeyWords);
+        crawlProtected.setAnchor("sahab nimbo jimbo");
+        assertTrue(crawlProtected.checkAnchorKeyWord());
+        crawlProtected.setAnchor("sahab");
+        assertFalse(crawlProtected.checkAnchorKeyWord());
     }
 
     @Test
@@ -128,14 +129,57 @@ public class CrawlProtectedTest {
 
     @Test
     public void checkContent() {
+        Set<Map<String, Integer>> contentKeyWords = new HashSet<>();
+        HashMap<String, Integer> map1 = new HashMap<>();
+        HashMap<String, Integer> map2 = new HashMap<>();
+        map1.put("allah", 5);
+        map2.put("jimbo", 7);
+        contentKeyWords.add(map1);
+        contentKeyWords.add(map2);
+        crawlProtected.setContentKeyWords(contentKeyWords);
+        crawlProtected.setSeedUrl(server1Host);
+
+        Set<String> metaKeyWords = new HashSet<>();
+        metaKeyWords.add("sport");
+        metaKeyWords.add("football");
+        crawlProtected.setMetaContain(metaKeyWords);
+        Document document = crawlProtected.fetchUrl();
+        assertTrue(crawlProtected.checkContent(document));
+        crawlProtected.setSeedUrl(server2Host);
+        document = crawlProtected.fetchUrl();
+        assertFalse(crawlProtected.checkContent(document));
 
     }
 
     @Test
     public void checkContentKeyWords() {
+        Set<Map<String, Integer>> contentKeyWords = new HashSet<>();
+        HashMap<String, Integer> map1 = new HashMap<>();
+        HashMap<String, Integer> map2 = new HashMap<>();
+        map1.put("allah", 5);
+        map2.put("jimbo", 7);
+        contentKeyWords.add(map1);
+        contentKeyWords.add(map2);
+        crawlProtected.setContentKeyWords(contentKeyWords);
+        crawlProtected.setSeedUrl(server1Host);
+        Document document = crawlProtected.fetchUrl();
+        assertTrue(crawlProtected.checkContentKeyWords(document));
+        crawlProtected.setSeedUrl(server2Host);
+        document = crawlProtected.fetchUrl();
+        assertFalse(crawlProtected.checkContentKeyWords(document));
     }
 
     @Test
     public void checkMetasKeyWords() {
+        Set<String> metaKeyWords = new HashSet<>();
+        metaKeyWords.add("sport");
+        metaKeyWords.add("football");
+        crawlProtected.setMetaContain(metaKeyWords);
+        crawlProtected.setSeedUrl(server1Host);
+        Document document = crawlProtected.fetchUrl();
+        assertTrue(crawlProtected.checkMetasKeyWords(document));
+        crawlProtected.setSeedUrl(server2Host);
+        document = crawlProtected.fetchUrl();
+        assertFalse(crawlProtected.checkMetasKeyWords(document));
     }
 }
