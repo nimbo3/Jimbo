@@ -35,6 +35,24 @@ public class CrawlProtectedTest {
 
     @Test
     public void isValidUri() {
+        assertTrue(crawlProtected.isValidUri("http://stackoverflow.com/"));
+        assertTrue(crawlProtected.isValidUri("https://stackoverflow.com/"));
+        assertTrue(crawlProtected.isValidUri("http://stackoverflow.com"));
+        assertTrue(crawlProtected.isValidUri("https://stackoverflow.co.io/"));
+        assertTrue(crawlProtected.isValidUri("https://discuss.stackoverflow.co.io"));
+        assertTrue(crawlProtected.isValidUri("http://discuss.stackoverflow.co.io"));
+        assertTrue(crawlProtected.isValidUri("www.w3school.com/javaCourse.asp"));
+        assertTrue(crawlProtected.isValidUri("www.w3school.com/javaCourse.htm"));
+        assertTrue(crawlProtected.isValidUri("www.w3school.com/javaCourse.html"));
+        assertFalse(crawlProtected.isValidUri("abc.jpg"));
+        assertFalse(crawlProtected.isValidUri(""));
+        assertFalse(crawlProtected.isValidUri("/"));
+        assertFalse(crawlProtected.isValidUri("www."));
+        assertFalse(crawlProtected.isValidUri("felan.mkv"));
+        assertFalse(crawlProtected.isValidUri("www.felan.mkv"));
+        assertFalse(crawlProtected.isValidUri("https://www.felan.mkv"));
+        assertFalse(crawlProtected.isValidUri("https://felan.mkv"));
+        assertFalse(crawlProtected.isValidUri("www.w3school.com/javaCourse.aspx"));
     }
 
     @Test
