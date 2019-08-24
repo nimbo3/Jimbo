@@ -260,8 +260,6 @@ public class CrawlProtected implements Runnable {
         for (Element meta : pageDocument.getElementsByTag("meta")) {
             String text = meta.toString().toLowerCase();
             for (String s : metaContain) {
-                System.out.println("meta contain : " + s);
-                System.out.println("text : " + text);
                 if (text.contains(s))
                     return true;
             }
