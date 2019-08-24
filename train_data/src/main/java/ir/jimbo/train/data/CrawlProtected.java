@@ -66,6 +66,7 @@ public class CrawlProtected extends Thread {
 
     @Override
     public void run() {
+        addToThreadPool();
         try {
             boolean isUrlYetPassed = false;
             if (anchorKeyWords != null && !anchorKeyWords.isEmpty()) {
@@ -92,6 +93,16 @@ public class CrawlProtected extends Thread {
             cacheService.close();
         } catch (IOException e) {
             logger.error("exception in creating cache service...", e);
+        }
+    }
+
+    private void addToThreadPool() {
+        while (true) {
+            int threadPoolQueueSize = App.executor.getQueue().size();
+            if (threadPoolQueueSize <= 90) {
+                App.executor.submit(this);
+                break;
+            }
         }
     }
 

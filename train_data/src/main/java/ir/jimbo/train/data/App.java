@@ -28,5 +28,18 @@ public class App {
                 logger.error(e);
             }
         }));
+        initApp();
+    }
+
+    /**
+     * Add seed urls with conditions. code example :
+     *  <code>
+     *      new CrawlProtected("www.varzesh3.com", "sport news", 10, 30000, true, null, null, null);
+     *  </code>
+     *  parameters in order : url, urlsAnchor, crawlDepth, politenessTimeMillis, stayInDomain, anchorsKeyWord
+     *      , contentKeyword, MetaContain
+     */
+    private static void initApp() {
+
     }
 }
