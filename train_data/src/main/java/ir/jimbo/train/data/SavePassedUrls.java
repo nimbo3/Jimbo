@@ -15,14 +15,14 @@ public class SavePassedUrls extends Thread {
     private AtomicBoolean repeat;
     private static SavePassedUrls savePassedUrls;
 
-    private SavePassedUrls(AtomicBoolean repeat) throws IOException {
-        fileWriter = new FileWriter("urls.txt");
-        this.repeat = repeat;
+    private SavePassedUrls(String filePath) throws IOException {
+        fileWriter = new FileWriter(filePath);
+        repeat = new AtomicBoolean(true);
     }
 
-    public static SavePassedUrls getInstance(AtomicBoolean repeat) throws IOException {
+    public static SavePassedUrls getInstance(String filePath) throws IOException {
         if (savePassedUrls == null)
-            return savePassedUrls = new SavePassedUrls(repeat);
+            return savePassedUrls = new SavePassedUrls(filePath);
         return savePassedUrls;
     }
 

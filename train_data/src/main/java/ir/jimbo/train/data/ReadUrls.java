@@ -8,6 +8,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+/**
+ * UNUSED
+ * TODO delete this class
+ */
 public class ReadUrls extends Thread {
 
     private final Logger logger = LogManager.getLogger(this.getClass());

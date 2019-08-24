@@ -76,9 +76,12 @@ public class CrawlProtected extends Thread {
             }
             Document pageDocument = null;
             CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
+            Runtime.getRuntime().addShutdownHook(new Thread(cacheService::close));
             if (! isUrlYetPassed) {
                 pageDocument = fetchUrl(cacheService);
-                checkContent(pageDocument);
+                if (checkContent(pageDocument)) {
+                    addUrl();
+                }
             }
             if (crawlDepth > 0) {
                 if (pageDocument == null) {

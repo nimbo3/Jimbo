@@ -15,7 +15,7 @@ public class RedisConfiguration {
     public RedisConfiguration() throws IOException {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(
-                "redisConfig.properties")));
+                "config.properties")));
         initValues(properties);
     }
 
