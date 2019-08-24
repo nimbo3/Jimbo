@@ -154,7 +154,7 @@ public class PageParserThread extends Thread {
         }
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
-            Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre"));
+            Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre", "td", "li"));
             String text = element.text();
             if (text == null)
                 text = "";
