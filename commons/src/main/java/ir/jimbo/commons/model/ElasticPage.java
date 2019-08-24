@@ -65,6 +65,8 @@ public class ElasticPage {
         StringBuilder stringBuilder = new StringBuilder();
         for (HtmlTag htmlTag : page.getPlainTextList()) {
             stringBuilder.append(htmlTag.getContent());
+            if (htmlTag.getContent() != null && !htmlTag.getContent().trim().equals(""))
+                stringBuilder.append(" ");
         }
         text = stringBuilder.toString();
     }
