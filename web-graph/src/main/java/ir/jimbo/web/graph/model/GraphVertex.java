@@ -7,8 +7,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class GraphEdge {
-    private String src;
-    private String dst;
-    private String anchor;
+public class GraphVertex {
+    private String id;
+    private double pagerank;
+    private double color;
 }

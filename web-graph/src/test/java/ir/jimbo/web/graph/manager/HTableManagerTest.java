@@ -50,7 +50,6 @@ public class HTableManagerTest {
         byte[] urlHash = md.digest(url.getBytes());
         byte[] domainHash = md.digest(hTableManager.getDomain(url).getBytes());
         byte[] hashDomainPlusUrl = Bytes.add(domainHash, urlHash);
-        // 32 for each one
         Assert.assertEquals(Bytes.toHex(hashDomainPlusUrl), hashUtil.getMd5(hTableManager.getDomain(url)) + "" + hashUtil.getMd5(url));
     }
 

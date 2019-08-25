@@ -1,14 +1,14 @@
 package ir.jimbo.web.graph;
 
 import ir.jimbo.commons.model.ElasticPage;
-import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.web.graph.config.AppConfiguration;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
 import ir.jimbo.web.graph.config.HBaseConfiguration;
 import ir.jimbo.web.graph.manager.ElasticSearchService;
 import ir.jimbo.web.graph.manager.HTableManager;
 import ir.jimbo.web.graph.model.GraphEdge;
-import ir.jimbo.web.graph.model.GraphVertice;
+import ir.jimbo.web.graph.model.GraphVertex;
+import ir.jimbo.web.graph.model.VerticesAndEdges;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
@@ -27,15 +27,13 @@ public class WebGraph {
     private AppConfiguration appConfiguration;
     private HTableManager hTableManager;
     private List<GraphEdge> graphEdges;    // yalha
-    private List<GraphVertice> graphVertices; // nodes
-    private HashUtil hashUtil;
+    private List<GraphVertex> graphVertices; // nodes
 
     public WebGraph(AppConfiguration appConfiguration) throws IOException, NoSuchAlgorithmException {
         elasticSearchService = new ElasticSearchService(ElasticSearchConfiguration.getInstance());
         this.appConfiguration = appConfiguration;
         HBaseConfiguration hBaseConfiguration = new HBaseConfiguration("hbase");
         hTableManager = new HTableManager(hBaseConfiguration.getTableName(), hBaseConfiguration.getColumnName());
-        hashUtil = new HashUtil();
         graphEdges = new ArrayList<>();
         graphVertices = new ArrayList<>();
     }
@@ -52,9 +50,16 @@ public class WebGraph {
         LOGGER.info("start finding links on hbase and create vertices and edges lists...");
         createVerticesAndEdges(elasticPages);
         LOGGER.info("vertices and edges created");
-        System.out.println(graphVertices);
-        System.out.println(graphEdges);
         startSparkJobs();
+        System.err.println("---------------------------------------- spark Job Done ----------------------------------------");
+        createOutput();
+    }
+
+    public void createOutput() {
+        VerticesAndEdges verticesAndEdges = new VerticesAndEdges();
+        verticesAndEdges.setEdges(graphEdges);
+        verticesAndEdges.setVertices(graphVertices);
+        System.out.println(verticesAndEdges);
     }
 
     /**
@@ -73,7 +78,7 @@ public class WebGraph {
                 LOGGER.warn("url {} is not in hbase", url);
                 continue;
             }
-            GraphVertice vertex = new GraphVertice(elasticPage.getUrl(), 1.0);
+            GraphVertex vertex = new GraphVertex(elasticPage.getUrl(), 1.0, 1.0);
             graphVertices.add(vertex);
             LOGGER.info("creating some vertex and edges (vertex for incoming links that may not have high rank)");
             record.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
@@ -88,7 +93,7 @@ public class WebGraph {
                     LOGGER.warn("page in not in elastic.qualifier : {}", Bytes.toHex(qualifier).substring(32));
                 } else {
                     LOGGER.info("a follower url : {}", document.getUrl());
-                    graphVertices.add(new GraphVertice(document.getUrl(), 0.5));
+                    graphVertices.add(new GraphVertex(document.getUrl(), 0.5, 1));
                     graphEdges.add(new GraphEdge(document.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
                 }
             }));
@@ -113,17 +118,20 @@ public class WebGraph {
                 .master("local")
                 .getOrCreate();
 
-        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertice.class);
+        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertex.class);
         Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
 
+        graphVertices.clear();
+
         GraphFrame graphFrame = new GraphFrame(verticesDataFrame, edgesDataFrame);
-        graphFrame.vertices().show();
-        graphFrame.edges().show();
-        graphFrame
-                .stronglyConnectedComponents()
+
+        graphFrame.stronglyConnectedComponents()
                 .maxIter(10)
                 .run()
-                .show();
+                .toJavaRDD()
+                .collect()
+                .forEach(a -> graphVertices.add(new GraphVertex(a.get(1).toString()
+                        , Double.parseDouble(a.get(2).toString()), Double.parseDouble(a.get(3).toString()))));
 
         spark.close();
     }
@@ -132,7 +140,7 @@ public class WebGraph {
         this.graphEdges = graphEdges;
     }
 
-    public void setGraphVertices(List<GraphVertice> graphVertices) {
+    public void setGraphVertices(List<GraphVertex> graphVertices) {
         this.graphVertices = graphVertices;
     }
 }
