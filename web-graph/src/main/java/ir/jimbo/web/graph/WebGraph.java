@@ -61,7 +61,6 @@ public class WebGraph {
      * getNoVersionMap of result return a navigableMap that have Column family name map to another navigable map
      * that contains qualifiers map to values
      * @param elasticPages
-     * @return
      * @throws IOException
      */
     private void createVerticesAndEdges(List<ElasticPage> elasticPages) throws IOException {

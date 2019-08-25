@@ -59,4 +59,9 @@ public class HTableManagerTest {
         String url = "https://hu.wikipedia.org/wiki/Saint-Maurice_(Val-de-Marne)";
         System.out.println(hashUtil.getMd5(url));
     }
+
+    @Test
+    public void valueToString() {
+        Assert.assertEquals("jimbo", Bytes.toString(Bytes.toBytes("jimbo")));
+    }
 }
