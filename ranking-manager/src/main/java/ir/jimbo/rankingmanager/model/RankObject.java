@@ -13,4 +13,11 @@ public class RankObject {
     private String id;
     private Double rank;
 
+    @Override
+    public String toString() {
+        return "RankObject{" +
+                "id='" + id + '\'' +
+                ", rank=" + rank +
+                '}';
+    }
 }
