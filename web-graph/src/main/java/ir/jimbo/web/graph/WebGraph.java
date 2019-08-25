@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.spark.sql.*;
+import org.elasticsearch.action.get.MultiGetRequestBuilder;
 import org.graphframes.GraphFrame;
 
 import java.io.IOException;
@@ -65,11 +66,14 @@ public class WebGraph {
     /**
      * getNoVersionMap of result return a navigableMap that have Column family name map to another navigable map
      * that contains qualifiers map to values
+     *
      * @param elasticPages
      * @throws IOException
      */
     private void createVerticesAndEdges(List<ElasticPage> elasticPages) throws IOException {
         String url;
+        MultiGetRequestBuilder multiGetRequestBuilder = elasticSearchService.getMultiGetRequestBuilder();
+        ElasticSearchConfiguration elasticConfigs = ElasticSearchConfiguration.getInstance();
         for (ElasticPage elasticPage : elasticPages) {
             url = elasticPage.getUrl();
             LOGGER.info("start getting {} from hbase", url);
@@ -83,20 +87,16 @@ public class WebGraph {
             LOGGER.info("creating some vertex and edges (vertex for incoming links that may not have high rank)");
             record.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
                 // Qualifier is hash of src url and value is its anchor
-                ElasticPage document = null;
-                try {
-                    document = elasticSearchService.getDocument(Bytes.toHex(qualifier).substring(32));
-                } catch (IOException e) {
-                    LOGGER.error("exception in getting document from elastic", e);
-                }
-                if (document == null) {
-                    LOGGER.warn("page in not in elastic.qualifier : {}", Bytes.toHex(qualifier).substring(32));
-                } else {
-                    LOGGER.info("a follower url : {}", document.getUrl());
-                    graphVertices.add(new GraphVertex(document.getUrl(), 0.5, 1));
-                    graphEdges.add(new GraphEdge(document.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
-                }
+                multiGetRequestBuilder.add(elasticConfigs.getIndexName(), "_doc"
+                        , Bytes.toHex(qualifier).substring(32));
             }));
+        }
+        List<ElasticPage> documentsAddedToNow = elasticSearchService.getDocumentsAddedToNow();
+        for (ElasticPage elasticPage : documentsAddedToNow) {
+            LOGGER.info("a follower url : {}", elasticPage.getUrl());
+            graphVertices.add(new GraphVertex(elasticPage.getUrl(), 0.5, 1));
+            graphEdges.add(new GraphEdge(elasticPage.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
+            // TODO value has error
         }
     }
 

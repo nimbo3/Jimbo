@@ -5,7 +5,7 @@ import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.get.GetRequestBuilder;
+import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
@@ -23,6 +23,7 @@ public class ElasticSearchService {
     private ElasticSearchConfiguration configuration;
     private TransportClient client;
     private String esScrollID = null;
+    private MultiGetRequestBuilder multiGetRequestBuilder;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
@@ -58,8 +59,6 @@ public class ElasticSearchService {
 
     public ElasticPage getDocument(String id) throws IOException {
         GetRequestBuilder doc = client.prepareGet(configuration.getSourceName(), "_doc", id);
-        System.out.println(doc.get().toString());
-        System.out.println(doc.get().getSource());
         ObjectMapper reader = new ObjectMapper();
         String sourceAsString = doc.get().getSourceAsString();
         if (sourceAsString == null) {
@@ -69,7 +68,33 @@ public class ElasticSearchService {
         }
     }
 
-    public TransportClient getClient() {
-        return client;
+    public MultiGetRequestBuilder getMultiGetRequestBuilder() {
+        if (multiGetRequestBuilder == null) {
+            return multiGetRequestBuilder = client.prepareMultiGet();
+        }
+        return multiGetRequestBuilder;
+    }
+
+    public List<ElasticPage> getDocumentsAddedToNow() {
+        List<ElasticPage> elasticPages = new ArrayList<>();
+        if (multiGetRequestBuilder == null) {
+            LOGGER.error("multiGetRequestBuilder is null. nothing will return");
+        } else {
+            MultiGetResponse multiGetItemResponses = multiGetRequestBuilder.get();
+            ObjectMapper reader = new ObjectMapper();
+            for (MultiGetItemResponse itemResponse : multiGetItemResponses) {
+                GetResponse response = itemResponse.getResponse();
+                if (response.isExists()) {
+                    String json = response.getSourceAsString();
+                    try {
+                        elasticPages.add(reader.readValue(json, ElasticPage.class));
+                    } catch (IOException e) {
+                        LOGGER.error("exception in converting json to elasticPage instance." +
+                                " source as string : {}", json, e);
+                    }
+                }
+            }
+        }
+        return elasticPages;
     }
 }
