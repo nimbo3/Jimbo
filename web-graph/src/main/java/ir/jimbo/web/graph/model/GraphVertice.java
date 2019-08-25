@@ -3,24 +3,14 @@ package ir.jimbo.web.graph.model;
 public class GraphVertice {
 
     private String id;
-    private String url;
     private double pagerank;
 
     public GraphVertice() {
     }
 
-    public GraphVertice(String id, String url, double pagerank) {
+    public GraphVertice(String id, double pagerank) {
         this.id = id;
-        this.url = url;
         this.pagerank = pagerank;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public double getPagerank() {
@@ -43,7 +33,6 @@ public class GraphVertice {
     public String toString() {
         return "GraphVertice{" +
                 "id='" + id + '\'' +
-                ", url='" + url + '\'' +
                 ", rank=" + pagerank +
                 '}';
     }

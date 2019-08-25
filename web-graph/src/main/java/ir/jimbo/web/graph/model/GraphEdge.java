@@ -4,14 +4,16 @@ public class GraphEdge {
 
     private String src;
     private String dst;
+    private String anchor;
 
     public GraphEdge() {
 
     }
 
-    public GraphEdge(String src, String dst) {
+    public GraphEdge(String src, String dst, String anchor) {
         this.src = src;
         this.dst = dst;
+        this.anchor = anchor;
     }
 
     public String getSrc() {
@@ -30,11 +32,20 @@ public class GraphEdge {
         this.dst = dst;
     }
 
+    public String getAnchor() {
+        return anchor;
+    }
+
+    public void setAnchor(String anchor) {
+        this.anchor = anchor;
+    }
+
     @Override
     public String toString() {
         return "GraphEdge{" +
                 "src='" + src + '\'' +
                 ", dst='" + dst + '\'' +
+                ", anchor='" + anchor + '\'' +
                 '}';
     }
 }

@@ -13,8 +13,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//import org.apache.spark.sql.*;
-//import org.graphframes.GraphFrame;
+import org.apache.spark.sql.*;
+import org.graphframes.GraphFrame;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -54,7 +54,7 @@ public class WebGraph {
         LOGGER.info("vertices and edges created");
         System.out.println(graphVertices);
         System.out.println(graphEdges);
-//        startSparkJobs();
+        startSparkJobs();
     }
 
     /**
@@ -74,7 +74,7 @@ public class WebGraph {
                 LOGGER.warn("url {} is not in hbase", url);
                 continue;
             }
-            GraphVertice vertex = new GraphVertice(hashUtil.getMd5(elasticPage.getUrl()), elasticPage.getUrl(), 1.0);
+            GraphVertice vertex = new GraphVertice(elasticPage.getUrl(), 1.0);
             graphVertices.add(vertex);
             LOGGER.info("creating some vertex and edges (vertex for incoming links that may not have high rank)");
             record.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
@@ -89,8 +89,8 @@ public class WebGraph {
                     LOGGER.warn("page in not in elastic.qualifier : {}", Bytes.toHex(qualifier).substring(32));
                 } else {
                     LOGGER.info("a follower url : {}", document.getUrl());
-                    graphVertices.add(new GraphVertice(hashUtil.getMd5(document.getUrl()), document.getUrl(), 0.5));
-                    graphEdges.add(new GraphEdge(hashUtil.getMd5(document.getUrl()), hashUtil.getMd5(elasticPage.getUrl())));
+                    graphVertices.add(new GraphVertice(document.getUrl(), 0.5));
+                    graphEdges.add(new GraphEdge(document.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
                 }
             }));
         }
@@ -109,25 +109,24 @@ public class WebGraph {
     }
 
     public void startSparkJobs() {
-//        SparkSession spark = SparkSession.builder()
-//                .appName("web_graph")
-//                .master("local")
-//                .getOrCreate();
-//
-//        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertice.class);
-//        Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
-//
-//        GraphFrame graphFrame = new GraphFrame(verticesDataFrame, edgesDataFrame);
-//        graphFrame.vertices().show();
-//        graphFrame.edges().show();
-//        graphFrame
-//                .stronglyConnectedComponents()
-//                .maxIter(10)
-//                .run()
-//                .collectAsList()
-//                .forEach(System.out::println);
-//
-//        spark.close();
+        SparkSession spark = SparkSession.builder()
+                .appName("web_graph")
+                .master("local")
+                .getOrCreate();
+
+        Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertice.class);
+        Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
+
+        GraphFrame graphFrame = new GraphFrame(verticesDataFrame, edgesDataFrame);
+        graphFrame.vertices().show();
+        graphFrame.edges().show();
+        graphFrame
+                .stronglyConnectedComponents()
+                .maxIter(10)
+                .run()
+                .show();
+
+        spark.close();
     }
 
     public void setGraphEdges(List<GraphEdge> graphEdges) {

@@ -13,7 +13,7 @@ public class App {
     private static final Logger LOGGER = LogManager.getLogger(App.class);
 
     public static void main( String[] args ) throws IOException, NoSuchAlgorithmException {
-        LOGGER.info("starting web_graph module");
+        LOGGER.info("starting web-graph module");
         new WebGraph(new AppConfiguration()).start();
     }
 }
