@@ -20,7 +20,7 @@
         <module>search-api</module>
         <module>ranking-manager</module>
         <module>es-page-migrator</module>
-        <module>web_graph</module>
+        <module>web-graph</module>
     </modules>
 
     <properties>
