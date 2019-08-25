@@ -15,6 +15,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +36,10 @@ import java.util.regex.Pattern;
 public class CrawlProtected implements Runnable {
 
     private final Logger logger = LogManager.getLogger(this.getClass());
-
+    /**
+     * Regex pattern to extract domain from URL. Please refer to RFC 3986 - Appendix B for more information
+     */
+    private final Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     private String seedUrl;
     private String anchor;
     /**
@@ -59,14 +64,11 @@ public class CrawlProtected implements Runnable {
      * that's why we search on all of meta tags. containing one keyWord is enough.
      */
     private Set<String> metaContain;
-    /**
-     * Regex pattern to extract domain from URL. Please refer to RFC 3986 - Appendix B for more information
-     */
-    private final Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
 
     @Override
     public void run() {
         try {
+            seedUrl = new URL(seedUrl).toURI().normalize().toString();
             boolean isUrlYetPassed = false;
             if (anchorKeyWords != null && !anchorKeyWords.isEmpty() && checkAnchorKeyWord()) {
                 addUrl();
@@ -78,6 +80,7 @@ public class CrawlProtected implements Runnable {
             if (!isUrlYetPassed) {
                 waitForPoliteness(cacheService);
                 pageDocument = fetchUrl();
+                pageDocument.text();
                 if (checkContent(pageDocument)) {
                     addUrl();
                 }
@@ -90,23 +93,21 @@ public class CrawlProtected implements Runnable {
                 createNewUrlSeeds(pageDocument);
             }
             cacheService.close();
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             logger.error("exception in creating cache service...", e);
         }
     }
 
     public void addToThreadPool() {
         while (true) {
-            logger.info("Adding to thread pool.");
-            int threadPoolQueueSize = App.executor.getQueue().size();
+            int threadPoolQueueSize = App.executor.getActiveCount();
             if (threadPoolQueueSize <= 10) {
                 App.executor.submit(this);
-                logger.info("Added to thread pool.");
                 break;
             }
             logger.info("Try again");
             try {
-                Thread.sleep(1000);
+                Thread.sleep(5000);
             } catch (Exception e) {
                 logger.error(e);
             }
@@ -115,7 +116,7 @@ public class CrawlProtected implements Runnable {
 
     public boolean checkAnchorKeyWord() {
         if (anchorKeyWords == null || anchorKeyWords.isEmpty()) {
-            return false;
+            return true;
         }
         int count = 0;
         for (String anchorKeyWord : anchorKeyWords) {
@@ -160,7 +161,6 @@ public class CrawlProtected implements Runnable {
         if (result == null) {
             throw new NoDomainFoundException();
         }
-
         if (result.startsWith("www.")) {
             result = result.substring(4);
         }
@@ -242,7 +242,7 @@ public class CrawlProtected implements Runnable {
 
     public boolean checkContentKeyWords(Document pageDocument) {
         if (contentKeyWords == null || contentKeyWords.isEmpty())
-            return false;
+            return true;
         String documentText = pageDocument.text().toLowerCase();
         for (Map<String, Integer> map : contentKeyWords) {
             for (Map.Entry<String, Integer> entry : map.entrySet()) {
@@ -256,7 +256,7 @@ public class CrawlProtected implements Runnable {
 
     public boolean checkMetasKeyWords(Document pageDocument) {
         if (metaContain == null || metaContain.isEmpty())
-            return false;
+            return true;
         for (Element meta : pageDocument.getElementsByTag("meta")) {
             String text = meta.toString().toLowerCase();
             for (String s : metaContain) {

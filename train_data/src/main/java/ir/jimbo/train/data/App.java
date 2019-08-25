@@ -42,7 +42,7 @@ public class App {
      * , contentKeyword, MetaContain
      */
     private static void initApp() {
-        new CrawlProtected("www.espn.com", "Sports news", 10, 30000,
+        new CrawlProtected("https://www.economist.com", "Sports news", 3, 30000,
                 true, null, null, null).addToThreadPool();
     }
 }

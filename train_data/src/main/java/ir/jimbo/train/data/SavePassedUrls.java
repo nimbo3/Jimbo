@@ -33,7 +33,7 @@ public class SavePassedUrls extends Thread {
             try {
                 url = App.passedUrls.poll(100, TimeUnit.MILLISECONDS);
                 if (url != null) {
-                    fileWriter.write(url);
+                    fileWriter.write(url + "\n");
                 }
             } catch (IOException e) {
                 logger.error("exception in writing url to file, {}", url, e);
