@@ -34,9 +34,11 @@ public class App {
         sparkConf.setAppName(appConfig.getAppName());
         sparkConf.set("es.nodes", appConfig.getElasticSearchNodes());
         sparkConf.set("es.mapping.id", "id");
-        sparkConf.set("spark.cores.max", "4");
+        sparkConf.set("spark.cores.max", "3");
+        sparkConf.set("spark.network.timeout", "1200s");
         sparkConf.set("spark.executor.cores", "2");
         sparkConf.set("es.write.operation", "upsert");
+        sparkConf.set("es.http.timeout", "3m");
         sparkConf.set("es.nodes.wan.only", "true");
         sparkConf.set("es.index.auto.create", appConfig.getAutoIndexCreate());
 

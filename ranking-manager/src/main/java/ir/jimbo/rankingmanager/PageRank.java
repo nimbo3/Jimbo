@@ -49,6 +49,7 @@ public class PageRank {
         sparkConf.set("es.mapping.id", "id");
         sparkConf.set("es.write.operation", "upsert");
         sparkConf.set("es.nodes.wan.only", "true");
+        sparkConf.set("spark.network.timeout", "1200s");
         sparkConf.set("es.index.auto.create", appConfig.getAutoIndexCreate());
 
         SparkSession session = SparkSession.builder()
