@@ -1,7 +1,6 @@
 package ir.jimbo.train.data;
 
 import ir.jimbo.commons.exceptions.NoDomainFoundException;
-import ir.jimbo.train.data.config.RedisConfiguration;
 import ir.jimbo.train.data.service.CacheService;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -65,22 +64,24 @@ public class CrawlProtected implements Runnable {
      */
     private Set<String> metaContain;
 
+    private CacheService cacheService;
+
     @Override
     public void run() {
         try {
+            logger.info("before: {}", seedUrl);
             seedUrl = new URL(seedUrl).toURI().normalize().toString();
+            logger.info("after: {}", seedUrl);
             boolean isUrlYetPassed = false;
             if (anchorKeyWords != null && !anchorKeyWords.isEmpty() && checkAnchorKeyWord()) {
                 addUrl();
                 isUrlYetPassed = true;
             }
             Document pageDocument = null;
-            CacheService cacheService = new CacheService(new RedisConfiguration(), politenessTime);
             Runtime.getRuntime().addShutdownHook(new Thread(cacheService::close));
             if (!isUrlYetPassed) {
                 waitForPoliteness(cacheService);
                 pageDocument = fetchUrl();
-                pageDocument.text();
                 if (checkContent(pageDocument)) {
                     addUrl();
                 }
@@ -92,7 +93,6 @@ public class CrawlProtected implements Runnable {
                 }
                 createNewUrlSeeds(pageDocument);
             }
-            cacheService.close();
         } catch (IOException | URISyntaxException e) {
             logger.error("exception in creating cache service...", e);
         }
@@ -132,9 +132,9 @@ public class CrawlProtected implements Runnable {
             String url = a.attr("abs:href");
             if (!isValidUri(url))
                 return;
-            if (!stayInDomain || getDomain(url).equals(getDomain(seedUrl))) {
+            if (!stayInDomain || url.startsWith(seedUrl)) {
                 new CrawlProtected(url, newAnchor, crawlDepth - 1, politenessTime,
-                        stayInDomain, anchorKeyWords, contentKeyWords, metaContain).addToThreadPool();
+                        stayInDomain, anchorKeyWords, contentKeyWords, metaContain, cacheService).addToThreadPool();
             }
         }
     }
@@ -199,7 +199,7 @@ public class CrawlProtected implements Runnable {
         Document document;
         try {
             Connection connect = Jsoup.connect(seedUrl);
-            connect.timeout(2000);
+            connect.timeout(10000);
             document = connect.get();
         } catch (Exception e) { //
             logger.error("exception in connection to url. empty page instance will return", e);

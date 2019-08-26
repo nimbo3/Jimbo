@@ -21,6 +21,7 @@
         <module>ranking-manager</module>
         <module>es-page-migrator</module>
         <module>train_data</module>
+        <module>fasttext</module>
     </modules>
 
     <properties>
