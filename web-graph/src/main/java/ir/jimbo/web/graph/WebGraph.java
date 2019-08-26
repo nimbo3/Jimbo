@@ -1,6 +1,7 @@
 package ir.jimbo.web.graph;
 
 import ir.jimbo.commons.model.ElasticPage;
+import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.web.graph.config.AppConfiguration;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
 import ir.jimbo.web.graph.config.HBaseConfiguration;
@@ -9,6 +10,7 @@ import ir.jimbo.web.graph.manager.HTableManager;
 import ir.jimbo.web.graph.model.GraphEdge;
 import ir.jimbo.web.graph.model.GraphVertex;
 import ir.jimbo.web.graph.model.VerticesAndEdges;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
@@ -71,32 +73,46 @@ public class WebGraph {
      * @throws IOException
      */
     private void createVerticesAndEdges(List<ElasticPage> elasticPages) throws IOException {
+        HashUtil hashUtil = new HashUtil();
         String url;
         MultiGetRequestBuilder multiGetRequestBuilder = elasticSearchService.getMultiGetRequestBuilder();
         ElasticSearchConfiguration elasticConfigs = ElasticSearchConfiguration.getInstance();
+        List<Get> gets = new ArrayList<>();
         for (ElasticPage elasticPage : elasticPages) {
             url = elasticPage.getUrl();
-            LOGGER.info("start getting {} from hbase", url);
-            Result record = hTableManager.getRecord(url);
-            if (record.isEmpty()) {
-                LOGGER.warn("url {} is not in hbase", url);
-                continue;
-            }
-            GraphVertex vertex = new GraphVertex(elasticPage.getUrl(), 1.0, 1.0);
-            graphVertices.add(vertex);
-            LOGGER.info("creating some vertex and edges (vertex for incoming links that may not have high rank)");
-            record.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
-                // Qualifier is hash of src url and value is its anchor
-                multiGetRequestBuilder.add(elasticConfigs.getIndexName(), "_doc"
-                        , Bytes.toHex(qualifier).substring(32));
-            }));
+            gets.add(hTableManager.getGet(url));
         }
-        List<ElasticPage> documentsAddedToNow = elasticSearchService.getDocumentsAddedToNow();
-        for (ElasticPage elasticPage : documentsAddedToNow) {
-            LOGGER.info("a follower url : {}", elasticPage.getUrl());
-            graphVertices.add(new GraphVertex(elasticPage.getUrl(), 0.5, 1));
-            graphEdges.add(new GraphEdge(elasticPage.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
-            // TODO value has error
+        Result[] rows = hTableManager.getBulk(gets);
+        for (Result row : rows) {
+            if (row != null) {
+                row.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
+                    // Qualifier is hash of src url and value is its anchor
+                    multiGetRequestBuilder.add(elasticConfigs.getIndexName(), "_doc"
+                            , Bytes.toHex(qualifier).substring(32));
+                }));
+            }
+        }
+        List<ElasticPage> documents = elasticSearchService.getDocuments(multiGetRequestBuilder);
+
+        for (ElasticPage elasticPage : elasticPages) {
+            url = elasticPage.getUrl();
+            graphVertices.add(new GraphVertex(url, 1, 2));
+
+        }
+
+        for (Result row : rows) {
+            if (row != null) {
+                row.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
+                    for (ElasticPage elasticPage : documents) {
+                        if (Bytes.toHex(qualifier).substring(32).equals(hashUtil.getMd5(elasticPage.getUrl()))) {
+                            graphVertices.add(new GraphVertex(elasticPage.getUrl(), 0.5, 1));
+                            graphEdges.add(new GraphEdge(elasticPage.getUrl(), , Bytes.toString(value)));
+                            documents.remove(elasticPage);
+                            break;
+                        }
+                    }
+                }));
+            }
         }
     }
 

@@ -75,7 +75,7 @@ public class ElasticSearchService {
         return multiGetRequestBuilder;
     }
 
-    public List<ElasticPage> getDocumentsAddedToNow() {
+    public List<ElasticPage> getDocuments(MultiGetRequestBuilder multiGetRequestBuilder) {
         List<ElasticPage> elasticPages = new ArrayList<>();
         if (multiGetRequestBuilder == null) {
             LOGGER.error("multiGetRequestBuilder is null. nothing will return");

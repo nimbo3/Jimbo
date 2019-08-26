@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,11 +104,20 @@ public class HTableManager {
      * @param rowKey url than will convert to <strong>domain_hash + url_hash</strong> in function
      * @return get method that used for finding row
      */
-    private Get getGet(String rowKey) {
+    public Get getGet(String rowKey) {
         return new Get(this.getHash(rowKey));
     }
 
     public Result getRecord(String rowKey) throws IOException {
         return table.get(getGet(rowKey));
+    }
+
+    public Result[] getBulk(List<Get> gets) {
+        try {
+            return table.get(gets);
+        } catch (IOException e) {
+            LOGGER.error(e);
+        }
+        return new Result[0];
     }
 }
