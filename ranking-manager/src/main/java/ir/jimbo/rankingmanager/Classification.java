@@ -18,20 +18,26 @@ import org.apache.spark.mllib.feature.IDFModel;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.regression.LabeledPoint;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class Classification {
+    static Map<String, Double> classes = new HashMap<>();
+    static int hashTableSize = 10000000;
+
+    static {
+        classes.put("arts", 0.0);
+        classes.put("economics", 1.0);
+        classes.put("medical", 2.0);
+        classes.put("sports", 3.0);
+        classes.put("technology", 4.0);
+    }
+
     private static final Logger LOGGER = LogManager.getLogger(Classification.class);
 
     static class LabeledTextToRDDTransformerFunction implements Function<String, Vector>, Serializable {
 
-        final HashingTF hashingTF = new HashingTF(100000);
+        final HashingTF hashingTF = new HashingTF(hashTableSize);
 
         @Override
         public Vector call(String s) throws Exception {
@@ -58,7 +64,7 @@ public class Classification {
 
     static class TFIDFBuilder implements Function<String, LabeledPoint>, Serializable {
         final IDFModel model;
-        final HashingTF hashingTF = new HashingTF(100000);
+        final HashingTF hashingTF = new HashingTF(hashTableSize);
 
         TFIDFBuilder(IDFModel model) {
             this.model = model;
@@ -67,13 +73,29 @@ public class Classification {
         @Override
         public LabeledPoint call(String v1) throws Exception {
             String[] split = v1.split("#####");
-            double label = Double.parseDouble(split[0]);
+            double label = classes.get(split[0]);
             return new LabeledPoint(label, model
                     .transform(hashingTF.transform(LabeledTextToRDDTransformerFunction.getTokenOfDocument(split[1]))));
         }
     }
 
-    public static void main(String[] args) {
+    static class NaiveBayesPredictionFunction implements Function<LabeledPoint, Boolean> {
+
+        private final NaiveBayesModel model;
+
+        public NaiveBayesPredictionFunction(final NaiveBayesModel model) {
+            this.model = model;
+        }
+
+        @Override
+        public Boolean call(final LabeledPoint labeledPoint) {
+            double expectedLabel = labeledPoint.label();
+            double predict = model.predict(labeledPoint.features());
+            return expectedLabel == predict;
+        }
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
         ApplicationConfiguration appConfig = null;
         try {
             appConfig = new ApplicationConfiguration();
@@ -83,68 +105,38 @@ public class Classification {
 
         SparkConf sparkConf = new SparkConf();
         sparkConf.setAppName(appConfig.getAppName());
-        sparkConf.set("es.nodes", appConfig.getElasticSearchNodes());
         sparkConf.setMaster("local");
         sparkConf.set("es.mapping.id", "id");
-        sparkConf.set("spark.cores.max", "3");
         sparkConf.set("spark.network.timeout", "1200s");
-        sparkConf.set("spark.executor.cores", "2");
-        sparkConf.set("es.write.operation", "upsert");
-        sparkConf.set("es.http.timeout", "3m");
-        sparkConf.set("es.nodes.wan.only", "true");
-        sparkConf.set("es.index.auto.create", appConfig.getAutoIndexCreate());
+
+        //read data from file
+        String dataPath = appConfig.getDataPath();
+        File file = new File(dataPath);
+        ArrayList<String> strings = new ArrayList<>();
+        Scanner scanner = new Scanner(file);
+        while (scanner.hasNextLine()) {
+            strings.add(scanner.nextLine());
+        }
 
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
-        ArrayList<String> strings = new ArrayList<>();
-        strings.add("1 ##### football");
-        strings.add("1 ##### volyball");
-        strings.add("1 ##### handball");
-        strings.add("1 ##### sport");
-        strings.add("1 ##### sport");
-        strings.add("1 ##### sport");
-        strings.add("1 ##### sport");
-        strings.add("1 ##### basketball islam islam");
-        strings.add("1 ##### basketball");
-        strings.add("1 ##### basketball");
-        strings.add("1 ##### basketball");
-        strings.add("1 ##### goleball");
-        strings.add("1 ##### goleball");
-        strings.add("1 ##### goleball");
-        strings.add("1 ##### goleball");
-        strings.add("1 ##### snockerball");
-        strings.add("1 ##### gameball");
-        strings.add("0 ##### god");
-        strings.add("0 ##### prophet");
-        strings.add("0 ##### imam");
-        strings.add("0 ##### imam");
-        strings.add("0 ##### imam");
-        strings.add("0 ##### imam");
-        strings.add("0 ##### islam");
-        strings.add("1 ##### islam");
-        strings.add("1 ##### islam");
-        strings.add("0 ##### islam");
-        strings.add("0 ##### islam");
-        strings.add("0 ##### mahdi");
-        strings.add("0 ##### mahdi");
-        strings.add("0 ##### mahdi");
-        strings.add("0 ##### mahdi");
-        strings.add("0 ##### ali");
-        strings.add("0 ##### ali");
-        strings.add("0 ##### ali");
-        strings.add("0 ##### ali");
-        strings.add("0 ##### ali");
-        strings.add("0 ##### hasan");
-
         JavaRDD<String> stringJavaRDD = javaSparkContext.parallelize(strings);
-        JavaRDD<String> features = stringJavaRDD.map(e -> e.split("#####")[1]);
+        stringJavaRDD = stringJavaRDD.filter(e -> e.contains("#####"));
+        //spite data for test and train
+        double[] splitRatios = {0.8d, 0.2d};
+        JavaRDD<String>[] splitData = stringJavaRDD.randomSplit(splitRatios);
+        //prepare train data and train model
+        JavaRDD<String> features = splitData[0].map(e -> e.split("#####")[1]);
         JavaRDD<Vector> vectorFeatures = features.map(new LabeledTextToRDDTransformerFunction());
-        IDFModel fit = new IDF().fit(vectorFeatures);
-        JavaRDD<LabeledPoint> map1 = stringJavaRDD.map(new TFIDFBuilder(fit));
-        HashingTF hashingTF = new HashingTF(100000);
-        NaiveBayesModel train = NaiveBayes.train(map1.rdd());
-        Vector goleball = hashingTF.transform(Arrays.asList("isalm"));
-        System.out.println(train.predict(goleball));
+        IDFModel fit = new IDF(2).fit(vectorFeatures);
+        JavaRDD<LabeledPoint> trainData = splitData[0].map(new TFIDFBuilder(fit));
+        NaiveBayesModel train = NaiveBayes.train(trainData.rdd());
+        // test model
+        JavaRDD<LabeledPoint> testData = splitData[1].map(new TFIDFBuilder(fit));
 
+        JavaRDD<Boolean> map = testData.map(new NaiveBayesPredictionFunction(train));
+        long all = map.count();
+        long t = map.filter(e -> e).count();
+        System.out.println(t * 1.0 / all * 1.0);
     }
 
 }

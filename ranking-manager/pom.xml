@@ -105,7 +105,7 @@
 
                     <archive>
                         <manifest>
-                            <mainClass>ir.jimbo.rankingmanager.App</mainClass>
+                            <mainClass>ir.jimbo.rankingmanager.Classification</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
