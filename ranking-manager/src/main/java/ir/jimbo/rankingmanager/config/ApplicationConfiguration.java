@@ -19,6 +19,7 @@ public class ApplicationConfiguration {
     private String autoIndexCreate;
     private String elasticSearchIndexName;
     private String flagColumnName;
+    private String dataPath;
     private int pageRankMaxIteration;
     private double resetProbability;
     private int graphSampleSize;
@@ -46,6 +47,7 @@ public class ApplicationConfiguration {
         elasticSearchNodes = properties.getProperty("elasticsearch.nodes");
         autoIndexCreate = properties.getProperty("elasticsearch.index.auto_create");
         elasticSearchIndexName = properties.getProperty("elasticsearch.index.name");
+        dataPath = properties.getProperty("data.path");
         flagColumnName = properties.getProperty("hbase.flag.column");
         pageRankMaxIteration = Integer.parseInt(properties.getProperty("pagerank.iteration.max"));
         resetProbability = Double.parseDouble(properties.getProperty("pagerank.resetProbability"));
