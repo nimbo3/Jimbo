@@ -14,15 +14,14 @@ import org.redisson.config.Config;
 /**
  * class for connecting to redis database (LRU cache)
  */
-public class CacheService extends HealthCheck {
+public class CacheService {
     private Logger logger = LogManager.getLogger(this.getClass());
-    private int expiredTimeDomainMilis;
-    private int expiredTimeUrlMilis;
+    private int expiredTimeDomainMillis;
+    private int expiredTimeUrlMillis;
     private HashUtil hashUtil;
     private RedissonClient redis;
 
-    public CacheService(RedisConfiguration redisConfiguration, String redisHealthChecker) {
-        super(redisHealthChecker);
+    public CacheService(RedisConfiguration redisConfiguration) {
         // On closing app
         hashUtil = new HashUtil();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -38,8 +37,8 @@ public class CacheService extends HealthCheck {
             config.useSingleServer().setAddress(redisConfiguration.getNodes().get(0));
         }
         redis = Redisson.create(config);
-        expiredTimeDomainMilis = redisConfiguration.getDomainExpiredTime();
-        expiredTimeUrlMilis = redisConfiguration.getUrlExpiredTime();
+        expiredTimeDomainMillis = redisConfiguration.getDomainExpiredTime();
+        expiredTimeUrlMillis = redisConfiguration.getUrlExpiredTime();
         logger.info("redis connection created.");
     }
 
@@ -62,47 +61,38 @@ public class CacheService extends HealthCheck {
 
     public boolean isDomainExist(String key) {
         if (key.trim().isEmpty()) {
-            return false;
+            return true;
         }
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(key).get();
         } catch (NullPointerException e) {
-            return true;
-        } catch (Exception e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
         long currentTime = System.currentTimeMillis();
-        return currentTime - lastTime < expiredTimeDomainMilis;
+        return currentTime - lastTime < expiredTimeDomainMillis;
     }
 
     public boolean isUrlExists(String uri) {
         if (uri.trim().isEmpty()) {
-            return false;
+            return true;
         }
         String hashedUri = hashUtil.getMd5(uri);
         long lastTime;
         try {
             lastTime = (long) redis.getBucket(hashedUri).get();
-        } catch (Exception e) {
+        } catch (NullPointerException e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastTime < expiredTimeUrlMilis) {
+        if (currentTime - lastTime < expiredTimeUrlMillis) {
             return true;
         } else {
             return false;
         }
-    }
-
-    @Override
-    protected Result check() {
-        if (redis == null)
-            return Result.unhealthy("connection is null");
-        if (redis.isShutdown())
-            return Result.unhealthy("connection is closed");
-        if (redis.isShuttingDown())
-            return Result.unhealthy("connection is closing");
-        return Result.healthy();
     }
 }
