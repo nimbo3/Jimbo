@@ -57,11 +57,12 @@ public class LinkConsumerTest {
                 "testTopic", 0, 0, 1L, "https://stackoverflow.com"));
         new Thread(() -> {
             try {
-                Thread.sleep(3000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+                consumer.interrupt();
             }
-            consumer.interrupt();
         }).start();
         consumer.run();
         String link = queue.take();
