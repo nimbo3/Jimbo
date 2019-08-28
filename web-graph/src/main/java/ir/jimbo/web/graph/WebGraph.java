@@ -59,6 +59,8 @@ public class WebGraph {
     }
 
     public void createOutput() {
+        LOGGER.info("number of vertices : {}", graphVertices.size());
+        LOGGER.info("number of edges : {}", graphEdges.size());
         VerticesAndEdges verticesAndEdges = new VerticesAndEdges();
         verticesAndEdges.setEdges(graphEdges);
         verticesAndEdges.setVertices(graphVertices);
@@ -68,7 +70,7 @@ public class WebGraph {
             LOGGER.error("exception in closing hBase manager", e);
         }
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        try (FileWriter fileWriter = new FileWriter("jsonFormat.txt");) {
+        try (FileWriter fileWriter = new FileWriter("jsonFormat.txt")) {
             String json = ow.writeValueAsString(verticesAndEdges);
             fileWriter.write(json);
             fileWriter.flush();
