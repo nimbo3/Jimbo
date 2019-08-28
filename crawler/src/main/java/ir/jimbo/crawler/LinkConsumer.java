@@ -67,7 +67,9 @@ public class LinkConsumer extends Thread {
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         logger.info("consumer thread started");
         while (repeat.get()) {
+            logger.info("before pooling");
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
+            logger.info("{} messages pooled", consumerRecords.count());
             Timer.Context bigTimerContext = crawlKafkaLinksProcessTimer.time();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
@@ -86,17 +88,16 @@ public class LinkConsumer extends Thread {
                                 cacheService.addDomain(getDomain(uri));
                                 cacheService.addUrl(uri);
                                 logger.info("uri \"{}\" added to queue", uri);
+                                backToKafka = false;
                             } else {
                                 logger.info("queue has not space for this url : {}", uri);
                                 if (!cacheService.isUrlExists(uri)) {
                                     sendUriToKafka(uri, producer);
                                 }
                             }
-                        } else {
-                            logger.info("it was not polite crawling this uri : {}", uri);
-                            if (backToKafka && !cacheService.isUrlExists(uri)) {
-                                sendUriToKafka(uri, producer);
-                            }
+                        }
+                        if (backToKafka) {
+                            sendUriToKafka(uri, producer);
                         }
                     } else {
                         logger.info("this uri was saved in past 24 hours: {}", uri);
@@ -125,7 +126,7 @@ public class LinkConsumer extends Thread {
             producer.close();
             consumer.close();
         } catch (Exception e) {
-            logger.info("error in closing producer");
+            logger.error("error in closing producer", e);
         }
     }
 

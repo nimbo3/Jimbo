@@ -31,7 +31,7 @@ public class LinkConsumerTest {
         redisServer = new RedisServer(6380);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
-        cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
+        cacheService = new CacheService(redisConfiguration);
     }
 
     @After
