@@ -1,7 +1,6 @@
 package ir.jimbo.web.graph;
 
 import ir.jimbo.commons.model.ElasticPage;
-import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.web.graph.config.AppConfiguration;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
 import ir.jimbo.web.graph.config.HBaseConfiguration;
@@ -10,13 +9,11 @@ import ir.jimbo.web.graph.manager.HTableManager;
 import ir.jimbo.web.graph.model.GraphEdge;
 import ir.jimbo.web.graph.model.GraphVertex;
 import ir.jimbo.web.graph.model.VerticesAndEdges;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.spark.sql.*;
-import org.elasticsearch.action.get.MultiGetRequestBuilder;
 import org.graphframes.GraphFrame;
 
 import java.io.IOException;
@@ -63,56 +60,40 @@ public class WebGraph {
         verticesAndEdges.setEdges(graphEdges);
         verticesAndEdges.setVertices(graphVertices);
         System.out.println(verticesAndEdges);
+        try {
+            hTableManager.close();
+        } catch (IOException e) {
+            LOGGER.error("exception in closing hBase manager", e);
+        }
     }
 
     /**
      * getNoVersionMap of result return a navigableMap that have Column family name map to another navigable map
      * that contains qualifiers map to values
      *
-     * @param elasticPages
-     * @throws IOException
+     * @param elasticPages source elastic pages
      */
-    private void createVerticesAndEdges(List<ElasticPage> elasticPages) throws IOException {
-        HashUtil hashUtil = new HashUtil();
-        String url;
-        MultiGetRequestBuilder multiGetRequestBuilder = elasticSearchService.getMultiGetRequestBuilder();
-        ElasticSearchConfiguration elasticConfigs = ElasticSearchConfiguration.getInstance();
-        List<Get> gets = new ArrayList<>();
+    private void createVerticesAndEdges(List<ElasticPage> elasticPages) {
         for (ElasticPage elasticPage : elasticPages) {
-            url = elasticPage.getUrl();
-            gets.add(hTableManager.getGet(url));
-        }
-        Result[] rows = hTableManager.getBulk(gets);
-        for (Result row : rows) {
-            if (row != null) {
-                row.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
-                    // Qualifier is hash of src url and value is its anchor
-                    multiGetRequestBuilder.add(elasticConfigs.getIndexName(), "_doc"
-                            , Bytes.toHex(qualifier).substring(32));
-                }));
+            Result record = null;
+            try {
+                record = hTableManager.getRecord(elasticPage.getUrl());
+            } catch (IOException e) {
+                LOGGER.error("line 79", e);
             }
-        }
-        List<ElasticPage> documents = elasticSearchService.getDocuments(multiGetRequestBuilder);
-
-        for (ElasticPage elasticPage : elasticPages) {
-            url = elasticPage.getUrl();
-            graphVertices.add(new GraphVertex(url, 1, 2));
-
-        }
-
-        for (Result row : rows) {
-            if (row != null) {
-                row.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
-                    for (ElasticPage elasticPage : documents) {
-                        if (Bytes.toHex(qualifier).substring(32).equals(hashUtil.getMd5(elasticPage.getUrl()))) {
-                            graphVertices.add(new GraphVertex(elasticPage.getUrl(), 0.5, 1));
-                            graphEdges.add(new GraphEdge(elasticPage.getUrl(), , Bytes.toString(value)));
-                            documents.remove(elasticPage);
-                            break;
-                        }
-                    }
-                }));
-            }
+            if (record == null)
+                continue;
+            graphVertices.add(new GraphVertex(elasticPage.getUrl(), 1, 1));
+            record.getNoVersionMap().forEach((a, b) -> b.forEach((qualifier, value) -> {
+                try {
+                    String elasticId = Bytes.toHex(qualifier).substring(32);
+                    ElasticPage elasticDocument = elasticSearchService.getDocument(elasticId);
+                    graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
+                    graphEdges.add(new GraphEdge(elasticDocument.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
+                } catch (Exception e) {
+                    LOGGER.error("line 91 ", e);
+                }
+            }));
         }
     }
 
