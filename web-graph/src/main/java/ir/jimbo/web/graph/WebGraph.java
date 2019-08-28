@@ -22,6 +22,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebGraph {
 
@@ -61,6 +62,9 @@ public class WebGraph {
     public void createOutput() {
         LOGGER.info("number of vertices : {}", graphVertices.size());
         LOGGER.info("number of edges : {}", graphEdges.size());
+        deleteBadEdges();
+        LOGGER.info("number of vertices : {}", graphVertices.size());
+        LOGGER.info("number of edges : {}", graphEdges.size());
         VerticesAndEdges verticesAndEdges = new VerticesAndEdges();
         verticesAndEdges.setEdges(graphEdges);
         verticesAndEdges.setVertices(graphVertices);
@@ -79,6 +83,22 @@ public class WebGraph {
         }
     }
 
+    private void deleteBadEdges() {
+        LOGGER.info("deleting bad edges");
+        Set<String> ids = new HashSet<>();
+        for (GraphVertex graphVertex : graphVertices) {
+            ids.add(graphVertex.getId());
+        }
+        int size = graphEdges.size();
+        for (int i = 0; i < size; i++) {
+            if (! ids.contains(graphEdges.get(i).getSrc())) {
+                graphEdges.remove(i);
+                size --;
+                i --;
+            }
+        }
+    }
+
     /**
      * getNoVersionMap of result return a navigableMap that have Column family name map to another navigable map
      * that contains qualifiers map to values
@@ -86,12 +106,13 @@ public class WebGraph {
      * @param elasticPages source elastic pages
      */
     private void createVerticesAndEdges(List<ElasticPage> elasticPages) {
+        AtomicInteger counter = new AtomicInteger();
         for (ElasticPage elasticPage : elasticPages) {
             Result record = null;
             try {
                 record = hTableManager.getRecord(elasticPage.getUrl());
             } catch (IOException e) {
-                LOGGER.error("line 79", e);
+                LOGGER.error("line 113", e);
             }
             if (record == null)
                 continue;
@@ -109,15 +130,17 @@ public class WebGraph {
                         String elasticId = Bytes.toHex(qualifier).substring(32);
                         ElasticPage elasticDocument = elasticSearchService.getDocument(elasticId);
                         if (elasticDocument != null) {
-                            graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
+//                            graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
                             graphEdges.add(new GraphEdge(elasticDocument.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
                         }
                     } catch (Exception e) {
-                        LOGGER.error("line 91 ", e);
+                        LOGGER.error("line 135 ", e);
+                        counter.getAndIncrement();
                     }
                 });
             });
         }
+        LOGGER.info("-_-_-_-_-_-_-_-_-_-_-_-_-_- {} bad mapping -_-_-_-_-_-_-_-_-_-_-_-_-_-", counter.get());
     }
 
     private List<ElasticPage> getFromElastic() {
