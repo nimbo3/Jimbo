@@ -67,9 +67,7 @@ public class LinkConsumer extends Thread {
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         logger.info("consumer thread started");
         while (repeat.get()) {
-            logger.info("before pooling");
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
-            logger.info("{} messages pooled", consumerRecords.count());
             Timer.Context bigTimerContext = crawlKafkaLinksProcessTimer.time();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
