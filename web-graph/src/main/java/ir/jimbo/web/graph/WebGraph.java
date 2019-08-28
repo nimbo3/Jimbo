@@ -43,7 +43,7 @@ public class WebGraph {
         graphVertices = new ArrayList<>();
     }
 
-    public void start() throws IOException {
+    public void start() {
         LOGGER.info("reading pages from elastic");
         List<ElasticPage> elasticPages = getFromElastic();
         LOGGER.info("{} pages readed from elastic", elasticPages.size());
