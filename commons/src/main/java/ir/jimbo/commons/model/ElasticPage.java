@@ -78,7 +78,7 @@ public class ElasticPage {
                 ", title='" + title + '\'' +
                 ", metaTags=" + metaTags +
                 ", h1List=" + h1List +
-                ", language='" + language + '\'' +
+                ", lang='" + lang + '\'' +
                 '}';
     }
 }
