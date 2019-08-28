@@ -88,8 +88,10 @@ public class WebGraph {
                 try {
                     String elasticId = Bytes.toHex(qualifier).substring(32);
                     ElasticPage elasticDocument = elasticSearchService.getDocument(elasticId);
-                    graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
-                    graphEdges.add(new GraphEdge(elasticDocument.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
+                    if (elasticDocument != null) {
+                        graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
+                        graphEdges.add(new GraphEdge(elasticDocument.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
+                    }
                 } catch (Exception e) {
                     LOGGER.error("line 91 ", e);
                 }

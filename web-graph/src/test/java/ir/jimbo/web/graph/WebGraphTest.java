@@ -60,8 +60,8 @@ public class WebGraphTest {
         webGraph.setGraphEdges(graphEdges);
     }
 
-    @Test
-    public void startSparkJobs() throws IOException {
-        webGraph.startSparkJobs();
-    }
+//    @Test
+//    public void startSparkJobs() throws IOException {
+//        webGraph.startSparkJobs();
+//    }
 }
