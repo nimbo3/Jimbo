@@ -10,7 +10,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RankObject {
-    private int id;
-    private float rank;
+    private String id;
+    private Double rank;
 
+    @Override
+    public String toString() {
+        return "RankObject{" +
+                "id='" + id + '\'' +
+                ", rank=" + rank +
+                '}';
+    }
 }

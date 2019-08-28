@@ -23,6 +23,11 @@ public class LinkProducerApp {
                 break;
             }
             sendUriToKafka(uri, linkProducer);
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

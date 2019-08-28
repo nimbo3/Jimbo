@@ -19,8 +19,11 @@ public class ApplicationConfiguration {
     private String autoIndexCreate;
     private String elasticSearchIndexName;
     private String flagColumnName;
+    private String dataPath;
     private int pageRankMaxIteration;
     private double resetProbability;
+    private int graphSampleSize;
+    private String graphIndex;
 
     public ApplicationConfiguration() throws IOException {
         Properties properties = new Properties();
@@ -44,9 +47,12 @@ public class ApplicationConfiguration {
         elasticSearchNodes = properties.getProperty("elasticsearch.nodes");
         autoIndexCreate = properties.getProperty("elasticsearch.index.auto_create");
         elasticSearchIndexName = properties.getProperty("elasticsearch.index.name");
+        dataPath = properties.getProperty("data.path");
         flagColumnName = properties.getProperty("hbase.flag.column");
         pageRankMaxIteration = Integer.parseInt(properties.getProperty("pagerank.iteration.max"));
         resetProbability = Double.parseDouble(properties.getProperty("pagerank.resetProbability"));
+        graphSampleSize = Integer.parseInt(properties.getProperty("sample.graph.size"));
+        graphIndex = properties.getProperty("sample.graph.index");
     }
 
     public String getFlagColumnName() {
@@ -71,5 +77,21 @@ public class ApplicationConfiguration {
 
     public void setResetProbability(double resetProbability) {
         this.resetProbability = resetProbability;
+    }
+
+    public int getGraphSampleSize() {
+        return graphSampleSize;
+    }
+
+    public void setGraphSampleSize(int graphSampleSize) {
+        this.graphSampleSize = graphSampleSize;
+    }
+
+    public String getGraphIndex() {
+        return graphIndex;
+    }
+
+    public void setGraphIndex(String graphIndex) {
+        this.graphIndex = graphIndex;
     }
 }
