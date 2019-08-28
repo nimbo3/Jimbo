@@ -1,7 +1,6 @@
 package ir.jimbo.crawler;
 
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.crawler.config.AppConfiguration;
@@ -28,12 +27,13 @@ public class App {
     private static Thread[] consumers;
     private static Thread[] producers;
     private static AtomicBoolean repeat = new AtomicBoolean(true);
+    public static boolean produceLink = true;
 
     public static void main(String[] args) throws IOException {
         LOGGER.info("crawler app starting...");
         initializeConfigurations(args);
-        MetricConfiguration metrics = new MetricConfiguration();    // Throws IOException
-        CacheService cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
+        MetricConfiguration metrics = MetricConfiguration.getInstance();    // Throws IOException
+        CacheService cacheService = new CacheService(redisConfiguration);
         queue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();
@@ -80,13 +80,11 @@ public class App {
     private static void aliveThreadCounter(MetricConfiguration metrics) {
         final long duration = Long.parseLong(metrics.getProperty("crawler.check.duration"));
         new Thread(() -> {
-            Counter consumerThreadNum = metrics.getNewCounter(metrics.getProperty("crawler.consumer.thread.counter.name"));
-            Counter parserThreadNum = metrics.getNewCounter(metrics.getProperty("crawler.parser.thread.counter.name"));
+            Histogram consumerThreadNum = metrics.getNewHistogram(metrics.getProperty("crawler.consumer.thread.histogram.name"));
+            Histogram parserThreadNum = metrics.getNewHistogram(metrics.getProperty("crawler.parser.thread.histogram.name"));
             while (repeat.get()) {
-                consumerThreadNum.dec(consumerThreadNum.getCount());
-                consumerThreadNum.inc(getAllWakeConsumers(consumerThreadNum));
-                parserThreadNum.dec(parserThreadNum.getCount());
-                parserThreadNum.inc(getAllWakeProducers(parserThreadNum));
+                consumerThreadNum.update(getAllWakeConsumers());
+                parserThreadNum.update(getAllWakeProducers());
                 try {
                     Thread.sleep(duration);
                 } catch (Exception e) {
@@ -96,22 +94,24 @@ public class App {
         }).start();
     }
 
-    static long getAllWakeConsumers(Counter counter) {
+    static int getAllWakeConsumers() {
+        int counter = 0;
         for (Thread consumer : consumers) {
             if (consumer.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 
-    static long getAllWakeProducers(Counter counter) {
+    static int getAllWakeProducers() {
+        int counter = 0;
         for (Thread producer : producers) {
             if (producer.isAlive()) {
-                counter.inc();
+                counter ++;
             }
         }
-        return counter.getCount();
+        return counter;
     }
 
     private static void addShutDownHook(CountDownLatch parserLatch, int parserThreadSize, CountDownLatch consumerLatch, int consumerThreadSize) {
@@ -124,7 +124,7 @@ public class App {
         }));
     }
 
-    private static void parserThreadInterruption(CountDownLatch parserThreadSize, int producersThreadSize) {
+    private static void parserThreadInterruption(CountDownLatch parsersCountDownLatch, int producersThreadSize) {
 
         LOGGER.info("start interrupting parser threads...");
         for (int i = 0; i < producersThreadSize; i++) {
@@ -132,10 +132,10 @@ public class App {
         }
         try {
             LOGGER.info("before parser threads");
-            parserThreadSize.await();
+            parsersCountDownLatch.await();
             LOGGER.info("after parser threads");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            parserThreadInterruption(parsersCountDownLatch, producersThreadSize);
         }
         LOGGER.info("parser threads interrupted");
     }
@@ -165,9 +165,9 @@ public class App {
             LOGGER.info("before consumer await. size : " + countDownLatch.getCount());
             countDownLatch.await();
             LOGGER.info("after consumer await");
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             LOGGER.warn("interrupted exception in closing consumer threads");
-            Thread.currentThread().interrupt();
+            consumerThreadInterruption(countDownLatch, consumerThreadSize);
         }
         LOGGER.info("end interrupting consumer threads");
     }
@@ -181,15 +181,18 @@ public class App {
         for (String path : args) {
             String key = path.split(":")[0];
             String value = path.split(":")[1];
-            switch (key) {
+            switch (key.toLowerCase().trim()) {
                 case "redis":
-                    redisPath = value;
+                    redisPath = value.trim();
                     break;
                 case "kafka":
-                    kafkaPath = value;
+                    kafkaPath = value.trim();
                     break;
                 case "app":
-                    appPath = value;
+                    appPath = value.trim();
+                    break;
+                case "producer":
+                    produceLink = Boolean.parseBoolean(value.trim());
                     break;
                 default:
                     //

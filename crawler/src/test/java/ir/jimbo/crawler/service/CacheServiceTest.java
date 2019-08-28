@@ -18,11 +18,11 @@ public class CacheServiceTest {
 
     @Before
     public void setUp() throws IOException {
-        MetricConfiguration metrics = new MetricConfiguration();
+        MetricConfiguration metrics = MetricConfiguration.getInstance();
         redisServer = new RedisServer(6380);
         redisServer.start();
         RedisConfiguration redisConfiguration = new RedisConfiguration();
-        cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
+        cacheService = new CacheService(redisConfiguration);
     }
 
     @After
@@ -62,15 +62,14 @@ public class CacheServiceTest {
     public void testEmptyDomain() {
         cacheService.addDomain("");
         boolean result = cacheService.isDomainExist("");
-        Assert.assertFalse(result);
+        Assert.assertTrue(result);
     }
 
     @Test
     public void testEmptyUrl() {
         cacheService.addUrl("   ");
         boolean result = cacheService.isUrlExists("   ");
-        Assert.assertFalse(result);
+        Assert.assertTrue(result);
     }
 }
 
-//Generated with love by TestMe :) Please report issues and submit feature requests at: http://weirddev.com/forum#!/testme

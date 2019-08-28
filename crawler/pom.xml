@@ -17,6 +17,9 @@
         <jsoup.version>1.12.1</jsoup.version>
         <kafka.client.version>2.3.0</kafka.client.version>
         <jackson.version>2.9.9.1</jackson.version>
+        <yammer.version>2.2.0</yammer.version>
+        <embedded.version>0.6</embedded.version>
+        <redisson.verision>3.11.1</redisson.verision>
     </properties>
 
     <dependencies>
@@ -24,13 +27,13 @@
         <dependency>
             <groupId>com.github.kstyrc</groupId>
             <artifactId>embedded-redis</artifactId>
-            <version>0.6</version>
+            <version>${embedded.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
-            <version>3.11.1</version>
+            <version>${redisson.verision}</version>
         </dependency>
 
         <dependency>
@@ -45,25 +48,53 @@
             <version>${kafka.client.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>ir.jimbo</groupId>
             <artifactId>commons</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>com.yammer.metrics</groupId>
             <artifactId>metrics-core</artifactId>
-            <version>2.2.0</version>
+            <version>${yammer.version}</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
 
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
@@ -152,9 +183,21 @@
                     <transformers>
                         <transformer implementation=
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.crawler.App</mainClass>
+                            <manifestEntries>
+                                <Main-Class>ir.jimbo.crawler.App</Main-Class>
+                                <Class-Path>./config/</Class-Path>
+                            </manifestEntries>
                         </transformer>
                     </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>${project.groupId}:${project.artifactId}</artifact>
+                            <excludes>
+                                <exclude>*.properties</exclude>
+                                <exclude>*.xml</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>

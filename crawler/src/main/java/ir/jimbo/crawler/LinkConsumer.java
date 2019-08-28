@@ -71,7 +71,7 @@ public class LinkConsumer extends Thread {
             Timer.Context bigTimerContext = crawlKafkaLinksProcessTimer.time();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
-                logger.info("uri read from kafka : " + uri);
+                logger.info("uri read from kafka : {}", uri);
                 linksCounter.inc();
                 Timer.Context timerContext = linkProcessTimer.time();
                 try {
@@ -81,30 +81,29 @@ public class LinkConsumer extends Thread {
                             boolean isAdded;
                             isAdded = queue.offer(uri, 2000, TimeUnit.MILLISECONDS);
                             if (isAdded) {
-                                logger.info("uri added to queue : " + uri);
+                                logger.info("uri added to queue : {}", uri);
                                 linksAddToQueueCounter.inc();
                                 cacheService.addDomain(getDomain(uri));
                                 cacheService.addUrl(uri);
-                                logger.info("uri \"" + uri + "\" added to queue");
+                                logger.info("uri \"{}\" added to queue", uri);
+                                backToKafka = false;
                             } else {
-                                logger.info("queue has not space for this url : " + uri);
+                                logger.info("queue has not space for this url : {}", uri);
                                 if (!cacheService.isUrlExists(uri)) {
                                     sendUriToKafka(uri, producer);
                                 }
                             }
-                        } else {
-                            logger.info("it was not polite crawling this uri : " + uri);
-                            if (backToKafka && !cacheService.isUrlExists(uri)) {
-                                sendUriToKafka(uri, producer);
-                            }
+                        }
+                        if (backToKafka) {
+                            sendUriToKafka(uri, producer);
                         }
                     } else {
-                        logger.info("this uri was saved in past 24 hours: " + uri);
+                        logger.info("this uri was saved in past 24 hours: {}", uri);
                     }
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
                 } catch (Exception e) {
-                    logger.error("error in putting uri to queue (interrupted exception) uri : " + uri);
+                    logger.error("error in putting uri to queue (interrupted exception) uri : {}", uri);
                     if (!cacheService.isUrlExists(uri)) {
                         sendUriToKafka(uri, producer);
                     }
@@ -120,10 +119,13 @@ public class LinkConsumer extends Thread {
         }
         logger.info("consumer countdown latch before");
         countDownLatch.countDown();
-        logger.info("consumer count down latch. size = " + countDownLatch.getCount());
-        producer.close();
-        consumer.close();
-
+        logger.info("consumer count down latch. size = {}", countDownLatch.getCount());
+        try {
+            producer.close();
+            consumer.close();
+        } catch (Exception e) {
+            logger.error("error in closing producer", e);
+        }
     }
 
     private void sendUriToKafka(String uri, Producer<Long, String> producer) {
@@ -163,6 +165,6 @@ public class LinkConsumer extends Thread {
     public void interrupt() {
         logger.info("setting repeat to false");
         repeat.set(false);
-        logger.info("repeat : " + repeat.get());
+        logger.info("repeat : {}", repeat.get());
     }
 }

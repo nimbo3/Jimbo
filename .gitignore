@@ -57,14 +57,12 @@ fabric.properties
 *.rar
 
 *.iml
+embeddedEs/
 
 .idea
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 common/
-commons/target/
-crawler/target/
 target/
-
 dependency-reduced-pom.xml

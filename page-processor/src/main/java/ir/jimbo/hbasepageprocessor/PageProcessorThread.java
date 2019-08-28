@@ -41,26 +41,26 @@ public class PageProcessorThread extends Thread {
     @Override
     public void run() {
         Timer insertHBaseTimer = metrics.getNewTimer(metrics.getProperty("hbase.record.process.timer.name"));
-        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("hbase.links.readed.from.kafka.histogram.name"));
+        Histogram histogram = metrics.getNewHistogram(metrics.getProperty("hbase.links.read.from.kafka.histogram.name"));
         histogram.update(0);
         while (!interrupted()) {
             try {
                 ConsumerRecords<Long, Page> records = pageConsumer.poll(Duration.ofMillis(pollDuration));
                 Timer.Context pagesProcessDurationContext = insertHBaseTimer.time();
                 for (ConsumerRecord<Long, Page> record : records) {
-                    Timer.Context oneInsertContext = insertHBaseTimer.time();
                     Page page = record.value();
+                    Timer.Context oneInsertContext = insertHBaseTimer.time();
                     for (HtmlTag link : page.getLinks()) {
                         final String href = link.getProps().get("href");
                         if (href != null && !href.isEmpty())
                             links.add(new HRow(href, page.getUrl(), link.getContent()));
                     }
-                    long hbaseInsertDuration = oneInsertContext.stop();
-                    ///////
-                    LOGGER.info("time passed for processing one page : {}", hbaseInsertDuration);
+                    long hBaseInsertDuration = oneInsertContext.stop();
+                    LOGGER.info("time passed for processing one page : {}", hBaseInsertDuration);
                 }
                 hTableManager.put(links);
-                LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), pagesProcessDurationContext.stop());
+                final long processDuration = pagesProcessDurationContext.stop();
+                LOGGER.info("time taken to process {} given pages from kafka : {}", records.count(), processDuration);
                 histogram.update(links.size());
                 links.clear();
             } catch (IOException e) {

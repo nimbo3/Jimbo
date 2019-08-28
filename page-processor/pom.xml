@@ -7,6 +7,14 @@
         <groupId>ir.jimbo</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
+    <properties>
+        <hbase.version>1.4.10</hbase.version>
+        <jackson.version>2.9.9.1</jackson.version>
+        <kafka.version>2.3.0</kafka.version>
+        <elasticsearch.version>6.3.2</elasticsearch.version>
+        <hadoop.version>2.7.7</hadoop.version>
+        <jackson.verision>2.9.9.1</jackson.verision>
+    </properties>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>page-processor</artifactId>
     <description>"page processor module"</description>
@@ -32,9 +40,9 @@
             <version>${kafka.version}</version>
         </dependency>
         <dependency>
-            <groupId>ir.jimbo</groupId>
-            <artifactId>crawler</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -44,15 +52,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <properties>
-        <hbase.version>1.4.10</hbase.version>
-        <jackson.version>2.9.9.1</jackson.version>
-        <kafka.version>2.3.0</kafka.version>
-        <elasticsearch.version>6.3.2</elasticsearch.version>
-        <hadoop.version>2.7.7</hadoop.version>
-    </properties>
-
-
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
@@ -98,7 +97,7 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.2</version>
+                    <version>${jacoco.version}</version>
                     <executions>
                         <execution>
                             <goals>
@@ -125,9 +124,21 @@
                     <transformers>
                         <transformer implementation=
                                              "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>ir.jimbo.hbasepageprocessor.App</mainClass>
+                            <manifestEntries>
+                                <Main-Class>ir.jimbo.hbasepageprocessor.App</Main-Class>
+                                <Class-Path>./config/</Class-Path>
+                            </manifestEntries>
                         </transformer>
                     </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>${project.groupId}:${project.artifactId}</artifact>
+                            <excludes>
+                                <exclude>*.properties</exclude>
+                                <exclude>*.xml</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                 </configuration>
                 <executions>
                     <execution>

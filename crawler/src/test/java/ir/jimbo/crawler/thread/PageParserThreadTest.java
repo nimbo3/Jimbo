@@ -34,14 +34,14 @@ public class PageParserThreadTest {
 
     @Test
     public void testTitle() throws IOException {
-        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
+        PageParserThread pageParser = new PageParserThread(MetricConfiguration.getInstance().getNewTimer("crawlParseTimer"));
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         assertEquals("Test page Title", parsed.getElasticPage().getTitle());
     }
 
     @Test
     public void testH1() throws IOException {
-        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
+        PageParserThread pageParser = new PageParserThread(MetricConfiguration.getInstance().getNewTimer("crawlParseTimer"));
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         assertEquals(1, parsed.getElasticPage().getH1List().size());
         assertEquals("Header1", parsed.getElasticPage().getH1List().get(0).getContent());
@@ -49,7 +49,7 @@ public class PageParserThreadTest {
 
     @Test
     public void testH2() throws IOException {
-        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
+        PageParserThread pageParser = new PageParserThread(MetricConfiguration.getInstance().getNewTimer("crawlParseTimer"));
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         assertEquals(1, parsed.getElasticPage().getH2List().size());
         assertEquals("Header2", parsed.getElasticPage().getH2List().get(0).getContent());
@@ -57,7 +57,7 @@ public class PageParserThreadTest {
 
     @Test
     public void testH3to6() throws IOException {
-        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
+        PageParserThread pageParser = new PageParserThread(MetricConfiguration.getInstance().getNewTimer("crawlParseTimer"));
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         assertEquals(4, parsed.getElasticPage().getH3to6List().size());
         assertTrue(parsed.getElasticPage().getH3to6List().contains(new HtmlTag("h3", "Header3")));
@@ -68,7 +68,7 @@ public class PageParserThreadTest {
 
     @Test
     public void testPlainText() throws IOException {
-        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
+        PageParserThread pageParser = new PageParserThread(MetricConfiguration.getInstance().getNewTimer("crawlParseTimer"));
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         assertTrue(parsed.getElasticPage().getPlainTextList().contains(new HtmlTag("p", "paragraph")));
         assertTrue(parsed.getElasticPage().getPlainTextList().contains(new HtmlTag("pre", "pre")));
@@ -79,7 +79,7 @@ public class PageParserThreadTest {
 
     @Test
     public void testLinks() throws IOException {
-        PageParserThread pageParser = new PageParserThread(new MetricConfiguration().getNewTimer("crawlParseTimer"));
+        PageParserThread pageParser = new PageParserThread(MetricConfiguration.getInstance().getNewTimer("crawlParseTimer"));
         PageParserThread.PagePair parsed = pageParser.parse("http://localhost:9898/test");
         HtmlTag aboutTag = new HtmlTag("a", "About");
         HtmlTag contactUsTag = new HtmlTag("a", "Contact us");

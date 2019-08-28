@@ -98,9 +98,9 @@ public class HTableManager extends HealthCheck {
 
     public void put(List<HRow> links) throws IOException {
         List<Put> puts = new ArrayList<>();
-        Timer.Context putContext = hBaseInsertTime.time();
         for (HRow link : links)
             puts.add(getPut(link));
+        Timer.Context putContext = hBaseInsertTime.time();
         table.put(puts);
         putContext.stop();
     }
