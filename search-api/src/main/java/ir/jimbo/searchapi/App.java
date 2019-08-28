@@ -21,7 +21,7 @@ import static spark.Spark.get;
 import static spark.Spark.port;
 
 public class App {
-    private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
+    private static final Logger LOGGER = LogManager.getLogger(App.class);
     private static final String EXPRESSION = "([A-Za-z]*)";
     private static final String FUZZY_PATTERN = "\\?\"" + EXPRESSION + "\"\\?";
     private static final String MUST_PATTERN = "!\"" + EXPRESSION + "\"!";
@@ -50,14 +50,14 @@ public class App {
         port(1478);
         get("/search", (req, res) -> {
             String query = req.queryParams("q");
-            LOGGER.info(String.format("query :%s received.", query));
+            LOGGER.info(String.format("Query: %s received.", query));
             Matcher fuzzyMatcher = fuzzyPattern.matcher(query);
             Matcher mustMatcher = mustPattern.matcher(query);
             Matcher prefixMatcher = prefixPattern.matcher(query);
             Matcher exactMatcher = exactPattern.matcher(query);
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             String normalQuery = query.replaceAll(FUZZY_PATTERN, "").replaceAll(MUST_PATTERN, "")
-                    .replaceAll(PREFIX_PATTERN, "");
+                    .replaceAll(PREFIX_PATTERN, "").replace(EXACT_PATTERN, "");
             while (fuzzyMatcher.find()) {
                 String fuzzyExp = fuzzyMatcher.group(1);
                 if (!fuzzyExp.isEmpty())
