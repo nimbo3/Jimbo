@@ -1,6 +1,5 @@
 package ir.jimbo.web.graph.manager;
 
-import lombok.Setter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -24,7 +23,6 @@ public class HTableManager {
     private static final Logger LOGGER = LogManager.getLogger(HTableManager.class);
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
     private static final int NUMBER_OF_VERSIONS = 1;
-    @Setter
     private static Configuration config = null;
     private static Connection connection = null;
 
