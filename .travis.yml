@@ -21,6 +21,9 @@ script:
   - mvn clean compile > /dev/null 2>&1
   - mvn org.jacoco:jacoco-maven-plugin:prepare-agent test
 
+before_install:
+  - mvn clean install -pl commons -am > /dev/null 2>&1
+  
 env:
   - CODECOV_TOKEN="56ee8f25-34f9-4f26-ad34-688cc9450163"
 
