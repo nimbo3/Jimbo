@@ -10,7 +10,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.mllib.classification.NaiveBayes;
 import org.apache.spark.mllib.classification.NaiveBayesModel;
 import org.apache.spark.mllib.feature.HashingTF;
 import org.apache.spark.mllib.feature.IDF;
@@ -23,7 +22,7 @@ import java.util.*;
 
 public class Classification {
     static Map<String, Double> classes = new HashMap<>();
-    static int hashTableSize = 10000000;
+    static int hashTableSize = 1000000;
 
     static {
         classes.put("arts", 0.0);
@@ -128,15 +127,18 @@ public class Classification {
         JavaRDD<String> features = splitData[0].map(e -> e.split("#####")[1]);
         JavaRDD<Vector> vectorFeatures = features.map(new LabeledTextToRDDTransformerFunction());
         IDFModel fit = new IDF(2).fit(vectorFeatures);
-        JavaRDD<LabeledPoint> trainData = splitData[0].map(new TFIDFBuilder(fit));
-        NaiveBayesModel train = NaiveBayes.train(trainData.rdd());
-        // test model
+//        JavaRDD<LabeledPoint> trainData = splitData[0].map(new TFIDFBuilder(fit));
+//        NaiveBayesModel train = NaiveBayes.train(trainData.rdd());
+//        // test model
+        NaiveBayesModel load = NaiveBayesModel.load(javaSparkContext.sc(), "./easmodel");
         JavaRDD<LabeledPoint> testData = splitData[1].map(new TFIDFBuilder(fit));
 
-        JavaRDD<Boolean> map = testData.map(new NaiveBayesPredictionFunction(train));
+        JavaRDD<Boolean> map = testData.map(new NaiveBayesPredictionFunction(load));
         long all = map.count();
         long t = map.filter(e -> e).count();
         System.out.println(t * 1.0 / all * 1.0);
+//        train.save(javaSparkContext.sc(), "./easmodel");
+        javaSparkContext.close();
     }
 
 }

@@ -2,29 +2,30 @@ language: java
 
 
 jdk:
-- openjdk8
+  - openjdk8
 
 
 install: true
 
 branches:
   only:
-  - master
+    - master
 
 notifications:
   email: false
 cache:
   directories:
-  - $HOME/.m2
+    - $HOME/.m2
 
 script:
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent test
-
-env:
-  - CODECOV_TOKEN="56ee8f25-34f9-4f26-ad34-688cc9450163"
+  - mvn clean compile > /dev/null 2>&1
+  - mvn org.jacoco:jacoco-maven-plugin:prepare-agent test
 
 before_install:
-  - mvn clean install;cd commons; mvn clean install;
+  - mvn clean install -pl commons -am > /dev/null 2>&1
+  
+env:
+  - CODECOV_TOKEN="56ee8f25-34f9-4f26-ad34-688cc9450163"
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

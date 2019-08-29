@@ -72,7 +72,6 @@ public class PageRank {
 
         String columnFamily = appConfig.getColumnFamily();
         String flagColumnName = appConfig.getFlagColumnName();
-
         JavaRDD<Result> filterData = hBaseRDD.filter((Function<Result, Boolean>) e ->
                 e.getFamilyMap(Bytes.toBytes(columnFamily)).containsKey(Bytes.toBytes(flagColumnName)));
 
@@ -120,7 +119,6 @@ public class PageRank {
         JavaSparkContext javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
         JavaRDD<RankObject> topRanksRdd = javaSparkContext.parallelize(topRank);
         JavaEsSpark.saveToEs(topRanksRdd, graphIndex + "/_doc");
-
         javaSparkContext.close();
     }
 }
