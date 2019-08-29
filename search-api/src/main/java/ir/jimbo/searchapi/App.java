@@ -1,5 +1,7 @@
 package ir.jimbo.searchapi;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
@@ -118,8 +120,12 @@ public class App {
             }
             graph.setNodes(nodes);
             graph.setLinks(links);
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.writeValueAsString(graph);
+            ObjectMapper mapper = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility
+                    .ANY);
+            final String json = mapper.writeValueAsString(graph);
+            res.body(json);
+            res.header("Access-Control-Allow-Origin", "*");
+            return json;
         });
     }
 }

@@ -139,7 +139,6 @@ public class HTableManager extends HealthCheck {
     }
 
     public List<String> get(String url) throws IOException {
-        LOGGER.info("Get {} from HBase", url);
         return table.get(new Get(getHash(url))).getFamilyMap(getBytes(columnFamilyName)).entrySet().parallelStream().
                 filter((cell) -> cell.getKey().length >= 16).map((cell) -> DatatypeConverter.printHexBinary(Arrays.
                 copyOfRange(cell.getKey(), 16, 32)).toLowerCase()).collect(Collectors.toList());

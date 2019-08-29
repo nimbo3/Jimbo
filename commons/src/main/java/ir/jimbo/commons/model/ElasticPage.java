@@ -22,6 +22,7 @@ public class ElasticPage {
     private String category;
 
     public ElasticPage() {
+        getu
         this.url = "";
         this.title = "";
         this.metaTags = new ArrayList<>();
