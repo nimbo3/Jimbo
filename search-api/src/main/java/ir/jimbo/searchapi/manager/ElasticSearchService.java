@@ -7,18 +7,19 @@ import ir.jimbo.searchapi.model.SearchItem;
 import ir.jimbo.searchapi.model.SearchResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.IdsQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,8 +52,9 @@ public class ElasticSearchService {
                 .field("text")
                 .preTags("")
                 .postTags("");
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(pageIndexName).highlighter(highlightQuery);
-        SearchResponse searchResponse = searchRequestBuilder.setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+        SearchResponse searchResponse = client
+                .prepareSearch(pageIndexName).highlighter(highlightQuery)
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .setQuery(query)
                 .setTimeout(TimeValue.timeValueMillis(100000))
                 .setSize(10).setExplain(false).get();
@@ -80,6 +82,36 @@ public class ElasticSearchService {
                 LOGGER.error(String.format("error in parsing document :%s", hit.getSourceAsString()));
             }
         }
+    }
+
+    public List<String> getURLs(List<String> ids) {
+        try {
+            final IdsQueryBuilder query = QueryBuilders.idsQuery();
+            for (String id : ids)
+                query.addIds(id);
+            final String message = query.toString();
+            LOGGER.info(message);
+            SearchResponse searchResponse = client
+                    .prepareSearch(pageIndexName)
+                    .setQuery(query)
+                    .setTimeout(TimeValue.timeValueMillis(100000))
+                    .setExplain(false)
+                    .get();
+            LOGGER.info("Query timeout: {}", searchResponse.isTimedOut());
+            LOGGER.info("Query finished");
+            ObjectMapper objectMapper = new ObjectMapper();
+            return Arrays.stream(searchResponse.getHits().getHits()).map(o -> {
+                try {
+                    return objectMapper.readValue(o.getSourceAsString(), ElasticPage.class).getUrl();
+                } catch (IOException e) {
+                    LOGGER.error("Parsing error: ", e);
+                }
+                return null;
+            }).filter(Objects::nonNull).collect(Collectors.toList());
+        } catch (Exception e) {
+            LOGGER.error("Query error: ", e);
+        }
+        return new ArrayList<>();
     }
 
     public TransportClient getClient() {
