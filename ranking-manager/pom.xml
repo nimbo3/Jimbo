@@ -13,12 +13,12 @@
     <artifactId>ranking-manager</artifactId>
     <properties>
         <elasticsearch.version>6.3.2</elasticsearch.version>
-        <spark.version>2.0.0</spark.version>
+        <spark.version>2.3.3</spark.version>
         <hbase.version>1.4.10</hbase.version>
         <elasticsearch.spark.version>6.3.2</elasticsearch.spark.version>
         <jackson.version>2.6.5</jackson.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
-        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
+        <graphframes.version>0.7.0-spark2.3-s_2.11</graphframes.version>
     </properties>
 
     <dependencies>
