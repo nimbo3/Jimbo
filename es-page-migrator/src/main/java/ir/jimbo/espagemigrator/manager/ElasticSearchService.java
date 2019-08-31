@@ -71,7 +71,7 @@ public class ElasticSearchService {
         sparkContext = new JavaSparkContext(sparkConf);
         hashingTF = new HashingTF(hashTableSize);
 
-        File file = new File("./td/shuf.td");
+        File file = new File("./td/shuf.txt");
         ArrayList<String> strings = new ArrayList<>();
         Scanner scanner = null;
         try {
