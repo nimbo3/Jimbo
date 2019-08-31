@@ -13,12 +13,12 @@
     <artifactId>ranking-manager</artifactId>
     <properties>
         <elasticsearch.version>6.3.2</elasticsearch.version>
-        <spark.version>2.0.0</spark.version>
+        <spark.version>2.3.3</spark.version>
         <hbase.version>1.4.10</hbase.version>
         <elasticsearch.spark.version>6.3.2</elasticsearch.spark.version>
         <jackson.version>2.6.5</jackson.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
-        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
+        <graphframes.version>0.7.0-spark2.3-s_2.11</graphframes.version>
     </properties>
 
     <dependencies>
@@ -41,8 +41,20 @@
 
         <dependency>
             <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
             <version>${spark.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+            <version>4.4.0</version>
         </dependency>
 
         <dependency>
@@ -83,27 +95,30 @@
         </pluginManagement>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>${assembly-plugin.version}</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-
-                    <archive>
-                        <manifest>
-                            <mainClass>ir.jimbo.rankingmanager.PageRank</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.1</version>
                 <executions>
                     <execution>
-                        <id>assemble-all</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>single</goal>
+                            <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

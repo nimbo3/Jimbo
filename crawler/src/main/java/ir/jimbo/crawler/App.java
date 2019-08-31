@@ -33,7 +33,7 @@ public class App {
         LOGGER.info("crawler app starting...");
         initializeConfigurations(args);
         MetricConfiguration metrics = MetricConfiguration.getInstance();    // Throws IOException
-        CacheService cacheService = new CacheService(redisConfiguration, metrics.getProperty("crawler.redis.health.name"));
+        CacheService cacheService = new CacheService(redisConfiguration);
         queue = new ArrayBlockingQueue<>(appConfiguration.getQueueSize());
 
         int consumerThreadSize = appConfiguration.getLinkConsumerSize();

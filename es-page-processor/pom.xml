@@ -10,15 +10,20 @@
     <properties>
         <embeddedElastic.version>2.10.0</embeddedElastic.version>
         <hbase.version>1.4.10</hbase.version>
-        <jackson.version>2.9.9.1</jackson.version>
+        <jackson.version>2.9.9.3</jackson.version>
         <kafka.version>2.3.0</kafka.version>
         <elasticsearch.version>6.3.2</elasticsearch.version>
-        <jackson.version>2.9.9.1</jackson.version>
+        <tika.version>1.21</tika.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>es-page-processor</artifactId>
     <description>"page processor module"</description>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -127,7 +132,8 @@
                             <manifestEntries>
                                 <Main-Class>ir.jimbo.espageprocessor.App</Main-Class>
                                 <Class-Path>./config/</Class-Path>
-                            </manifestEntries>                        </transformer>
+                            </manifestEntries>
+                        </transformer>
                     </transformers>
                     <filters>
                         <filter>

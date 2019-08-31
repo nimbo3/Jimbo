@@ -5,12 +5,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RankObject {
-    private int id;
-    private float rank;
+public class RankObject implements Serializable {
+    private String id;
+    private Double rank;
 
+    @Override
+    public String toString() {
+        return "RankObject{" +
+                "id='" + id + '\'' +
+                ", rank=" + rank +
+                '}';
+    }
 }

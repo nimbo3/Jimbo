@@ -34,7 +34,6 @@ public class PageParserThread extends Thread {
     private CountDownLatch countDownLatch;
     private Producer<Long, String> linkProducer;
     private Producer<Long, Page> pageProducer;
-    private CacheService cacheService;
     private Timer parseTimer;
     private Counter pagesCounter;
 
@@ -42,7 +41,6 @@ public class PageParserThread extends Thread {
                             CountDownLatch parserLatch, CacheService cacheService, MetricConfiguration metrics) {
         this.queue = queue;
         this.kafkaConfiguration = kafkaConfiguration;
-        this.cacheService = cacheService;
         countDownLatch = parserLatch;
         repeat = new AtomicBoolean(true);
         linkProducer = kafkaConfiguration.getLinkProducer();
@@ -70,22 +68,22 @@ public class PageParserThread extends Thread {
             }
             logger.info("uri {} catches from queue", uri);
             Page elasticPage = null;
-            Page hbasePage = null;
+            Page hBasePage = null;
             try {
                 PagePair parse = parse(uri);
-                hbasePage = parse.getHBasePage();
+                hBasePage = parse.getHBasePage();
                 elasticPage = parse.getElasticPage();
 
-                if (elasticPage == null || hbasePage == null) {
+                if (elasticPage == null || hBasePage == null) {
                     continue;
                 }
 
-                if (!elasticPage.isValid() || !hbasePage.isValid()) {
+                if (!elasticPage.isValid() || !hBasePage.isValid()) {
                     continue;
                 }
 
                 ProducerRecord<Long, Page> hBaseRecord = new ProducerRecord<>(kafkaConfiguration.getHBasePageTopicName(),
-                        hbasePage);
+                        hBasePage);
                 ProducerRecord<Long, Page> elasticRecord = new ProducerRecord<>(kafkaConfiguration.getElasticPageTopicName(),
                         elasticPage);
                 pageProducer.send(hBaseRecord);
@@ -93,7 +91,7 @@ public class PageParserThread extends Thread {
                 pagesCounter.inc();
                 logger.info("page added to kafka");
                 if (App.produceLink)
-                    addLinksToKafka(hbasePage);
+                    addLinksToKafka(hBasePage);
             } catch (Exception e) {
                 logger.error("1 parser thread was going to interrupt", e);
             }
@@ -106,7 +104,7 @@ public class PageParserThread extends Thread {
             pageProducer.close();
             linkProducer.close();
         } catch (Exception e) {
-            logger.info("error in closing producer");
+            logger.error("error in closing producer", e);
         }
     }
 
@@ -121,19 +119,21 @@ public class PageParserThread extends Thread {
     }
 
     /**
-     * @return True if uri end with ".html" or ".htm" or ".asp" or ".php" or the uri do not have any extension.
+     * @return True if uri end with ".html" or ".htm" or ".asp[x]" or ".php" or the uri do not have any extension.
      */
     private boolean isValidUri(String link) {
+        if (link.contains("softonic"))
+            return false;
         try {
             while (link.endsWith("/")) {
                 link = link.substring(0, link.length() - 1);
             }
             if (link.endsWith(".html") || link.endsWith(".htm") || link.endsWith(".php") || link.endsWith(".asp")
-                    || !link.substring(link.lastIndexOf('/') + 1).contains(".")) {
+                    || link.endsWith(".aspx") || !link.substring(link.lastIndexOf('/') + 1).contains(".")) {
                 return true;
             }
         } catch (IndexOutOfBoundsException e) {
-            logger.info("invalid uri : " + link);
+            logger.info("invalid uri : {}", link);
             return false;
         }
         return false;
@@ -157,7 +157,7 @@ public class PageParserThread extends Thread {
         }
         for (Element element : document.getAllElements()) {
             Set<String> h3to6Tags = new HashSet<>(Arrays.asList("h3", "h4", "h5", "h6"));
-            Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre"));
+            Set<String> plainTextTags = new HashSet<>(Arrays.asList("p", "span", "pre", "td", "li"));
             String text = element.text();
             if (text == null)
                 text = "";
