@@ -1,8 +1,15 @@
 package ir.jimbo.searchapi;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.searchapi.config.ElasticSearchConfiguration;
 import ir.jimbo.searchapi.manager.ElasticSearchService;
+import ir.jimbo.searchapi.manager.HTableManager;
+import ir.jimbo.searchapi.model.Graph;
+import ir.jimbo.searchapi.model.Link;
+import ir.jimbo.searchapi.model.Node;
 import ir.jimbo.searchapi.model.SearchResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +64,7 @@ public class App {
             Matcher exactMatcher = exactPattern.matcher(query);
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             String normalQuery = query.replaceAll(FUZZY_PATTERN, "").replaceAll(MUST_PATTERN, "")
-                    .replaceAll(PREFIX_PATTERN, "").replace(EXACT_PATTERN, "");
+                    .replaceAll(PREFIX_PATTERN, "").replaceAll(EXACT_PATTERN, "");
             while (fuzzyMatcher.find()) {
                 String fuzzyExp = fuzzyMatcher.group(1);
                 if (!fuzzyExp.isEmpty())
@@ -82,7 +89,8 @@ public class App {
                     for (String field : fields)
                         boolQuery = boolQuery.should(QueryBuilders.termQuery(field + ".keyword", exactExp));
             }
-            boolQuery = boolQuery.should(QueryBuilders.multiMatchQuery(normalQuery, fields.toArray(new String[]{})));
+            if (!normalQuery.isEmpty())
+                boolQuery = boolQuery.should(QueryBuilders.multiMatchQuery(normalQuery, fields.toArray(new String[]{})));
             final String lang = req.queryParams("lang");
             if (lang != null && !lang.isEmpty())
                 boolQuery = boolQuery.filter(QueryBuilders.termQuery("lang", lang));
@@ -94,6 +102,30 @@ public class App {
             res.body(responseText);
             res.header("Access-Control-Allow-Origin", "*");
             return responseText;
+        });
+        get("/graph", (req, res) -> {
+            String url = req.queryParams("url");
+            LOGGER.info("Getting neighbours of {}", url);
+            HTableManager hTableManager = new HTableManager("l", "t",
+                    "HBaseHealthChecker", MetricConfiguration.getInstance());
+            LOGGER.info("HBase");
+            Graph graph = new Graph();
+            List<Node> nodes = new ArrayList<>();
+            List<Link> links = new ArrayList<>();
+            nodes.add(new Node(url));
+            for (String node : elasticSearchService.getURLs(hTableManager.get(url))) {
+                LOGGER.info("Neighbour: {}", node);
+                nodes.add(new Node(node));
+                links.add(new Link(node, url));
+            }
+            graph.setNodes(nodes);
+            graph.setLinks(links);
+            ObjectMapper mapper = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility
+                    .ANY);
+            final String json = mapper.writeValueAsString(graph);
+            res.body(json);
+            res.header("Access-Control-Allow-Origin", "*");
+            return json;
         });
     }
 }

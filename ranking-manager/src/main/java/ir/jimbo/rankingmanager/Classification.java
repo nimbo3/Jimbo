@@ -133,10 +133,12 @@ public class Classification {
         NaiveBayesModel load = NaiveBayesModel.load(javaSparkContext.sc(), "./easmodel");
         JavaRDD<LabeledPoint> testData = splitData[1].map(new TFIDFBuilder(fit));
 
+
         JavaRDD<Boolean> map = testData.map(new NaiveBayesPredictionFunction(load));
         long all = map.count();
         long t = map.filter(e -> e).count();
         System.out.println(t * 1.0 / all * 1.0);
+
 //        train.save(javaSparkContext.sc(), "./easmodel");
         javaSparkContext.close();
     }

@@ -9,8 +9,11 @@ import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,5 +99,21 @@ public class ElasticSearchService {
             }
         }
         return elasticPages;
+    }
+
+    public List<ElasticPage> getSourcePagesSorted() {
+        QueryBuilder qb = QueryBuilders.matchAllQuery();
+
+        SearchResponse response = client.prepareSearch("page_rank").setTypes("_doc")
+                .addSort(SortBuilders.fieldSort("rank")
+                        .order(SortOrder.DESC)).setQuery(qb)
+                .setSize(100).execute().actionGet();
+
+        for(SearchHit hits : response.getHits())
+        {
+            System.out.print("id = " + hits.getId());
+            System.out.println(hits.getSourceAsString());
+        }
+        return null;
     }
 }

@@ -14,6 +14,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.sound.midi.SysexMessage;
 import java.time.Duration;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -64,10 +65,16 @@ public class LinkConsumer extends Thread {
         Timer crawlKafkaLinksProcessTimer = metrics.getNewTimer(metrics.getProperty("crawler.kafka.links.process.timer.name"));
         Counter linksCounter = metrics.getNewCounter(metrics.getProperty("crawler.links.readed.from.kafka.counter.name"));
         Counter linksAddToQueueCounter = metrics.getNewCounter(metrics.getProperty("crawler.links.added.to.queue.counter.name"));
+        Counter numberOfQueueIsFull = metrics.getNewCounter(metrics.getProperty("crawler.queue.is.full.times"));
+        Counter notPoliteLinkCounter = metrics.getNewCounter(metrics.getProperty("crawl.not.polite.link.counter.name"));
+        Counter seenIn24HoursCounter = metrics.getNewCounter(metrics.getProperty("crawl.seen.in.24.hours.counter.name"));
         Producer<Long, String> producer = kafkaConfiguration.getLinkProducer();
         logger.info("consumer thread started");
         while (repeat.get()) {
+            logger.info("start to poll :");
+            long start = System.currentTimeMillis();
             ConsumerRecords<Long, String> consumerRecords = consumer.poll(Duration.ofMillis(pollDuration));
+            logger.info("end poll , time : {}", System.currentTimeMillis() -start);
             Timer.Context bigTimerContext = crawlKafkaLinksProcessTimer.time();
             for (ConsumerRecord<Long, String> record : consumerRecords) {
                 uri = record.value();
@@ -79,7 +86,7 @@ public class LinkConsumer extends Thread {
                         backToKafka = true;
                         if (isPolite(uri)) {
                             boolean isAdded;
-                            isAdded = queue.offer(uri, 2000, TimeUnit.MILLISECONDS);
+                            isAdded = queue.offer(uri, 500, TimeUnit.MILLISECONDS);
                             if (isAdded) {
                                 logger.info("uri added to queue : {}", uri);
                                 linksAddToQueueCounter.inc();
@@ -88,17 +95,19 @@ public class LinkConsumer extends Thread {
                                 logger.info("uri \"{}\" added to queue", uri);
                                 backToKafka = false;
                             } else {
+                                numberOfQueueIsFull.inc();
                                 logger.info("queue has not space for this url : {}", uri);
-                                if (!cacheService.isUrlExists(uri)) {
-                                    sendUriToKafka(uri, producer);
-                                }
+                                sendUriToKafka(uri, producer);
                             }
-                        }
+                        } else {
+                            logger.info("it was not polite crawling this uri : {}", uri);
+                            notPoliteLinkCounter.inc();                        }
                         if (backToKafka) {
                             sendUriToKafka(uri, producer);
                         }
                     } else {
                         logger.info("this uri was saved in past 24 hours: {}", uri);
+                        seenIn24HoursCounter.inc();
                     }
                 } catch (NoDomainFoundException e) {
                     logger.error("bad uri. cant take domain", e);
@@ -110,11 +119,11 @@ public class LinkConsumer extends Thread {
                 }
                 timerContext.stop();
             }
-            try {
-                consumer.commitSync();
-            } catch (Exception e) {
-                logger.info("unable to commit.###################################################", e);
-            }
+//            try {
+//                consumer.commitSync();
+//            } catch (Exception e) {
+//                logger.info("unable to commit.###################################################", e);
+//            }
             bigTimerContext.stop();
         }
         logger.info("consumer countdown latch before");

@@ -10,7 +10,7 @@
     <properties>
         <embeddedElastic.version>2.10.0</embeddedElastic.version>
         <hbase.version>1.4.10</hbase.version>
-        <jackson.version>2.9.9.1</jackson.version>
+        <jackson.version>2.9.9.3</jackson.version>
         <kafka.version>2.3.0</kafka.version>
         <elasticsearch.version>6.3.2</elasticsearch.version>
         <tika.version>1.21</tika.version>
