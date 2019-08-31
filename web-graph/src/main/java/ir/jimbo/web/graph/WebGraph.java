@@ -66,8 +66,8 @@ public class WebGraph {
         LOGGER.info("number of vertices : {}", graphVertices.size());
         LOGGER.info("number of edges : {}", graphEdges.size());
         VerticesAndEdges verticesAndEdges = new VerticesAndEdges();
-        verticesAndEdges.setEdges(graphEdges);
-        verticesAndEdges.setVertices(graphVertices);
+        verticesAndEdges.setLinks(graphEdges);
+        verticesAndEdges.setNodes(graphVertices);
         try {
             hTableManager.close();
         } catch (IOException e) {
@@ -91,7 +91,7 @@ public class WebGraph {
         }
         int size = graphEdges.size();
         for (int i = 0; i < size; i++) {
-            if (! ids.contains(graphEdges.get(i).getSrc())) {
+            if (! ids.contains(graphEdges.get(i).getSource())) {
                 graphEdges.remove(i);
                 size --;
                 i --;

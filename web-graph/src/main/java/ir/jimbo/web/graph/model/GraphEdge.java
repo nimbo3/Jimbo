@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @ToString
 public class GraphEdge {
-    private String src;
-    private String dst;
+    private String source;
+    private String destination;
     private String anchor;
 }

@@ -12,6 +12,6 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 public class VerticesAndEdges {
-    List<GraphVertex> vertices;
-    List<GraphEdge> edges;
+    List<GraphVertex> nodes;
+    List<GraphEdge> links;
 }

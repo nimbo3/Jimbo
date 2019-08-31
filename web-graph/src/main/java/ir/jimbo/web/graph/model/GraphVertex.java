@@ -9,6 +9,6 @@ import lombok.*;
 @ToString
 public class GraphVertex {
     private String id;
-    private double pagerank;
+    private double size;
     private double color;
 }
