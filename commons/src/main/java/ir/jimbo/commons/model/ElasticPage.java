@@ -18,11 +18,11 @@ public class ElasticPage {
     private String text;
     private String lang;
     private String id;
-    private double pageRank;
+    private double rank;
     private String category;
+    private String suggest;
 
     public ElasticPage() {
-        getu
         this.url = "";
         this.title = "";
         this.metaTags = new ArrayList<>();
@@ -32,8 +32,9 @@ public class ElasticPage {
         this.text = "";
         this.lang = "";
         this.id = "";
-        this.pageRank = 1;
+        this.rank = 1;
         this.category = "";
+        this.suggest = "";
     }
 
     // Map page to ElasticPage
@@ -47,7 +48,7 @@ public class ElasticPage {
         this.text = "";
         this.lang = "";
         this.id = "";
-        this.pageRank = 1;
+        this.rank = 1;
         this.category = "";
 
         for (HtmlTag meta : page.getMetadata()) {
@@ -70,5 +71,7 @@ public class ElasticPage {
                 stringBuilder.append(" ");
         }
         text = stringBuilder.toString();
+        String h1 = h1List.stream().reduce("", (s1, s2) -> s1 + " " + s2);
+        suggest = h1 + " " + title;
     }
 }

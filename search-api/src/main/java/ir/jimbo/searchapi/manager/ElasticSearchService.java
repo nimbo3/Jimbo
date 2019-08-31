@@ -11,12 +11,16 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
 
 import java.io.IOException;
 import java.util.*;
@@ -114,7 +118,31 @@ public class ElasticSearchService {
         return new ArrayList<>();
     }
 
+    public List<String> suggest(String exp) {
+        return client.prepareSearch(pageIndexName).suggest(new SuggestBuilder().addSuggestion("suggestion",
+                SuggestBuilders.completionSuggestion("suggest").prefix(exp, Fuzziness.TWO).skipDuplicates(true
+                ).size(5))).get(TimeValue.timeValueMillis(100000)).getSuggest().getSuggestion("suggestion").
+                getEntries().stream().flatMap(o -> o.getOptions().stream()).map(o -> o.getText().toString()).collect(
+                Collectors.toList());
+    }
+
     public TransportClient getClient() {
         return client;
+    }
+
+    public SearchResult getTop(String category) {
+        List<SearchItem> searchItems = new ArrayList<>();
+        long time = System.currentTimeMillis();
+        return new SearchResult(Arrays.stream(client.prepareSearch(pageIndexName).setQuery(QueryBuilders.boolQuery().
+                filter(QueryBuilders.termQuery("category", category))).setExplain(false).setSize(100).addSort(
+                "rank", SortOrder.DESC).get(TimeValue.timeValueMillis(100000)).getHits().getHits()).map(hit -> {
+            try {
+                final ElasticPage page = mapper.readValue(hit.getSourceAsString(), ElasticPage.class);
+                return new SearchItem(page.getTitle(), page.getText(), page.getUrl());
+            } catch (IOException e) {
+                LOGGER.error("Page parse error", e);
+                return null;
+            }
+        }).collect(Collectors.toList()), System.currentTimeMillis() - time);
     }
 }

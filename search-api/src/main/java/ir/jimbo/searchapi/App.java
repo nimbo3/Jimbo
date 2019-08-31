@@ -13,10 +13,12 @@ import ir.jimbo.searchapi.model.Node;
 import ir.jimbo.searchapi.model.SearchResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,7 +71,8 @@ public class App {
                 String fuzzyExp = fuzzyMatcher.group(1);
                 if (!fuzzyExp.isEmpty())
                     for (String field : fields)
-                        boolQuery = boolQuery.should(QueryBuilders.fuzzyQuery(field, fuzzyExp));
+                        boolQuery = boolQuery.should(QueryBuilders.fuzzyQuery(field, fuzzyExp).fuzziness(Fuzziness.TWO))
+                                ;
             }
             while (mustMatcher.find()) {
                 String mustExp = mustMatcher.group(1);
@@ -126,6 +129,29 @@ public class App {
             res.body(json);
             res.header("Access-Control-Allow-Origin", "*");
             return json;
+        });
+        get("/suggest", (req, res) -> {
+            final String suggest = req.queryParams("suggest");
+            LOGGER.info("Suggestion: {}", suggest);
+            ObjectMapper mapper = new ObjectMapper().setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility
+                    .ANY);
+            final String json = mapper.writeValueAsString(elasticSearchService.suggest(suggest));
+            res.body(json);
+            res.header("Access-Control-Allow-Origin", "*");
+            LOGGER.info(json);
+            return json;
+        });
+        get("/top", (req, res) -> {
+            final String category = req.queryParams("category");
+            LOGGER.info("Top: {}", category);
+            final String json = objectMapper.writeValueAsString(elasticSearchService.getTop(category));
+            res.body(json);
+            res.header("Access-Control-Allow-Origin", "*");
+            LOGGER.info(json);
+            return json;
+        });
+        get("/webgraph", (req, res) -> {
+            return null;
         });
     }
 }
