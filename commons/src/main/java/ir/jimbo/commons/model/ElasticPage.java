@@ -18,11 +18,10 @@ public class ElasticPage {
     private String text;
     private String lang;
     private String id;
-    private double pageRank;
+    private double rank;
     private String category;
 
     public ElasticPage() {
-        getu
         this.url = "";
         this.title = "";
         this.metaTags = new ArrayList<>();
@@ -32,7 +31,7 @@ public class ElasticPage {
         this.text = "";
         this.lang = "";
         this.id = "";
-        this.pageRank = 1;
+        this.rank = 1;
         this.category = "";
     }
 
@@ -47,7 +46,7 @@ public class ElasticPage {
         this.text = "";
         this.lang = "";
         this.id = "";
-        this.pageRank = 1;
+        this.rank = 1;
         this.category = "";
 
         for (HtmlTag meta : page.getMetadata()) {
