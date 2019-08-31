@@ -17,6 +17,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.mllib.classification.NaiveBayesModel;
 import org.apache.spark.mllib.feature.HashingTF;
+import org.apache.spark.mllib.feature.IDF;
 import org.apache.spark.mllib.feature.IDFModel;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.regression.LabeledPoint;
@@ -37,10 +38,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Serializable;
-import java.io.StringReader;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
@@ -72,8 +70,30 @@ public class ElasticSearchService {
         sparkConf.set("spark.network.timeout", "1200s");
         sparkContext = new JavaSparkContext(sparkConf);
         hashingTF = new HashingTF(hashTableSize);
-        //todo fit idf model
-        //todo load naive bayes model
+
+        File file = new File("./td/shuf.td");
+        ArrayList<String> strings = new ArrayList<>();
+        Scanner scanner = null;
+        try {
+            scanner = new Scanner(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        while (scanner.hasNextLine()) {
+            strings.add(scanner.nextLine());
+        }
+
+//        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
+        JavaRDD<String> stringJavaRDD = sparkContext.parallelize(strings);
+        stringJavaRDD = stringJavaRDD.filter(e -> e.contains("#####"));
+        //spite data for test and train
+        double[] splitRatios = {0.8d, 0.2d};
+        JavaRDD<String>[] splitData = stringJavaRDD.randomSplit(splitRatios);
+        //prepare train data and train model
+        JavaRDD<String> features = splitData[0].map(e -> e.split("#####")[1]);
+        JavaRDD<Vector> vectorFeatures = features.map(new LabeledTextToRDDTransformerFunction());
+        idfModel = new IDF(2).fit(vectorFeatures);
+        model = NaiveBayesModel.load(sparkContext.sc(), "./easmodel");
 
         classes.put(0.0, "arts");
         classes.put(1.0, "economics");
@@ -135,10 +155,6 @@ public class ElasticSearchService {
 
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
-        //todo new a spark context
-        //todo new tf-idf
-        //todo load model
-
         this.configuration = configuration;
         languageDetector = LanguageDetector.getDefaultLanguageDetector();
         try {
@@ -212,11 +228,12 @@ public class ElasticSearchService {
 
         List<String> ids = new ArrayList<>();
         MultiGetRequestBuilder multiGetRequestBuilder = new MultiGetRequestBuilder(client, MultiGetAction.INSTANCE);
-
+        MultiGetRequestBuilder rankMG = new MultiGetRequestBuilder(client, MultiGetAction.INSTANCE);
         for (SearchHit hit : searchHits) {
             ids.add(hit.getId());
         }
         MultiGetResponse multiGetItemResponses = multiGetRequestBuilder.add("page_anchor", "_doc", ids).get();
+        MultiGetResponse rankMGResponse = rankMG.add("page_rank", "_doc", ids).get();
 
         HashMap<String, List<String>> topAnchors = new HashMap<>();
         for (MultiGetItemResponse respons : multiGetItemResponses.getResponses()) {
@@ -229,6 +246,17 @@ public class ElasticSearchService {
                 LOGGER.error(e);
             }
         }
+        HashMap<String, Double> ranks = new HashMap<>();
+        for (MultiGetItemResponse respons : rankMGResponse.getResponses()) {
+            try {
+                if (respons.getResponse().isExists()) {
+                    Map<String, Object> source = respons.getResponse().getSource();
+                    ranks.put(respons.getId(), (Double) source.get("rank"));
+                }
+            } catch (Exception e) {
+                LOGGER.error(e);
+            }
+        }
 
         for (SearchHit hit : searchHits) {
             try {
@@ -236,12 +264,14 @@ public class ElasticSearchService {
                 if (topAnchors.containsKey(hit.getId())) {
                     elasticPage.setTopAnchors(topAnchors.get(hit.getId()));
                 }
+                if (ranks.containsKey(hit.getId())) {
+                    elasticPage.setRank(ranks.get(hit.getId()));
+                }
                 pages.add(elasticPage);
             } catch (IOException e) {
                 LOGGER.error("Source page parse exception", e);
             }
         }
-
         return pages;
     }
 
