@@ -1,5 +1,6 @@
 package ir.jimbo.crawler.thread;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import ir.jimbo.commons.config.MetricConfiguration;
 import ir.jimbo.commons.model.HtmlTag;
@@ -34,6 +35,7 @@ public class PageParserThread extends Thread {
     private Producer<Long, String> linkProducer;
     private Producer<Long, Page> pageProducer;
     private Timer parseTimer;
+    private Counter pagesCounter;
 
     public PageParserThread(ArrayBlockingQueue<String> queue, KafkaConfiguration kafkaConfiguration,
                             CountDownLatch parserLatch, CacheService cacheService, MetricConfiguration metrics) {
@@ -44,6 +46,7 @@ public class PageParserThread extends Thread {
         linkProducer = kafkaConfiguration.getLinkProducer();
         pageProducer = kafkaConfiguration.getPageProducer();
         parseTimer = metrics.getNewTimer(metrics.getProperty("crawler.page.parse.timer.name"));
+        pagesCounter = metrics.getNewCounter(metrics.getProperty("crawler.pages.added.to.kafka.counter.name"));
     }
 
     // For Test
@@ -85,7 +88,7 @@ public class PageParserThread extends Thread {
                         elasticPage);
                 pageProducer.send(hBaseRecord);
                 pageProducer.send(elasticRecord);
-
+                pagesCounter.inc();
                 logger.info("page added to kafka");
                 if (App.produceLink)
                     addLinksToKafka(hBasePage);
