@@ -1,7 +1,6 @@
 package ir.jimbo.crawler;
 
 
-import com.codahale.metrics.Counter;
 import org.junit.Assert;
 import org.junit.Test;
 

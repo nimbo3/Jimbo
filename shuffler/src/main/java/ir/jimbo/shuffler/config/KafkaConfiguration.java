@@ -1,6 +1,5 @@
-package ir.jimbo.crawler.config;
+package ir.jimbo.shuffler.config;
 
-import ir.jimbo.commons.model.Page;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -12,7 +11,6 @@ import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
@@ -20,10 +18,8 @@ import java.util.Properties;
 
 public class KafkaConfiguration {
 
-    private String hBasePageTopicName;
-    private String elasticPageTopicName;
     private String linkTopicName;
-    private String shuffledLinkTopicName;
+    private String shuffledLinksTopicName;
     private int pollDuration;
     private String autoOffsetReset;
     private String autoCommit;
@@ -32,27 +28,17 @@ public class KafkaConfiguration {
     private String groupId;
     private String clientId;
     private String bootstrapServers;
-    private int minFetchSize;
 
     public KafkaConfiguration() throws IOException {
         Properties properties = new Properties();
         properties.load(Objects.requireNonNull(Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream("kafkaConfig.properties")));
-        initValues(properties);
-    }
-
-    public KafkaConfiguration(String path) throws IOException {
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(path));
+                .getResourceAsStream("configs.properties")));
         initValues(properties);
     }
 
     private void initValues(Properties properties) {
-        hBasePageTopicName = properties.getProperty("hbase.pages.topic.name");
-        elasticPageTopicName = properties.getProperty("elastic.pages.topic.name");
         pollDuration = Integer.parseInt(properties.getProperty("poll.duration"));
         linkTopicName = properties.getProperty("links.topic.name");
-        shuffledLinkTopicName = properties.getProperty("shuffled.links.topic.name");
         autoOffsetReset = properties.getProperty("auto.offset.reset");
         autoCommit = properties.getProperty("auto.commit");
         maxPollRecord = Integer.parseInt(properties.getProperty("max.poll.record"));
@@ -60,7 +46,7 @@ public class KafkaConfiguration {
         clientId = properties.getProperty("client.id");
         bootstrapServers = properties.getProperty("bootstrap.servers");
         maxPollInterval = Integer.parseInt(properties.getProperty("max.poll.interval"));
-//        minFetchSize = Integer.parseInt(properties.getProperty("kafka.consumer.fetch.min.bytes"));
+        shuffledLinksTopicName = properties.getProperty("shuffled.links.topic.name");
     }
 
     public int getPollDuration() {
@@ -69,15 +55,6 @@ public class KafkaConfiguration {
 
     public String getLinkTopicName() {
         return linkTopicName;
-    }
-
-    public Producer<Long, Page> getPageProducer() {
-        Properties producerProperties = new Properties();
-        producerProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        producerProperties.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
-        producerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class.getName());
-        producerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, PageSerializer.class.getName());
-        return new KafkaProducer<>(producerProperties);
     }
 
     public Producer<Long, String> getLinkProducer() {
@@ -99,18 +76,12 @@ public class KafkaConfiguration {
         consumerProperties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollInterval);
         consumerProperties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         consumerProperties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
-//        consumerProperties.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, minFetchSize);
         Consumer<Long, String> consumer = new KafkaConsumer<>(consumerProperties);
-        System.err.println("shuffled links topic name : " + shuffledLinkTopicName);
-        consumer.subscribe(Collections.singletonList(shuffledLinkTopicName));
+        consumer.subscribe(Collections.singletonList(linkTopicName));
         return consumer;
     }
 
-    public String getHBasePageTopicName() {
-        return hBasePageTopicName;
-    }
-
-    public String getElasticPageTopicName() {
-        return elasticPageTopicName;
+    public String getShuffledLinksTopicName() {
+        return shuffledLinksTopicName;
     }
 }
