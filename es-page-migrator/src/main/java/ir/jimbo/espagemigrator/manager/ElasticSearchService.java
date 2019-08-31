@@ -66,7 +66,7 @@ public class ElasticSearchService {
         SparkConf sparkConf = new SparkConf();
         sparkConf.setAppName("classification");
         sparkConf.setMaster("local");
-        sparkConf.set("es.mapping.id", "id");
+//        sparkConf.set("es.mapping.id", "id");
         sparkConf.set("spark.network.timeout", "1200s");
         sparkContext = new JavaSparkContext(sparkConf);
         hashingTF = new HashingTF(hashTableSize);
