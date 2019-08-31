@@ -17,7 +17,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -29,8 +28,6 @@ import org.graphframes.GraphFrame;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 
 public class PageRank {
     private static final Logger LOGGER = LogManager.getLogger(PageRank.class);
@@ -116,19 +113,19 @@ public class PageRank {
         rankMap.saveAsTextFile("./out.txt");
         JavaEsSpark.saveToEs(rankMap, indexName + "/_doc");
 
-        int graphSampleSize = appConfig.getGraphSampleSize();
-        List<RankObject> topRank = rankMap.takeOrdered(graphSampleSize, new Comparator<RankObject>() {
-            @Override
-            public int compare(RankObject rankObject, RankObject t1) {
-                return t1.getRank() - rankObject.getRank() > 0 ? 1 : t1.getRank() - rankObject.getRank() == 0 ? 0 : -1;
-            }
-        });
-
-        String graphIndex = appConfig.getGraphIndex();
-        JavaSparkContext javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
-        JavaRDD<RankObject> topRanksRdd = javaSparkContext.parallelize(topRank);
-        JavaEsSpark.saveToEs(topRanksRdd, graphIndex + "/_doc");
-        rankMap.unpersist();
-        javaSparkContext.close();
+//        int graphSampleSize = appConfig.getGraphSampleSize();
+//        List<RankObject> topRank = rankMap.takeOrdered(graphSampleSize, new Comparator<RankObject>() {
+//            @Override
+//            public int compare(RankObject rankObject, RankObject t1) {
+//                return t1.getRank() - rankObject.getRank() > 0 ? 1 : t1.getRank() - rankObject.getRank() == 0 ? 0 : -1;
+//            }
+//        });
+//
+//        String graphIndex = appConfig.getGraphIndex();
+//        JavaSparkContext javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+//        JavaRDD<RankObject> topRanksRdd = javaSparkContext.parallelize(topRank);
+//        JavaEsSpark.saveToEs(topRanksRdd, graphIndex + "/_doc");
+//        rankMap.unpersist();
+//        javaSparkContext.close();
     }
 }

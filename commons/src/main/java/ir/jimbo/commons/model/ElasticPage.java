@@ -20,6 +20,8 @@ public class ElasticPage {
     private String id;
     private double rank;
     private String category;
+    private int numberOfReferences;
+    private List<String> topAnchors;
 
     public ElasticPage() {
         this.url = "";
