@@ -32,11 +32,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>4.4.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.github.ptnplanet</groupId>
             <artifactId>Java-Naive-Bayes-Classifier</artifactId>
             <version>1.0.9</version>

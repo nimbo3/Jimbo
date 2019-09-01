@@ -5,5 +5,5 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class Link {
     private String source;
-    private String target;
+    private String destination;
 }

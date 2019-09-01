@@ -19,6 +19,7 @@ public class ElasticPage {
     private String lang;
     private String id;
     private double rank;
+    private double pageRank;
     private String category;
     private String suggest;
     private int numberOfReferences;

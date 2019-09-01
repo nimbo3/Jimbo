@@ -10,12 +10,14 @@ import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.lucene.search.function.FieldValueFactorFunction;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.IdsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -26,6 +28,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders.fieldValueFactorFunction;
 
 public class ElasticSearchService {
     private static final Logger LOGGER = LogManager.getLogger(ElasticSearchService.class);
@@ -59,10 +63,13 @@ public class ElasticSearchService {
         SearchResponse searchResponse = client
                 .prepareSearch(pageIndexName).highlighter(highlightQuery)
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(query)
+                .setQuery(QueryBuilders.functionScoreQuery(query, new FunctionScoreQueryBuilder.FilterFunctionBuilder[]{
+                        new FunctionScoreQueryBuilder.FilterFunctionBuilder(fieldValueFactorFunction("rank")
+                                .missing(1)
+                                .modifier(FieldValueFactorFunction.Modifier.LN1P))}))
                 .setTimeout(TimeValue.timeValueMillis(100000))
                 .setSize(10).setExplain(false).get();
-        final String message = String.format("execute of query finished, query :%s", query.toString());
+        final String message = String.format("Execution of query finished, query :%s", query.toString());
         LOGGER.info(message);
         SearchResult searchResult = new SearchResult();
         parseSearchResults(searchResult, searchResponse);
@@ -75,12 +82,12 @@ public class ElasticSearchService {
             try {
                 ElasticPage page = mapper.readValue(hit.getSourceAsString(), ElasticPage.class);
                 StringBuilder text = new StringBuilder();
-
                 hit.getHighlightFields().forEach((fieldName, fieldValue) -> {
                     for (Text fragment : fieldValue.getFragments())
                         text.append(fragment.string());
                 });
-
+                LOGGER.info("URL: {}", page.getUrl());
+                LOGGER.info("Score: {}", hit.getScore());
                 searchResult.getSearchItemList().add(new SearchItem(page.getTitle(), text.toString(), page.getUrl()));
             } catch (IOException e) {
                 LOGGER.error(String.format("error in parsing document :%s", hit.getSourceAsString()));

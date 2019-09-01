@@ -219,8 +219,8 @@ public class ElasticSearchService {
     }
 
     private static List<String> getTokenOfDocument(String s) {
-        List<java.lang.String> tokenList = new ArrayList<java.lang.String>();
-        List<java.lang.String> stopWordsArray = new ArrayList<java.lang.String>(Arrays.asList("a's" + "able" + "about" + "above" + "according" +
+        List<java.lang.String> tokenList = new ArrayList<>();
+        List<java.lang.String> stopWordsArray = new ArrayList<>(Arrays.asList("a's" + "able" + "about" + "above" + "according" +
                 "accordingly" + "across" + "actually" + "after" + "afterwards" +
                 "again" + "against" + "ain't" + "all" + "allow" +
                 "allows" + "almost" + "alone" + "along" + "already" +
@@ -544,7 +544,7 @@ public class ElasticSearchService {
         if (list.size() <= size)
             return list;
         else {
-            List<String> tops = new ArrayList<String>();
+            List<String> tops = new ArrayList<>();
             for (int i = 0; i < size; i++) {
                 tops.add((String) getRandom(list));
             }

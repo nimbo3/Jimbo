@@ -19,6 +19,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -151,7 +152,12 @@ public class App {
             return json;
         });
         get("/webgraph", (req, res) -> {
-            return null;
+            LOGGER.info("Webgraph request");
+            final String json = String.join("", Files.readAllLines(Paths.get("webgraph/graph.json")));
+            res.body(json);
+            res.header("Access-Control-Allow-Origin", "*");
+            LOGGER.info(json);
+            return json;
         });
     }
 }
