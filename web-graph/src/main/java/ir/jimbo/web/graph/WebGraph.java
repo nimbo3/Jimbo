@@ -138,7 +138,7 @@ public class WebGraph {
      */
     private void createVerticesAndEdges(List<ElasticPage> elasticPages) {
         AtomicInteger counter = new AtomicInteger();
-        AtomicInteger attempt = new AtomicInteger();
+        int attempt = 0;
         for (ElasticPage elasticPage : elasticPages) {
             Result record = null;
             try {
@@ -164,10 +164,6 @@ public class WebGraph {
                         if (elasticDocument != null) {
 //                            graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
                             graphEdges.add(new GraphEdge(elasticDocument.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
-                            if (attempt.getAndIncrement() > 999) {
-                                attempt.set(0);
-                                logger.info("1000 edge added.");
-                            }
                         }
                     } catch (Exception e) {
                         logger.error("line 135, get elastic documents");
@@ -175,6 +171,7 @@ public class WebGraph {
                     }
                 });
             });
+            logger.info("page {} job done. url : {}", ++ attempt, elasticPage.getUrl());
         }
         logger.info("-_-_-_-_-_-_-_-_-_-_-_-_-_- {} bad mapping -_-_-_-_-_-_-_-_-_-_-_-_-_-", counter.get());
     }
