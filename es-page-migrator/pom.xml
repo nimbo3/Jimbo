@@ -20,8 +20,27 @@
         <elasticsearch.version>6.3.2</elasticsearch.version>
         <jackson.version>2.9.9.3</jackson.version>
         <tika.version>1.21</tika.version>
+        <spark.version>2.3.3</spark.version>
     </properties>
+    <repositories>
+        <!-- list of other repositories -->
+        <repository>
+            <id>SparkPackagesRepo</id>
+            <url>http://dl.bintray.com/spark-packages/maven</url>
+        </repository>
+    </repositories>
+
     <dependencies>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+            <version>4.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ptnplanet</groupId>
+            <artifactId>Java-Naive-Bayes-Classifier</artifactId>
+            <version>1.0.9</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-langdetect</artifactId>
@@ -115,4 +134,37 @@
             </plugin>
         </plugins>
     </build>
+    <!--        <pluginManagement>-->
+    <!--        </pluginManagement>-->
+    <!--        <plugins>-->
+    <!--            <plugin>-->
+    <!--                <artifactId>maven-shade-plugin</artifactId>-->
+    <!--                <version>2.4.1</version>-->
+    <!--                <executions>-->
+    <!--                    <execution>-->
+    <!--                        <phase>package</phase>-->
+    <!--                        <goals>-->
+    <!--                            <goal>shade</goal>-->
+    <!--                        </goals>-->
+    <!--                        <configuration>-->
+    <!--                            <createDependencyReducedPom>false</createDependencyReducedPom>-->
+    <!--                            <filters>-->
+    <!--                                <filter>-->
+    <!--                                    <artifact>*:*</artifact>-->
+    <!--                                    <excludes>-->
+    <!--                                        <exclude>META-INF/*.SF</exclude>-->
+    <!--                                        <exclude>META-INF/*.DSA</exclude>-->
+    <!--                                        <exclude>META-INF/*.RSA</exclude>-->
+    <!--                                    </excludes>-->
+    <!--                                </filter>-->
+    <!--                            </filters>-->
+    <!--                            <transformers>-->
+    <!--                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>-->
+    <!--                            </transformers>-->
+    <!--                        </configuration>-->
+    <!--                    </execution>-->
+    <!--                </executions>-->
+    <!--            </plugin>-->
+    <!--        </plugins>-->
+    <!--    </build>-->
 </project>

@@ -39,7 +39,8 @@ public class App {
         sparkConf.set("es.http.timeout", "3m");
 //        sparkConf.set("spark.cores.max", "6");
 //        sparkConf.set("es.batch.size.entries", "500");
-//        sparkConf.set("spark.network.timeout", "1200s");
+        sparkConf.set("spark.network.timeout", "1200s");
+        sparkConf.set("spark.rpc.askTimeout", "1200s");
 //        sparkConf.set("spark.executor.cores", "3");
         sparkConf.set("es.write.operation", "upsert");
 //        sparkConf.set("es.http.timeout", "10m");
