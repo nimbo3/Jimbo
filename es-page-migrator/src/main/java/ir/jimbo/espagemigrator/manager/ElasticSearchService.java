@@ -3,23 +3,25 @@ package ir.jimbo.espagemigrator.manager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import de.daslaboratorium.machinelearning.classifier.Classification;
 import de.daslaboratorium.machinelearning.classifier.Classifier;
 import de.daslaboratorium.machinelearning.classifier.bayes.BayesClassifier;
 import ir.jimbo.commons.model.ElasticPage;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.espagemigrator.config.ElasticSearchConfiguration;
-import ir.jimbo.espagemigrator.tokenizer.NgramTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.DelimitedTermFrequencyTokenFilter;
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilter;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.CharArraySet;
-import org.apache.lucene.util.Version;
 import org.apache.tika.language.detect.LanguageDetector;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -201,6 +203,8 @@ public class ElasticSearchService {
                 }
                 if (ranks.containsKey(hit.getId())) {
                     elasticPage.setRank(ranks.get(hit.getId()));
+                } else {
+                    elasticPage.setRank(1.0);
                 }
                 pages.add(elasticPage);
             } catch (IOException e) {
@@ -211,7 +215,8 @@ public class ElasticSearchService {
     }
 
     synchronized public void setCategory(ElasticPage page) {
-        bayes.classify(getTokenOfDocument(page.getText()));
+        Classification<String, String> classify = bayes.classify(getTokenOfDocument(page.getText()));
+        page.setCategory(classify.getCategory());
     }
 
     public TransportClient getClient() {
@@ -501,17 +506,19 @@ public class ElasticSearchService {
                 "yours" +
                 "yourself" +
                 "yourselves"));
-        NgramTokenizer ngramTokenizer = new NgramTokenizer();
 
         CharArraySet stopWords = EnglishAnalyzer.getDefaultStopSet();
-        CharArraySet stopSet = new CharArraySet(Version.LUCENE_44, 10, true);
+        CharArraySet stopSet = new CharArraySet(10, true);
         stopSet.addAll(stopWordsArray);
         stopSet.addAll(stopWords);
-        TokenStream tokenStream = new StandardTokenizer(Version.LUCENE_44, new StringReader(s));
-        tokenStream = new LengthFilter(Version.LUCENE_44, tokenStream, 2, 30);
+        Analyzer analyzer = new StandardAnalyzer();
+        TokenStream tokenStream = analyzer.tokenStream("", new StringReader(s));
+        tokenStream = new LengthFilter(tokenStream, 2, 30);
         tokenStream = new PatternReplaceFilter(tokenStream, Pattern.compile("[0-9]+"), "", true);
-        tokenStream = new StopFilter(Version.LUCENE_44, tokenStream, stopSet);
+        tokenStream = new StopFilter(tokenStream, stopSet);
         StringBuilder sb = new StringBuilder();
+        tokenStream = new LowerCaseFilter(tokenStream);
+        tokenStream = new DelimitedTermFrequencyTokenFilter(tokenStream);
         CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
         try {
             tokenStream.reset();
@@ -525,17 +532,7 @@ public class ElasticSearchService {
                 e.printStackTrace();
             }
             String term = charTermAttribute.toString();
-            sb.append(term + " ");
-        }
-        Reader reader = new StringReader(sb.toString());
-        try {
-            TokenStream tokenStreamNgram = ngramTokenizer.tokenStream("contents", reader);
-            CharTermAttribute term = tokenStreamNgram.getAttribute(CharTermAttribute.class);
-            tokenStreamNgram.reset();
-            while (tokenStreamNgram.incrementToken()) {
-                tokenList.add(term.toString());
-            }
-        } catch (IOException e) {
+            tokenList.add(term);
         }
         return tokenList;
     }
