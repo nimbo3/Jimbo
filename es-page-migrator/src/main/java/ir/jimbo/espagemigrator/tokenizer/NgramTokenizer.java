@@ -6,7 +6,6 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 import org.apache.lucene.analysis.miscellaneous.WordDelimiterFilterFactory;
-import org.apache.lucene.analysis.shingle.ShingleFilterFactory;
 import org.apache.lucene.util.Version;
 
 import java.io.Reader;
@@ -31,8 +30,8 @@ public class NgramTokenizer extends Analyzer {
         TokenStream lowerCaseFilter = new LowerCaseFilter(Version.LUCENE_44, source);
         TokenStream delimiterFilter = new WordDelimiterFilterFactory(delimiterParams).
                 create(lowerCaseFilter);
-        TokenStream shingleFilter = new ShingleFilterFactory(shingleParams).
-                create(delimiterFilter);
-        return new TokenStreamComponents(source, shingleFilter);
+//        TokenStream shingleFilter = new ShingleFilterFactory(shingleParams).
+//                create(delimiterFilter);
+        return new TokenStreamComponents(source, delimiterFilter);
     }
 }
