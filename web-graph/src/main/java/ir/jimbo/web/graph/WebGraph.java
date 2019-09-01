@@ -3,7 +3,6 @@ package ir.jimbo.web.graph;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import ir.jimbo.commons.model.ElasticPage;
-import ir.jimbo.commons.model.RankObject;
 import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.web.graph.config.AppConfiguration;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
@@ -13,13 +12,12 @@ import ir.jimbo.web.graph.manager.HTableManager;
 import ir.jimbo.web.graph.model.GraphEdge;
 import ir.jimbo.web.graph.model.GraphVertex;
 import ir.jimbo.web.graph.model.VerticesAndEdges;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.spark.sql.*;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.search.SearchHit;
 import org.graphframes.GraphFrame;
 
 import java.io.FileWriter;
@@ -60,18 +58,12 @@ public class WebGraph {
         logger.info("vertices and edges created");
         logger.info("number of vertices : {}", graphVertices.size());
         logger.info("number of edges : {}", graphEdges.size());
-        deleteBadEdges();
-        logger.info("number of vertices : {}", graphVertices.size());
-        logger.info("number of edges : {}", graphEdges.size());
         startSparkJobs();
         System.err.println("---------------------------------------- spark Job Done ----------------------------------------");
         createOutput();
     }
 
     public void createOutput() {
-        logger.info("fixing ranks ...");
-        fixRanks();
-        logger.info("ranks fixed");
         VerticesAndEdges verticesAndEdges = new VerticesAndEdges();
         verticesAndEdges.setEdges(graphEdges);
         verticesAndEdges.setVertices(graphVertices);
@@ -90,90 +82,67 @@ public class WebGraph {
         }
     }
 
-    private void fixRanks() {
-        SearchResponse topIds = elasticSearchService.getSearchResponse();
-        List<RankObject> rankObjects = new ArrayList<>();
-        ObjectMapper reader = new ObjectMapper();
-        HashUtil hashUtil = new HashUtil();
-        for (SearchHit hit : topIds.getHits()) {
-            try {
-                rankObjects.add(reader.readValue(hit.getSourceAsString(), RankObject.class));
-            } catch (IOException e) {
-                logger.error("cannot create rank object", e);
-            }
-        }
-        for (GraphVertex graphVertex : graphVertices) {
-            int size = rankObjects.size();
-            for (int i = 0; i < size; i++) {
-                if (hashUtil.getMd5(graphVertex.getId()).equals(rankObjects.get(i).getId())) {
-                    graphVertex.setPagerank(rankObjects.get(i).getRank());
-                    rankObjects.remove(i);
-                    break;
-                }
-            }
-        }
-    }
-
-    private void deleteBadEdges() {
-        logger.info("deleting bad edges");
-        Set<String> ids = new HashSet<>();
-        for (GraphVertex graphVertex : graphVertices) {
-            ids.add(graphVertex.getId());
-        }
-        int size = graphEdges.size();
-        for (int i = 0; i < size; i++) {
-            if (! ids.contains(graphEdges.get(i).getSrc())) {
-                graphEdges.remove(i);
-                size --;
-                i --;
-            }
-        }
-    }
-
-    /**
-     * getNoVersionMap of result return a navigableMap that have Column family name map to another navigable map
-     * that contains qualifiers map to values
-     *
-     * @param elasticPages source elastic pages
-     */
     private void createVerticesAndEdges(List<ElasticPage> elasticPages) {
-        AtomicInteger counter = new AtomicInteger();
-        int attempt = 0;
+        List<String> hashes = new ArrayList<>();
+        logger.info("reading from hbase ...");
+        AtomicInteger count = new AtomicInteger(0);
+        HashUtil hashUtil = new HashUtil();
         for (ElasticPage elasticPage : elasticPages) {
+            hashes.add(hashUtil.getMd5(elasticPage.getUrl()));
+        }
+        for (ElasticPage elasticPage : elasticPages) {
+            graphVertices.add(new GraphVertex(elasticPage.getUrl(), elasticPage.getRank(), 1));
             Result record = null;
             try {
                 record = hTableManager.getRecord(elasticPage.getUrl());
             } catch (IOException e) {
-                logger.error("line 113", e);
+                logger.error(e);
             }
             if (record == null)
                 continue;
-            graphVertices.add(new GraphVertex(elasticPage.getUrl(), 1, 1));
             NavigableMap<byte[], NavigableMap<byte[], byte[]>> noVersionMap = record.getNoVersionMap();
-            if (noVersionMap == null) {
-                continue;
-            }
-            noVersionMap.forEach((a, b) -> {
-                if (b == null) {
-                    return;
-                }
-                b.forEach((qualifier, value) -> {
-                    try {
-                        String elasticId = Bytes.toHex(qualifier).substring(32);
-                        ElasticPage elasticDocument = elasticSearchService.getDocument(elasticId);
-                        if (elasticDocument != null) {
-//                            graphVertices.add(new GraphVertex(elasticDocument.getUrl(), 0.5, 1));
-                            graphEdges.add(new GraphEdge(elasticDocument.getUrl(), elasticPage.getUrl(), Bytes.toString(value)));
-                        }
-                    } catch (Exception e) {
-                        logger.error("line 135, get elastic documents");
-                        counter.getAndIncrement();
+            if (noVersionMap != null && !noVersionMap.isEmpty()) {
+                Result finalRecord = record;
+                noVersionMap.forEach((a, b) -> {
+                    if (!Bytes.toString(a).equals("t") || b == null) {
+                        return;
                     }
+                    logger.info("walking on the {}th site", count.incrementAndGet());
+                    b.forEach((qualifier, value) -> {
+                        String urlHash = null;
+                        try {
+                            if (qualifier == null) {
+                                return;
+                            }
+                            urlHash = Bytes.toHex(qualifier);
+                            urlHash = urlHash.substring(32);
+                        } catch (Exception e) {
+                            urlHash = Bytes.toHex(qualifier);
+                        }
+                        for (String hash : hashes) {
+                            if (hash.equals(urlHash)) {
+                                logger.info("row key : {}", Bytes.toHex(finalRecord.getRow()).substring(32));
+                                graphEdges.add(new GraphEdge(urlHash, Bytes.toHex(finalRecord.getRow()).substring(32)
+                                        , Bytes.toString(value)));
+                                break;
+                            }
+                        }
+                    });
                 });
-            });
-            logger.info("page {} job done. url : {}", ++ attempt, elasticPage.getUrl());
+            }
+            noVersionMap = null;
         }
-        logger.info("-_-_-_-_-_-_-_-_-_-_-_-_-_- {} bad mapping -_-_-_-_-_-_-_-_-_-_-_-_-_-", counter.get());
+        logger.info("done walking");
+        for (GraphEdge graphEdge : graphEdges) {
+            for (ElasticPage elasticPage : elasticPages) {
+                if (hashUtil.getMd5(elasticPage.getUrl()).equals(graphEdge.getSrc())) {
+                    graphEdge.setSrc(elasticPage.getUrl());
+                } else if (hashUtil.getMd5(elasticPage.getUrl()).equals(graphEdge.getDst())) {
+                    graphEdge.setDst(elasticPage.getUrl());
+                }
+            }
+        }
+        logger.info("done fixing edges");
     }
 
     private List<ElasticPage> getFromElastic() {

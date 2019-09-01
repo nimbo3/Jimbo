@@ -2,12 +2,14 @@ package ir.jimbo.commons.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
+@ToString
 public class ElasticPage {
     private String url;
     private String title;
@@ -72,16 +74,5 @@ public class ElasticPage {
                 stringBuilder.append(" ");
         }
         text = stringBuilder.toString();
-    }
-
-    @Override
-    public String toString() {
-        return "ElasticPage{" +
-                "url='" + url + '\'' +
-                ", title='" + title + '\'' +
-                ", metaTags=" + metaTags +
-                ", h1List=" + h1List +
-                ", lang='" + lang + '\'' +
-                '}';
     }
 }

@@ -2,6 +2,8 @@ package ir.jimbo.web.graph.manager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ir.jimbo.commons.model.ElasticPage;
+import ir.jimbo.commons.model.RankObject;
+import ir.jimbo.commons.util.HashUtil;
 import ir.jimbo.web.graph.config.ElasticSearchConfiguration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,8 +95,7 @@ public class ElasticSearchService {
                     try {
                         elasticPages.add(reader.readValue(json, ElasticPage.class));
                     } catch (IOException e) {
-                        LOGGER.error("exception in converting json to elasticPage instance." +
-                                " source as string : {}", json, e);
+                        LOGGER.error("exception in converting json to elasticPage instance", e);
                     }
                 }
             }
@@ -110,8 +111,22 @@ public class ElasticSearchService {
         for(SearchHit hits : response.getHits()) {
             multiGetRequestBuilder.add("page", "_doc", hits.getId());
         }
-
-        return getDocuments(getMultiGetRequestBuilder());
+        List<ElasticPage> documents = getDocuments(getMultiGetRequestBuilder());
+        ObjectMapper reader = new ObjectMapper();
+        HashUtil hashUtil = new HashUtil();
+        for (ElasticPage document : documents) {
+            for (SearchHit hit : response.getHits()) {
+                if (hit.getId().equals(hashUtil.getMd5(document.getUrl()))) {
+                    try {
+                        document.setRank(reader.readValue(hit.getSourceAsString(), RankObject.class).getRank());
+                        break;
+                    } catch (IOException e) {
+                        LOGGER.error(e);
+                    }
+                }
+            }
+        }
+        return documents;
     }
 
     public SearchResponse getTopIds() {
