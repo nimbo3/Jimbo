@@ -27,6 +27,7 @@ public class ElasticSearchService {
     private TransportClient client;
     private String esScrollID = null;
     private MultiGetRequestBuilder multiGetRequestBuilder;
+    private SearchResponse searchResponse;
 
     public ElasticSearchService(ElasticSearchConfiguration configuration) {
         this.configuration = configuration;
@@ -102,18 +103,26 @@ public class ElasticSearchService {
     }
 
     public List<ElasticPage> getSourcePagesSorted() {
-        QueryBuilder qb = QueryBuilders.matchAllQuery();
 
-        SearchResponse response = client.prepareSearch("page_rank").setTypes("_doc")
+        SearchResponse response = getTopIds();
+
+        multiGetRequestBuilder = getMultiGetRequestBuilder();
+        for(SearchHit hits : response.getHits()) {
+            multiGetRequestBuilder.add("page", "_doc", hits.getId());
+        }
+
+        return getDocuments(getMultiGetRequestBuilder());
+    }
+
+    public SearchResponse getTopIds() {
+        QueryBuilder qb = QueryBuilders.matchAllQuery();
+        return searchResponse = client.prepareSearch("page_rank").setTypes("_doc")
                 .addSort(SortBuilders.fieldSort("rank")
                         .order(SortOrder.DESC)).setQuery(qb)
                 .setSize(100).execute().actionGet();
+    }
 
-        for(SearchHit hits : response.getHits())
-        {
-            System.out.print("id = " + hits.getId());
-            System.out.println(hits.getSourceAsString());
-        }
-        return null;
+    public SearchResponse getSearchResponse() {
+        return searchResponse;
     }
 }
