@@ -66,7 +66,7 @@ public class ElasticSearchService {
                 .setQuery(QueryBuilders.functionScoreQuery(query, new FunctionScoreQueryBuilder.FilterFunctionBuilder[]{
                         new FunctionScoreQueryBuilder.FilterFunctionBuilder(fieldValueFactorFunction("rank")
                                 .missing(1)
-                                .modifier(FieldValueFactorFunction.Modifier.LN1P))}))
+                                .modifier(FieldValueFactorFunction.Modifier.SQRT))}))
                 .setTimeout(TimeValue.timeValueMillis(100000))
                 .setSize(10).setExplain(false).get();
         final String message = String.format("Execution of query finished, query :%s", query.toString());

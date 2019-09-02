@@ -155,7 +155,7 @@ public class App {
             LOGGER.info("Webgraph request");
             final String json = String.join("", Files.readAllLines(Paths.get("webgraph/graph.json"))).
                     replaceAll("\"src\"", "\"source\"").replaceAll("\"dst\"",
-                    "\"destination\"").replaceAll("\"pagerank\"", "\"size\"");
+                    "\"target\"").replaceAll("\"pagerank\"", "\"size\"");
             res.body(json);
             res.header("Access-Control-Allow-Origin", "*");
             LOGGER.info(json);
