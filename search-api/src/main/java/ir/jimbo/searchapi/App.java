@@ -38,7 +38,7 @@ public class App {
     private static final String PREFIX_PATTERN = "~" + EXPRESSION + "~";
     private static final String EXACT_PATTERN = "=" + EXPRESSION + "=";
     private static final List<String> fields = new ArrayList<>(Arrays.asList("h1List", "h2List", "h3to6List",
-            "metaTags", "text", "title", "url"));
+            "metaTags", "text", "title", "url", "topAnchors"));
     private static ElasticSearchService elasticSearchService;
 
     static {
@@ -153,7 +153,9 @@ public class App {
         });
         get("/webgraph", (req, res) -> {
             LOGGER.info("Webgraph request");
-            final String json = String.join("", Files.readAllLines(Paths.get("webgraph/graph.json")));
+            final String json = String.join("", Files.readAllLines(Paths.get("webgraph/graph.json"))).
+                    replaceAll("\"src\"", "\"source\"").replaceAll("\"dst\"",
+                    "\"destination\"").replaceAll("\"pagerank\"", "\"size\"");
             res.body(json);
             res.header("Access-Control-Allow-Origin", "*");
             LOGGER.info(json);

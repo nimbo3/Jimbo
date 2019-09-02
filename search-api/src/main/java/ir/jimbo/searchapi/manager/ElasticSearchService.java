@@ -138,7 +138,6 @@ public class ElasticSearchService {
     }
 
     public SearchResult getTop(String category) {
-        List<SearchItem> searchItems = new ArrayList<>();
         long time = System.currentTimeMillis();
         return new SearchResult(Arrays.stream(client.prepareSearch(pageIndexName).setQuery(QueryBuilders.boolQuery().
                 filter(QueryBuilders.termQuery("category", category))).setExplain(false).setSize(100).addSort(
