@@ -12,7 +12,6 @@ import ir.jimbo.web.graph.manager.HTableManager;
 import ir.jimbo.web.graph.model.GraphEdge;
 import ir.jimbo.web.graph.model.GraphVertex;
 import ir.jimbo.web.graph.model.VerticesAndEdges;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
@@ -67,8 +66,8 @@ public class WebGraph {
 
     public void createOutput() {
         VerticesAndEdges verticesAndEdges = new VerticesAndEdges();
-        verticesAndEdges.setEdges(graphEdges);
-        verticesAndEdges.setVertices(graphVertices);
+        verticesAndEdges.setLinks(graphEdges);
+        verticesAndEdges.setNodes(graphVertices);
         try {
             hTableManager.close();
         } catch (IOException e) {
