@@ -61,6 +61,8 @@ public class WebGraph {
         startSparkJobs();
         System.err.println("---------------------------------------- spark Job Done ----------------------------------------");
         createOutput();
+        logger.info("number of vertices : {}", graphVertices.size());
+        logger.info("number of edges : {}", graphEdges.size());
     }
 
     public void createOutput() {
@@ -73,7 +75,7 @@ public class WebGraph {
             logger.error("exception in closing hBase manager", e);
         }
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        try (FileWriter fileWriter = new FileWriter("jsonFormat.txt")) {
+        try (FileWriter fileWriter = new FileWriter("graph.json")) {
             String json = ow.writeValueAsString(verticesAndEdges);
             fileWriter.write(json);
             fileWriter.flush();
@@ -133,15 +135,20 @@ public class WebGraph {
             noVersionMap = null;
         }
         logger.info("done walking");
+        int counter = 0;
         for (GraphEdge graphEdge : graphEdges) {
             for (ElasticPage elasticPage : elasticPages) {
                 if (hashUtil.getMd5(elasticPage.getUrl()).equals(graphEdge.getSrc())) {
                     graphEdge.setSrc(elasticPage.getUrl());
-                } else if (hashUtil.getMd5(elasticPage.getUrl()).equals(graphEdge.getDst())) {
+                    counter ++;
+                }
+                if (hashUtil.getMd5(elasticPage.getUrl()).equals(graphEdge.getDst())) {
                     graphEdge.setDst(elasticPage.getUrl());
+                    counter ++;
                 }
             }
         }
+        logger.info("number of src and dst change : {}", counter);
         logger.info("done fixing edges");
     }
 
@@ -166,6 +173,9 @@ public class WebGraph {
                 .appName("web_graph")
                 .master("local")
                 .getOrCreate();
+
+        spark.sparkContext()
+                .setLogLevel("ERROR");
 
         Dataset<Row> verticesDataFrame = spark.createDataFrame(graphVertices, GraphVertex.class);
         Dataset<Row> edgesDataFrame = spark.createDataFrame(graphEdges, GraphEdge.class);
