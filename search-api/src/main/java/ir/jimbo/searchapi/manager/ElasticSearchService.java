@@ -144,7 +144,8 @@ public class ElasticSearchService {
                 "rank", SortOrder.DESC).get(TimeValue.timeValueMillis(100000)).getHits().getHits()).map(hit -> {
             try {
                 final ElasticPage page = mapper.readValue(hit.getSourceAsString(), ElasticPage.class);
-                return new SearchItem(page.getTitle(), page.getText(), page.getUrl());
+                return new SearchItem(page.getTitle(), (page.getText().length() > 100 ? page.getText().substring(0, 100)
+                        : page.getText()) , page.getUrl());
             } catch (IOException e) {
                 LOGGER.error("Page parse error", e);
                 return null;
