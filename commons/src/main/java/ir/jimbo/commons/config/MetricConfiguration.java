@@ -1,5 +1,6 @@
 package ir.jimbo.commons.config;
 
+
 import com.codahale.metrics.*;
 import com.codahale.metrics.jmx.JmxReporter;
 
@@ -9,6 +10,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class MetricConfiguration {
+
     private static MetricConfiguration metricConfiguration;
     private MetricRegistry metricRegistry;
     private Properties properties;

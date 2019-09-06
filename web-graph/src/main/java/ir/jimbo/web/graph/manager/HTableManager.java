@@ -1,10 +1,5 @@
-package ir.jimbo.hbasepageprocessor.manager;
+package ir.jimbo.web.graph.manager;
 
-import com.codahale.metrics.Timer;
-import com.yammer.metrics.core.HealthCheck;
-import ir.jimbo.commons.config.MetricConfiguration;
-import ir.jimbo.hbasepageprocessor.assets.HRow;
-import lombok.Setter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -20,34 +15,30 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HTableManager extends HealthCheck {
+public class HTableManager {
     private static final Logger LOGGER = LogManager.getLogger(HTableManager.class);
     private static final Compression.Algorithm COMPRESSION_TYPE = Compression.Algorithm.NONE;
     private static final int NUMBER_OF_VERSIONS = 1;
-    @Setter
     private static Configuration config = null;
     private static Connection connection = null;
 
     // Regex pattern to extract domain from URL
     private Pattern domainPattern = Pattern.compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
     //Please refer to RFC 3986 - Appendix B for more information
-    private Timer hBaseInsertTime;
     private Table table;
-    private String columnFamilyName;
     private MessageDigest md = MessageDigest.getInstance("MD5");
 
-    public HTableManager(String tableName, String columnFamilyName, String healthCheckerName, MetricConfiguration metrics) throws IOException, NoSuchAlgorithmException {
-        super(healthCheckerName);    // HealthChecker need this, parameter is the name of health checker
-
-        this.columnFamilyName = columnFamilyName;
+    public HTableManager(String tableName, String columnFamilyName) throws IOException, NoSuchAlgorithmException {
         checkConnection();
         table = getTable(tableName, columnFamilyName);
-        hBaseInsertTime = metrics.getNewTimer(metrics.getProperty("hbase.put.duration.timer.name"));
+    }
+
+    public HTableManager() throws NoSuchAlgorithmException {
+
     }
 
     public static void closeConnection() throws IOException {
@@ -70,7 +61,6 @@ public class HTableManager extends HealthCheck {
     }
 
     private Table getTable(String tableName, String columnFamilyName) throws IOException {
-
         final Admin admin = connection.getAdmin();
         final TableName tableNameValue = TableName.valueOf(tableName);
         if (admin.tableExists(tableNameValue)) {
@@ -96,29 +86,11 @@ public class HTableManager extends HealthCheck {
         return md.digest(getBytes(input));
     }
 
-    public void put(List<HRow> links) throws IOException {
-        List<Put> puts = new ArrayList<>();
-        for (HRow link : links)
-            puts.add(getPut(link));
-        Timer.Context putContext = hBaseInsertTime.time();
-        table.put(puts);
-        putContext.stop();
-    }
-
-    public void put(HRow link) throws IOException {
-        table.put(getPut(link));
-    }
-
-    private Put getPut(HRow link) {
-        return new Put(getHash(link.getRowKey())).addColumn(getBytes(columnFamilyName), getHash(link.getQualifier()),
-                getBytes(link.getValue()));
-    }
-
     public byte[] getHash(String rowKey) {
         return Bytes.add(getMd5(getDomain(rowKey)), getMd5(rowKey));
     }
 
-    private String getDomain(String url) {
+    public String getDomain(String url) {
         final Matcher matcher = domainPattern.matcher(url);
         if (matcher.matches())
             return matcher.group(4);
@@ -126,12 +98,24 @@ public class HTableManager extends HealthCheck {
         return "";
     }
 
-    @Override
-    protected Result check() {
-        if (connection == null)
-            return Result.unhealthy("connection is null");
-        if (connection.isClosed())
-            return Result.unhealthy("connection is closed");
-        return Result.healthy();
+    /**
+     * @param rowKey url than will convert to <strong>domain_hash + url_hash</strong> in function
+     * @return get method that used for finding row
+     */
+    public Get getGet(String rowKey) {
+        return new Get(this.getHash(rowKey));
+    }
+
+    public Result getRecord(String rowKey) throws IOException {
+        return table.get(getGet(rowKey));
+    }
+
+    public Result[] getBulk(List<Get> gets) {
+        try {
+            return table.get(gets);
+        } catch (IOException e) {
+            LOGGER.error(e);
+        }
+        return new Result[0];
     }
 }
