@@ -16,7 +16,7 @@
         <spark.version>2.4.3</spark.version>
         <hbase.version>1.4.10</hbase.version>
         <elasticsearch.spark.version>6.3.2</elasticsearch.spark.version>
-        <jackson.version>2.6.5</jackson.version>
+        <jackson.version>2.9.10.1</jackson.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
     </properties>
