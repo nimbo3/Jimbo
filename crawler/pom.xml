@@ -16,7 +16,7 @@
         <robots.version>1.4.2</robots.version>
         <jsoup.version>1.12.1</jsoup.version>
         <kafka.client.version>2.3.0</kafka.client.version>
-        <jackson.version>2.9.9.1</jackson.version>
+        <jackson.version>2.9.10.3</jackson.version>
         <yammer.version>2.2.0</yammer.version>
         <embedded.version>0.6</embedded.version>
         <redisson.verision>3.11.1</redisson.verision>
